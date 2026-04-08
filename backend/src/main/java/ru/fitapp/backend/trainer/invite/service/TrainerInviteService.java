@@ -62,7 +62,7 @@ public class TrainerInviteService {
                 .setStatus(invite.getStatus().name())
                 .setExpiresAt(invite.getExpiresAt())
                 .setUsedAt(invite.getUsedAt())
-                .setRegistrationLink("http://localhost:5173/invite/" + invite.getToken());
+                .setRegistrationLink("http://89.111.137.65:8081/invite/" + invite.getToken());
     }
 
     private String generateToken() {
