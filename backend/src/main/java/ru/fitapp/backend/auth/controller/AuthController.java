@@ -1,0 +1,35 @@
+package ru.fitapp.backend.auth.controller;
+
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+import ru.fitapp.backend.auth.dto.AuthResponse;
+import ru.fitapp.backend.auth.dto.CurrentUserResponse;
+import ru.fitapp.backend.auth.dto.LoginRequest;
+import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
+import ru.fitapp.backend.auth.service.AuthService;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
+    }
+
+    @PostMapping("/register-by-invite")
+    public AuthResponse registerByInvite(@Valid @RequestBody RegisterByInviteRequest request) {
+        return authService.registerByInvite(request);
+    }
+
+    @GetMapping("/me")
+    public CurrentUserResponse me() {
+        return authService.me();
+    }
+}

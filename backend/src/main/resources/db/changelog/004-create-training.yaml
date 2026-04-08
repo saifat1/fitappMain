@@ -1,0 +1,102 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-training
+      author: ivan
+      changes:
+        - createTable:
+            tableName: training
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_training
+                    nullable: false
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: training_date
+                  type: date
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: start_time
+                  type: time
+
+              - column:
+                  name: end_time
+                  type: time
+
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: trainer_note
+                  type: varchar(2000)
+
+              - column:
+                  name: client_note
+                  type: varchar(2000)
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: training
+            baseColumnNames: trainer_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_training_trainer
+            onDelete: RESTRICT
+
+        - addForeignKeyConstraint:
+            baseTableName: training
+            baseColumnNames: client_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_training_client
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: training
+            indexName: idx_training_trainer_date
+            columns:
+              - column:
+                  name: trainer_id
+              - column:
+                  name: training_date
+
+        - createIndex:
+            tableName: training
+            indexName: idx_training_client_date
+            columns:
+              - column:
+                  name: client_id
+              - column:
+                  name: training_date

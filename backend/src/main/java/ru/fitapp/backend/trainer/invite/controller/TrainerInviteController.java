@@ -1,0 +1,30 @@
+package ru.fitapp.backend.trainer.invite.controller;
+
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
+import ru.fitapp.backend.trainer.invite.dto.CreateInviteRequest;
+import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
+import ru.fitapp.backend.trainer.invite.service.TrainerInviteService;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/trainer/invites")
+public class TrainerInviteController {
+
+    private final TrainerInviteService trainerInviteService;
+
+    public TrainerInviteController(TrainerInviteService trainerInviteService) {
+        this.trainerInviteService = trainerInviteService;
+    }
+
+    @PostMapping
+    public InviteResponse createInvite(@Valid @RequestBody CreateInviteRequest request) {
+        return trainerInviteService.createInvite(request);
+    }
+
+    @GetMapping
+    public List<InviteResponse> getCurrentTrainerInvites() {
+        return trainerInviteService.getCurrentTrainerInvites();
+    }
+}

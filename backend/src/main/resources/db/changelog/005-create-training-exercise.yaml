@@ -1,0 +1,97 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-training-exercise
+      author: ivan
+      changes:
+        - createTable:
+            tableName: training_exercise
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_training_exercise
+                    nullable: false
+
+              - column:
+                  name: training_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: order_num
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: varchar(2000)
+
+              - column:
+                  name: sets
+                  type: int
+
+              - column:
+                  name: reps
+                  type: int
+
+              - column:
+                  name: duration_seconds
+                  type: int
+
+              - column:
+                  name: rest_seconds
+                  type: int
+
+              - column:
+                  name: is_completed
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: trainer_note
+                  type: varchar(2000)
+
+              - column:
+                  name: client_note
+                  type: varchar(2000)
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: training_exercise
+            baseColumnNames: training_id
+            referencedTableName: training
+            referencedColumnNames: id
+            constraintName: fk_training_exercise_training
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: training_exercise
+            indexName: idx_training_exercise_training_order
+            columns:
+              - column:
+                  name: training_id
+              - column:
+                  name: order_num

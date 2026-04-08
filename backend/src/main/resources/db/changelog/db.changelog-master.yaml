@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-app-user.yaml
+  - include:
+      file: db/changelog/002-create-invite.yaml
+  - include:
+      file: db/changelog/003-create-trainer-client.yaml
+  - include:
+      file: db/changelog/004-create-training.yaml
+  - include:
+      file: db/changelog/005-create-training-exercise.yaml
+  - include:
+      file: db/changelog/006-create-reschedule-request.yaml

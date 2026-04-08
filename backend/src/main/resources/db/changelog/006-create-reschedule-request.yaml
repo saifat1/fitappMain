@@ -1,0 +1,109 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-reschedule-request
+      author: ivan
+      changes:
+        - createTable:
+            tableName: reschedule_request
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_reschedule_request
+                    nullable: false
+
+              - column:
+                  name: training_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: requester_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: requested_training_date
+                  type: date
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: requested_start_time
+                  type: time
+
+              - column:
+                  name: requested_end_time
+                  type: time
+
+              - column:
+                  name: client_comment
+                  type: varchar(2000)
+
+              - column:
+                  name: trainer_comment
+                  type: varchar(2000)
+
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: processed_at
+                  type: timestamp
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: reschedule_request
+            baseColumnNames: training_id
+            referencedTableName: training
+            referencedColumnNames: id
+            constraintName: fk_reschedule_request_training
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: reschedule_request
+            baseColumnNames: requester_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_reschedule_request_requester
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: reschedule_request
+            indexName: idx_reschedule_request_training
+            columns:
+              - column:
+                  name: training_id
+
+        - createIndex:
+            tableName: reschedule_request
+            indexName: idx_reschedule_request_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: reschedule_request
+            indexName: idx_reschedule_request_created_at
+            columns:
+              - column:
+                  name: created_at
