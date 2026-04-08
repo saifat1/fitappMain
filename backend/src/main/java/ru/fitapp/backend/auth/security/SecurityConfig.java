@@ -52,7 +52,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5174", "http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5174",
+                "http://localhost:5173",
+                "http://89.111.137.65:8081",
+                "http://89-111-137-65.swtest.ru:8081"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(false);
