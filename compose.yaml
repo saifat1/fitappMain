@@ -31,6 +31,8 @@ services:
       SERVER_PORT: ${SERVER_PORT}
     expose:
       - "8080"
+    ports:
+      - "8080:8080"
 
   frontend:
     build:

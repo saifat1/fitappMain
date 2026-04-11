@@ -1,0 +1,30 @@
+services:
+  db:
+    container_name: fitapp-postgres-local
+    ports:
+      - "5433:5432"
+    volumes:
+      - fitapp_postgres_data_local:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fitapp_local}
+      POSTGRES_USER: ${POSTGRES_USER:-fitapp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fitapp_local_pass}
+
+  backend:
+    container_name: fitapp-backend-local
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-fitapp_local}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fitapp}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fitapp_local_pass}
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+
+  frontend:
+    container_name: fitapp-frontend-local
+    ports:
+      - "3000:80"
+
+volumes:
+  fitapp_postgres_data_local:

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { trainingApi } from "../shared/api/trainingApi";
@@ -29,14 +29,14 @@ function getDefaultToDate(): string {
 
 function formatTimeRange(startTime: string | null, endTime: string | null): string {
     if (!startTime && !endTime) {
-        return "-";
+        return "Время не указано";
     }
 
     if (startTime && endTime) {
         return `${startTime} - ${endTime}`;
     }
 
-    return startTime ?? endTime ?? "-";
+    return startTime ?? endTime ?? "Время не указано";
 }
 
 function formatClientName(training: TrainingResponse): string {
@@ -49,6 +49,32 @@ function formatClientName(training: TrainingResponse): string {
     }
 
     return training.clientEmail;
+}
+
+function getStatusLabel(status: string): string {
+    switch (status) {
+        case "PLANNED":
+            return "Запланирована";
+        case "COMPLETED":
+            return "Завершена";
+        case "CANCELLED":
+            return "Отменена";
+        default:
+            return status;
+    }
+}
+
+function getStatusClass(status: string): string {
+    switch (status) {
+        case "PLANNED":
+            return "training-status-badge planned";
+        case "COMPLETED":
+            return "training-status-badge completed";
+        case "CANCELLED":
+            return "training-status-badge cancelled";
+        default:
+            return "training-status-badge";
+    }
 }
 
 export default function TrainingsPage() {
@@ -129,6 +155,7 @@ export default function TrainingsPage() {
         try {
             const created = await trainingApi.createTraining(payload);
             setTrainings((prev) => [created, ...prev]);
+            setTrainerNote("");
         } catch (error) {
             if (axios.isAxiosError<ApiErrorResponse>(error)) {
                 setErrorMessage(error.response?.data?.message ?? "Не удалось создать тренировку");
@@ -140,160 +167,253 @@ export default function TrainingsPage() {
         }
     };
 
+    const stats = useMemo(() => {
+        const planned = trainings.filter((item) => item.status === "PLANNED").length;
+        const completed = trainings.filter((item) => item.status === "COMPLETED").length;
+        const cancelled = trainings.filter((item) => item.status === "CANCELLED").length;
+
+        return {
+            total: trainings.length,
+            planned,
+            completed,
+            cancelled,
+        };
+    }, [trainings]);
+
     return (
-        <div className="page-card page-card-wide">
-            <div className="page-header-row">
-                <div>
-                    <h2>Тренировки</h2>
-                    <p className="page-description">
+        <div className="trainings-page">
+            <section className="trainings-hero">
+                <div className="trainings-hero-main">
+                    <div className="trainings-kicker">Тренировки</div>
+                    <h1 className="trainings-title">
+                        {isTrainer ? "Планирование и контроль занятий" : "Твои тренировки"}
+                    </h1>
+                    <p className="trainings-subtitle">
                         {isTrainer
-                            ? "Список тренировок твоих клиентов в выбранном диапазоне."
-                            : "Список твоих тренировок в выбранном диапазоне."}
+                            ? "Создавай тренировки, фильтруй расписание и быстро переходи к деталям занятия по каждому клиенту."
+                            : "Смотри свои тренировки в выбранном диапазоне и открывай детали каждого занятия."}
                     </p>
                 </div>
-            </div>
+
+                <div className="trainings-hero-stats">
+                    <div className="trainings-stat-card">
+                        <span>Всего в диапазоне</span>
+                        <strong>{stats.total}</strong>
+                    </div>
+                    <div className="trainings-stat-card">
+                        <span>Запланировано</span>
+                        <strong>{stats.planned}</strong>
+                    </div>
+                    <div className="trainings-stat-card">
+                        <span>Завершено</span>
+                        <strong>{stats.completed}</strong>
+                    </div>
+                    <div className="trainings-stat-card">
+                        <span>Отменено</span>
+                        <strong>{stats.cancelled}</strong>
+                    </div>
+                </div>
+            </section>
 
             {isTrainer && (
-                <form className="form section-block training-create-block" onSubmit={handleCreateTraining}>
-                    <h3>Создать тренировку</h3>
-
-                    <div className="form-row">
-                        <label htmlFor="create-client">Клиент</label>
-                        <select
-                            id="create-client"
-                            value={clientId}
-                            onChange={(event) => setClientId(event.target.value)}
-                            required
-                        >
-                            {clients.length === 0 && <option value="">Нет клиентов</option>}
-                            {clients.map((client) => (
-                                <option key={client.id} value={client.id}>
-                                    {client.firstName || client.lastName
-                                        ? `${client.firstName ?? ""} ${client.lastName ?? ""} (${client.email})`
-                                        : client.email}
-                                </option>
-                            ))}
-                        </select>
+                <section className="trainings-panel trainings-panel-create">
+                    <div className="trainings-panel-header">
+                        <div>
+                            <div className="trainings-panel-kicker">Создание</div>
+                            <h2 className="trainings-panel-title">Новая тренировка</h2>
+                        </div>
                     </div>
 
-                    <div className="form-row">
-                        <label htmlFor="create-training-date">Дата</label>
-                        <input
-                            id="create-training-date"
-                            type="date"
-                            value={trainingDate}
-                            onChange={(event) => setTrainingDate(event.target.value)}
-                            required
-                        />
-                    </div>
+                    <form className="trainings-form" onSubmit={handleCreateTraining}>
+                        <div className="trainings-form-grid">
+                            <div className="form-row">
+                                <label htmlFor="create-client">Клиент</label>
+                                <select
+                                    id="create-client"
+                                    value={clientId}
+                                    onChange={(event) => setClientId(event.target.value)}
+                                    required
+                                >
+                                    {clients.length === 0 && <option value="">Нет клиентов</option>}
+                                    {clients.map((client) => (
+                                        <option key={client.id} value={client.id}>
+                                            {client.firstName || client.lastName
+                                                ? `${client.firstName ?? ""} ${client.lastName ?? ""} (${client.email})`
+                                                : client.email}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                    <div className="form-row">
-                        <label htmlFor="create-start-time">Начало</label>
-                        <input
-                            id="create-start-time"
-                            type="time"
-                            value={startTime}
-                            onChange={(event) => setStartTime(event.target.value)}
-                        />
-                    </div>
+                            <div className="form-row">
+                                <label htmlFor="create-training-date">Дата</label>
+                                <input
+                                    id="create-training-date"
+                                    type="date"
+                                    value={trainingDate}
+                                    onChange={(event) => setTrainingDate(event.target.value)}
+                                    required
+                                />
+                            </div>
 
-                    <div className="form-row">
-                        <label htmlFor="create-end-time">Окончание</label>
-                        <input
-                            id="create-end-time"
-                            type="time"
-                            value={endTime}
-                            onChange={(event) => setEndTime(event.target.value)}
-                        />
-                    </div>
+                            <div className="form-row">
+                                <label htmlFor="create-start-time">Начало</label>
+                                <input
+                                    id="create-start-time"
+                                    type="time"
+                                    value={startTime}
+                                    onChange={(event) => setStartTime(event.target.value)}
+                                />
+                            </div>
 
-                    <div className="form-row">
-                        <label htmlFor="create-trainer-note">Заметка тренера</label>
-                        <textarea
-                            id="create-trainer-note"
-                            value={trainerNote}
-                            onChange={(event) => setTrainerNote(event.target.value)}
-                            rows={3}
-                        />
-                    </div>
+                            <div className="form-row">
+                                <label htmlFor="create-end-time">Окончание</label>
+                                <input
+                                    id="create-end-time"
+                                    type="time"
+                                    value={endTime}
+                                    onChange={(event) => setEndTime(event.target.value)}
+                                />
+                            </div>
+                        </div>
 
-                    <button type="submit" disabled={isCreating || clients.length === 0}>
-                        {isCreating ? "Создаём..." : "Создать тренировку"}
-                    </button>
-                </form>
+                        <div className="form-row">
+                            <label htmlFor="create-trainer-note">Заметка тренера</label>
+                            <textarea
+                                id="create-trainer-note"
+                                value={trainerNote}
+                                onChange={(event) => setTrainerNote(event.target.value)}
+                                rows={4}
+                                placeholder="Например: акцент на технику, ограничение по нагрузке, особенности занятия"
+                            />
+                        </div>
+
+                        <div className="trainings-actions">
+                            <button
+                                type="submit"
+                                className="dashboard-btn dashboard-btn-primary"
+                                disabled={isCreating || clients.length === 0}
+                            >
+                                {isCreating ? "Создаём..." : "Создать тренировку"}
+                            </button>
+                        </div>
+                    </form>
+                </section>
             )}
 
-            <form className="filter-form section-block" onSubmit={handleSubmit}>
-                <div className="form-row">
-                    <label htmlFor="from-date">С даты</label>
-                    <input
-                        id="from-date"
-                        type="date"
-                        value={from}
-                        onChange={(event) => setFrom(event.target.value)}
-                        required
-                    />
+            <section className="trainings-panel trainings-panel-filter">
+                <div className="trainings-panel-header">
+                    <div>
+                        <div className="trainings-panel-kicker">Фильтр</div>
+                        <h2 className="trainings-panel-title">Период отображения</h2>
+                    </div>
                 </div>
 
-                <div className="form-row">
-                    <label htmlFor="to-date">По дату</label>
-                    <input
-                        id="to-date"
-                        type="date"
-                        value={to}
-                        onChange={(event) => setTo(event.target.value)}
-                        required
-                    />
-                </div>
+                <form className="trainings-filter-form" onSubmit={handleSubmit}>
+                    <div className="form-row">
+                        <label htmlFor="from-date">С даты</label>
+                        <input
+                            id="from-date"
+                            type="date"
+                            value={from}
+                            onChange={(event) => setFrom(event.target.value)}
+                            required
+                        />
+                    </div>
 
-                <div className="filter-actions">
-                    <button type="submit" disabled={isLoading}>
-                        {isLoading ? "Загружаем..." : "Загрузить"}
-                    </button>
-                </div>
-            </form>
+                    <div className="form-row">
+                        <label htmlFor="to-date">По дату</label>
+                        <input
+                            id="to-date"
+                            type="date"
+                            value={to}
+                            onChange={(event) => setTo(event.target.value)}
+                            required
+                        />
+                    </div>
+
+                    <div className="trainings-filter-actions">
+                        <button
+                            type="submit"
+                            className="dashboard-btn dashboard-btn-secondary"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Загружаем..." : "Применить"}
+                        </button>
+                    </div>
+                </form>
+            </section>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-            {isLoading && <p>Загрузка...</p>}
+            {isLoading && (
+                <section className="trainings-panel">
+                    <p>Загрузка...</p>
+                </section>
+            )}
 
             {!isLoading && !errorMessage && trainings.length === 0 && (
-                <p>Тренировок в выбранном диапазоне нет.</p>
+                <section className="trainings-panel">
+                    <div className="trainings-empty">
+                        <div className="trainings-empty-title">Тренировок в выбранном диапазоне нет</div>
+                        <div className="trainings-empty-text">
+                            Измени диапазон дат или создай новую тренировку.
+                        </div>
+                    </div>
+                </section>
             )}
 
             {!isLoading && !errorMessage && trainings.length > 0 && (
-                <div className="table-wrap">
-                    <table className="data-table">
-                        <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Дата</th>
-                            <th>Время</th>
-                            {isTrainer && <th>Клиент</th>}
-                            <th>Статус</th>
-                            <th>Заметка тренера</th>
-                            <th>Действия</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {trainings.map((training) => (
-                            <tr key={training.id}>
-                                <td>{training.id}</td>
-                                <td>{training.trainingDate}</td>
-                                <td>{formatTimeRange(training.startTime, training.endTime)}</td>
-                                {isTrainer && <td>{formatClientName(training)}</td>}
-                                <td>{training.status}</td>
-                                <td>{training.trainerNote ?? "-"}</td>
-                                <td>
-                                    <button onClick={() => navigate(`/trainings/${training.id}`)}>
-                                        Открыть
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
+                <section className="trainings-list">
+                    {trainings.map((training) => (
+                        <article key={training.id} className="training-card">
+                            <div className="training-card-top">
+                                <div>
+                                    <div className="training-card-date">{training.trainingDate}</div>
+                                    <h3 className="training-card-title">
+                                        {isTrainer ? formatClientName(training) : `Тренировка #${training.id}`}
+                                    </h3>
+                                    <div className="training-card-time">
+                                        {formatTimeRange(training.startTime, training.endTime)}
+                                    </div>
+                                </div>
+
+                                <span className={getStatusClass(training.status)}>
+                  {getStatusLabel(training.status)}
+                </span>
+                            </div>
+
+                            <div className="training-card-grid">
+                                <div className="training-card-item">
+                                    <span>ID</span>
+                                    <strong>{training.id}</strong>
+                                </div>
+
+                                {isTrainer && (
+                                    <div className="training-card-item">
+                                        <span>Клиент</span>
+                                        <strong>{formatClientName(training)}</strong>
+                                    </div>
+                                )}
+
+                                <div className="training-card-item training-card-item-wide">
+                                    <span>Заметка тренера</span>
+                                    <strong>{training.trainerNote?.trim() ? training.trainerNote : "Нет заметки"}</strong>
+                                </div>
+                            </div>
+
+                            <div className="training-card-actions">
+                                <button
+                                    type="button"
+                                    className="dashboard-btn dashboard-btn-primary"
+                                    onClick={() => navigate(`/trainings/${training.id}`)}
+                                >
+                                    Открыть
+                                </button>
+                            </div>
+                        </article>
+                    ))}
+                </section>
             )}
         </div>
     );

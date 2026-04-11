@@ -6,6 +6,28 @@ type Props = {
     children: ReactNode;
 };
 
+function getUserDisplayName(
+    email?: string,
+    firstName?: string | null,
+    lastName?: string | null
+) {
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
+    return fullName || email || "Пользователь";
+}
+
+function getInitials(
+    email?: string,
+    firstName?: string | null,
+    lastName?: string | null
+) {
+    const first = firstName?.[0] ?? "";
+    const last = lastName?.[0] ?? "";
+    const initials = `${first}${last}`.trim().toUpperCase();
+
+    if (initials) return initials;
+    return email?.[0]?.toUpperCase() ?? "U";
+}
+
 export default function AppLayout({ children }: Props) {
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
@@ -17,67 +39,133 @@ export default function AppLayout({ children }: Props) {
         navigate("/login");
     };
 
+    const displayName = getUserDisplayName(
+        currentUser?.email,
+        currentUser?.firstName,
+        currentUser?.lastName
+    );
+
+    const initials = getInitials(
+        currentUser?.email,
+        currentUser?.firstName,
+        currentUser?.lastName
+    );
+
     return (
         <div className="app-shell">
-            <header className="app-header">
-                <div>
-                    <h1 className="app-title">FitApp</h1>
-                    <p className="app-subtitle">Этап 3 — тренировки</p>
+            <aside className="app-sidebar">
+                <div className="app-sidebar-top">
+                    <div className="app-brand">
+                        <div className="app-brand-mark">F</div>
+                        <div>
+                            <div className="app-brand-title">FitApp</div>
+                            <div className="app-brand-subtitle">Тренировки и сопровождение</div>
+                        </div>
+                    </div>
+
+                    {currentUser && (
+                        <div className="app-sidebar-user-card">
+                            <div className="app-sidebar-user-top">
+                                <div className="app-sidebar-avatar">{initials}</div>
+                                <div className="app-sidebar-user-meta">
+                                    <div className="app-sidebar-user-name">{displayName}</div>
+                                    <div className="app-sidebar-user-email">{currentUser.email}</div>
+                                </div>
+                            </div>
+
+                            <div className="app-sidebar-role-row">
+                                <span>Роль</span>
+                                <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {currentUser && (
-                    <div className="app-user-panel">
-                        <div>{currentUser.email}</div>
-                        <div>{currentUser.role}</div>
-                        <button onClick={handleLogout}>Выйти</button>
+                <nav className="side-nav">
+                    <NavLink
+                        to="/me"
+                        className={({ isActive }) =>
+                            isActive ? "nav-link nav-link-active" : "nav-link"
+                        }
+                    >
+                        <span className="nav-link-icon">◦</span>
+                        <span>Профиль</span>
+                    </NavLink>
+
+                    <NavLink
+                        to="/trainings"
+                        className={({ isActive }) =>
+                            isActive ? "nav-link nav-link-active" : "nav-link"
+                        }
+                    >
+                        <span className="nav-link-icon">◦</span>
+                        <span>Тренировки</span>
+                    </NavLink>
+
+                    <NavLink
+                        to="/reschedule-requests"
+                        className={({ isActive }) =>
+                            isActive ? "nav-link nav-link-active" : "nav-link"
+                        }
+                    >
+                        <span className="nav-link-icon">◦</span>
+                        <span>Переносы</span>
+                    </NavLink>
+
+                    {isTrainer && (
+                        <>
+                            <NavLink
+                                to="/trainer/clients"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                <span className="nav-link-icon">◦</span>
+                                <span>Клиенты</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/trainer/invites"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                <span className="nav-link-icon">◦</span>
+                                <span>Приглашения</span>
+                            </NavLink>
+                        </>
+                    )}
+                </nav>
+
+                <div className="app-sidebar-bottom">
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-secondary app-logout-btn"
+                        onClick={handleLogout}
+                    >
+                        Выйти
+                    </button>
+                </div>
+            </aside>
+
+            <div className="app-content-shell">
+                <header className="app-topbar">
+                    <div>
+                        <div className="app-topbar-kicker">Рабочее пространство</div>
+                        <h1 className="app-topbar-title">FitApp</h1>
                     </div>
-                )}
-            </header>
 
-            <div className="app-body">
-                <aside className="app-sidebar">
-                    <nav className="side-nav">
-                        <NavLink
-                            to="/me"
-                            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                        >
-                            Профиль
-                        </NavLink>
+                    {currentUser && (
+                        <div className="app-topbar-user-pill">
+                            <span>{currentUser.email}</span>
+                            <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
+                        </div>
+                    )}
+                </header>
 
-                        <NavLink
-                            to="/trainings"
-                            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                        >
-                            Тренировки
-                        </NavLink>
-                        <NavLink
-                            to="/reschedule-requests"
-                            className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                        >
-                            Переносы
-                        </NavLink>
-
-                        {isTrainer && (
-                            <>
-                                <NavLink
-                                    to="/trainer/clients"
-                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                                >
-                                    Клиенты
-                                </NavLink>
-
-                                <NavLink
-                                    to="/trainer/invites"
-                                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                                >
-                                    Приглашения
-                                </NavLink>
-                            </>
-                        )}
-                    </nav>
-                </aside>
-
-                <main className="app-main">{children}</main>
+                <main className="app-main">
+                    <div className="app-page-container">{children}</div>
+                </main>
             </div>
         </div>
     );
