@@ -1,6 +1,7 @@
 package ru.fitapp.backend.trainer.invite.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.fitapp.backend.trainer.invite.dto.CreateInviteRequest;
 import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
@@ -24,7 +25,15 @@ public class TrainerInviteController {
     }
 
     @GetMapping
-    public List<InviteResponse> getCurrentTrainerInvites() {
-        return trainerInviteService.getCurrentTrainerInvites();
+    public List<InviteResponse> getCurrentTrainerInvites(
+            @RequestParam(defaultValue = "false") boolean includeAll
+    ) {
+        return trainerInviteService.getCurrentTrainerInvites(includeAll);
+    }
+
+    @DeleteMapping("/{inviteId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteInvite(@PathVariable Long inviteId) {
+        trainerInviteService.deleteInvite(inviteId);
     }
 }

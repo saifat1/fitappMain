@@ -2875,3 +2875,33 @@ input:focus {
     align-items: flex-start;
   }
 }
+.invites-panel-header-with-controls {
+  align-items: center;
+}
+
+.invite-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.invite-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #dbe3ea;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.invite-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}

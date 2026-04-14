@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
@@ -9,8 +9,8 @@ import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 
 function getInviteStatusLabel(status: string): string {
     switch (status) {
-        case "ACTIVE":
-            return "Активно";
+        case "NEW":
+            return "Новое";
         case "USED":
             return "Использовано";
         case "EXPIRED":
@@ -24,7 +24,7 @@ function getInviteStatusLabel(status: string): string {
 
 function getInviteStatusClass(status: string): string {
     switch (status) {
-        case "ACTIVE":
+        case "NEW":
             return "invite-status-badge active";
         case "USED":
             return "invite-status-badge used";
@@ -39,19 +39,22 @@ function getInviteStatusClass(status: string): string {
 
 export default function InvitesPage() {
     const [invites, setInvites] = useState<InviteResponse[]>([]);
-    const [email, setEmail] = useState("");
-    const [expiresInDays, setExpiresInDays] = useState("");
+    const [email, setEmail] = useState("client@test.local");
+    const [expiresInDays, setExpiresInDays] = useState("7");
+    const [showAllInvites, setShowAllInvites] = useState(false);
+
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [copiedInviteId, setCopiedInviteId] = useState<number | null>(null);
+    const [deletingInviteId, setDeletingInviteId] = useState<number | null>(null);
 
-    async function loadInvites() {
+    const loadInvites = useCallback(async () => {
         setErrorMessage("");
         setIsLoading(true);
 
         try {
-            const data = await trainerApi.getInvites();
+            const data = await trainerApi.getInvites(showAllInvites);
             setInvites(data);
         } catch (error) {
             if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -62,13 +65,13 @@ export default function InvitesPage() {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [showAllInvites]);
 
     useEffect(() => {
-        loadInvites();
-    }, []);
+        void loadInvites();
+    }, [loadInvites]);
 
-    const handleCreateInvite = async (event: React.FormEvent) => {
+    const handleCreateInvite = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setErrorMessage("");
 
@@ -76,12 +79,12 @@ export default function InvitesPage() {
         const trimmedExpiresInDays = expiresInDays.trim();
 
         if (!trimmedEmail) {
-            setErrorMessage("Поле «Email клиента» обязательно");
+            setErrorMessage("Укажи email клиента");
             return;
         }
 
         if (!trimmedExpiresInDays) {
-            setErrorMessage("Поле «Срок действия, дней» обязательно");
+            setErrorMessage("Укажи срок действия приглашения");
             return;
         }
 
@@ -100,12 +103,10 @@ export default function InvitesPage() {
         };
 
         try {
-            const created = await trainerApi.createInvite(payload);
-            setInvites((prev) => [created, ...prev]);
-            setEmail("");
-            setExpiresInDays("");
+            await trainerApi.createInvite(payload);
+            await loadInvites();
         } catch (error) {
-            if (axios.isAxiosError(error)) {
+            if (axios.isAxiosError<ApiErrorResponse>(error)) {
                 setErrorMessage(error.response?.data?.message ?? "Не удалось создать приглашение");
             } else {
                 setErrorMessage("Неизвестная ошибка");
@@ -128,15 +129,38 @@ export default function InvitesPage() {
         }
     };
 
+    const handleDelete = async (inviteId: number) => {
+        const confirmed = window.confirm("Удалить приглашение?");
+        if (!confirmed) {
+            return;
+        }
+
+        setErrorMessage("");
+        setDeletingInviteId(inviteId);
+
+        try {
+            await trainerApi.deleteInvite(inviteId);
+            setInvites((prev) => prev.filter((invite) => invite.id !== inviteId));
+        } catch (error) {
+            if (axios.isAxiosError<ApiErrorResponse>(error)) {
+                setErrorMessage(error.response?.data?.message ?? "Не удалось удалить приглашение");
+            } else {
+                setErrorMessage("Неизвестная ошибка");
+            }
+        } finally {
+            setDeletingInviteId(null);
+        }
+    };
+
     const stats = useMemo(() => {
-        const active = invites.filter((item) => item.status === "ACTIVE").length;
+        const newCount = invites.filter((item) => item.status === "NEW").length;
         const used = invites.filter((item) => item.status === "USED").length;
         const expired = invites.filter((item) => item.status === "EXPIRED").length;
         const cancelled = invites.filter((item) => item.status === "CANCELLED").length;
 
         return {
             total: invites.length,
-            active,
+            newCount,
             used,
             expired,
             cancelled,
@@ -160,14 +184,17 @@ export default function InvitesPage() {
                         <span>Всего</span>
                         <strong>{stats.total}</strong>
                     </div>
+
                     <div className="invites-stat-card">
-                        <span>Активные</span>
-                        <strong>{stats.active}</strong>
+                        <span>Новые</span>
+                        <strong>{stats.newCount}</strong>
                     </div>
+
                     <div className="invites-stat-card">
                         <span>Использованные</span>
                         <strong>{stats.used}</strong>
                     </div>
+
                     <div className="invites-stat-card">
                         <span>Истекшие / отменённые</span>
                         <strong>{stats.expired + stats.cancelled}</strong>
@@ -193,7 +220,6 @@ export default function InvitesPage() {
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
                                 placeholder="client@test.local"
-                                required
                             />
                         </div>
 
@@ -206,7 +232,6 @@ export default function InvitesPage() {
                                 max="365"
                                 value={expiresInDays}
                                 onChange={(event) => setExpiresInDays(event.target.value)}
-                                required
                             />
                         </div>
                     </div>
@@ -224,93 +249,122 @@ export default function InvitesPage() {
             </section>
 
             <section className="invites-panel">
-                <div className="invites-panel-header">
+                <div className="invites-panel-header invites-panel-header-with-controls">
                     <div>
                         <div className="invites-panel-kicker">Список</div>
-                        <h2 className="invites-panel-title">Все приглашения</h2>
+                        <h2 className="invites-panel-title">
+                            {showAllInvites ? "Все приглашения" : "Новые приглашения"}
+                        </h2>
                     </div>
 
-                    <button
-                        type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
-                        onClick={loadInvites}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Обновляем..." : "Обновить"}
-                    </button>
+                    <div className="invite-toolbar">
+                        <label className="invite-toggle">
+                            <input
+                                type="checkbox"
+                                checked={showAllInvites}
+                                onChange={(event) => setShowAllInvites(event.target.checked)}
+                            />
+                            <span>Показать все приглашения</span>
+                        </label>
+
+                        <button
+                            type="button"
+                            className="dashboard-btn dashboard-btn-secondary"
+                            onClick={() => void loadInvites()}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Обновляем..." : "Обновить"}
+                        </button>
+                    </div>
                 </div>
 
                 {errorMessage && <div className="error-box">{errorMessage}</div>}
-
                 {isLoading && <p>Загрузка...</p>}
 
                 {!isLoading && invites.length === 0 && (
                     <div className="invites-empty">
                         <div className="invites-empty-title">Приглашений пока нет</div>
                         <div className="invites-empty-text">
-                            Создай первое приглашение для нового клиента.
+                            {showAllInvites
+                                ? "У тренера пока нет приглашений."
+                                : "Новых приглашений сейчас нет."}
                         </div>
                     </div>
                 )}
 
                 {!isLoading && invites.length > 0 && (
                     <div className="invites-list">
-                        {invites.map((invite) => (
-                            <article key={invite.id} className="invite-card-ui">
-                                <div className="invite-card-top">
-                                    <div>
-                                        <div className="invite-card-kicker">Invite #{invite.id}</div>
-                                        <h3 className="invite-card-title">{invite.email ?? "Без привязки к email"}</h3>
-                                        <div className="invite-card-subtitle">
-                                            Истекает: {new Date(invite.expiresAt).toLocaleString()}
+                        {invites.map((invite) => {
+                            const isDeleting = deletingInviteId === invite.id;
+
+                            return (
+                                <article key={invite.id} className="invite-card-ui">
+                                    <div className="invite-card-top">
+                                        <div>
+                                            <div className="invite-card-kicker">Invite #{invite.id}</div>
+                                            <h3 className="invite-card-title">
+                                                {invite.email ?? "Без привязки к email"}
+                                            </h3>
+                                            <div className="invite-card-subtitle">
+                                                Истекает: {new Date(invite.expiresAt).toLocaleString()}
+                                            </div>
+                                        </div>
+
+                                        <span className={getInviteStatusClass(invite.status)}>
+                      {getInviteStatusLabel(invite.status)}
+                    </span>
+                                    </div>
+
+                                    <div className="invite-card-grid">
+                                        <div className="invite-card-item">
+                                            <span>Email</span>
+                                            <strong>{invite.email ?? "—"}</strong>
+                                        </div>
+
+                                        <div className="invite-card-item">
+                                            <span>Статус</span>
+                                            <strong>{getInviteStatusLabel(invite.status)}</strong>
+                                        </div>
+
+                                        <div className="invite-card-item">
+                                            <span>Использовано</span>
+                                            <strong>
+                                                {invite.usedAt ? new Date(invite.usedAt).toLocaleString() : "Ещё нет"}
+                                            </strong>
                                         </div>
                                     </div>
 
-                                    <span className={getInviteStatusClass(invite.status)}>
-                    {getInviteStatusLabel(invite.status)}
-                  </span>
-                                </div>
-
-                                <div className="invite-card-grid">
-                                    <div className="invite-card-item">
-                                        <span>Email</span>
-                                        <strong>{invite.email ?? "—"}</strong>
+                                    <div className="invite-link-panel">
+                                        <div className="invite-link-label">Ссылка регистрации</div>
+                                        <input
+                                            className="invite-link-input"
+                                            type="text"
+                                            readOnly
+                                            value={invite.registrationLink}
+                                        />
                                     </div>
 
-                                    <div className="invite-card-item">
-                                        <span>Статус</span>
-                                        <strong>{getInviteStatusLabel(invite.status)}</strong>
+                                    <div className="invite-card-actions">
+                                        <button
+                                            type="button"
+                                            className="dashboard-btn dashboard-btn-primary"
+                                            onClick={() => void handleCopy(invite)}
+                                        >
+                                            {copiedInviteId === invite.id ? "Скопировано" : "Копировать ссылку"}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="dashboard-btn dashboard-btn-secondary"
+                                            onClick={() => void handleDelete(invite.id)}
+                                            disabled={isDeleting}
+                                        >
+                                            {isDeleting ? "Удаляем..." : "Удалить"}
+                                        </button>
                                     </div>
-
-                                    <div className="invite-card-item">
-                                        <span>Использовано</span>
-                                        <strong>
-                                            {invite.usedAt ? new Date(invite.usedAt).toLocaleString() : "Ещё нет"}
-                                        </strong>
-                                    </div>
-                                </div>
-
-                                <div className="invite-link-panel">
-                                    <div className="invite-link-label">Ссылка регистрации</div>
-                                    <input
-                                        className="invite-link-input"
-                                        type="text"
-                                        readOnly
-                                        value={invite.registrationLink}
-                                    />
-                                </div>
-
-                                <div className="invite-card-actions">
-                                    <button
-                                        type="button"
-                                        className="dashboard-btn dashboard-btn-primary"
-                                        onClick={() => handleCopy(invite)}
-                                    >
-                                        {copiedInviteId === invite.id ? "Скопировано" : "Копировать ссылку"}
-                                    </button>
-                                </div>
-                            </article>
-                        ))}
+                                </article>
+                            );
+                        })}
                     </div>
                 )}
             </section>

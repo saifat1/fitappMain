@@ -37,8 +37,14 @@ export const trainerApi = {
         return response.data;
     },
 
-    getInvites: async (): Promise<InviteResponse[]> => {
-        const response = await apiClient.get<InviteResponse[]>("/trainer/invites");
+    getInvites: async (includeAll = false): Promise<InviteResponse[]> => {
+        const response = await apiClient.get<InviteResponse[]>("/trainer/invites", {
+            params: { includeAll },
+        });
         return response.data;
+    },
+
+    deleteInvite: async (inviteId: number): Promise<void> => {
+        await apiClient.delete(`/trainer/invites/${inviteId}`);
     },
 };

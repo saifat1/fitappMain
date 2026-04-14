@@ -12,5 +12,7 @@ public interface InviteRepository extends JpaRepository<Invite, Long> {
 
     boolean existsByToken(String token);
 
-    List<Invite> findAllByTrainerId(Long trainerId);
+    List<Invite> findAllByTrainerIdOrderByCreatedAtDesc(Long trainerId);
+
+    Optional<Invite> findByIdAndTrainerId(Long id, Long trainerId);
 }

@@ -3,6 +3,7 @@ package ru.fitapp.backend.trainer.invite.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.invite.entity.Invite;
 import ru.fitapp.backend.invite.model.InviteStatus;
@@ -25,8 +26,10 @@ public class TrainerInviteService {
     @Value("${app.public-base-url}")
     private String publicBaseUrl;
 
-    public TrainerInviteService(InviteRepository inviteRepository,
-                                CurrentUserService currentUserService) {
+    public TrainerInviteService(
+            InviteRepository inviteRepository,
+            CurrentUserService currentUserService
+    ) {
         this.inviteRepository = inviteRepository;
         this.currentUserService = currentUserService;
     }
@@ -49,24 +52,52 @@ public class TrainerInviteService {
     }
 
     @Transactional(readOnly = true)
-    public List<InviteResponse> getCurrentTrainerInvites() {
+    public List<InviteResponse> getCurrentTrainerInvites(boolean includeAll) {
         AppUser trainer = currentUserService.getCurrentTrainer();
 
-        return inviteRepository.findAllByTrainerId(trainer.getId())
+        return inviteRepository.findAllByTrainerIdOrderByCreatedAtDesc(trainer.getId())
                 .stream()
+                .filter(invite -> includeAll || resolveStatus(invite) == InviteStatus.NEW)
                 .map(this::mapToResponse)
                 .toList();
     }
 
+    public void deleteInvite(Long inviteId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+
+        Invite invite = inviteRepository.findByIdAndTrainerId(inviteId, trainer.getId())
+                .orElseThrow(() -> new ApiException("INVITE_NOT_FOUND", "Приглашение не найдено"));
+
+        inviteRepository.delete(invite);
+    }
+
     private InviteResponse mapToResponse(Invite invite) {
+        InviteStatus actualStatus = resolveStatus(invite);
+
         return new InviteResponse()
                 .setId(invite.getId())
                 .setToken(invite.getToken())
                 .setEmail(invite.getEmail())
-                .setStatus(invite.getStatus().name())
+                .setStatus(actualStatus.name())
                 .setExpiresAt(invite.getExpiresAt())
                 .setUsedAt(invite.getUsedAt())
                 .setRegistrationLink(publicBaseUrl + "/invite/" + invite.getToken());
+    }
+
+    private InviteStatus resolveStatus(Invite invite) {
+        if (invite.getStatus() == InviteStatus.CANCELLED) {
+            return InviteStatus.CANCELLED;
+        }
+
+        if (invite.getStatus() == InviteStatus.USED || invite.getUsedAt() != null) {
+            return InviteStatus.USED;
+        }
+
+        if (invite.getExpiresAt() != null && invite.getExpiresAt().isBefore(LocalDateTime.now())) {
+            return InviteStatus.EXPIRED;
+        }
+
+        return InviteStatus.NEW;
     }
 
     private String generateToken() {
