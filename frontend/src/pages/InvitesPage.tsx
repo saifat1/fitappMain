@@ -39,8 +39,8 @@ function getInviteStatusClass(status: string): string {
 
 export default function InvitesPage() {
     const [invites, setInvites] = useState<InviteResponse[]>([]);
-    const [email, setEmail] = useState("client@test.local");
-    const [expiresInDays, setExpiresInDays] = useState("7");
+    const [email, setEmail] = useState("");
+    const [expiresInDays, setExpiresInDays] = useState("");
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
@@ -68,21 +68,44 @@ export default function InvitesPage() {
         loadInvites();
     }, []);
 
-    const handleCreateInvite = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleCreateInvite = async (event: React.FormEvent) => {
         event.preventDefault();
         setErrorMessage("");
+
+        const trimmedEmail = email.trim();
+        const trimmedExpiresInDays = expiresInDays.trim();
+
+        if (!trimmedEmail) {
+            setErrorMessage("Поле «Email клиента» обязательно");
+            return;
+        }
+
+        if (!trimmedExpiresInDays) {
+            setErrorMessage("Поле «Срок действия, дней» обязательно");
+            return;
+        }
+
+        const expiresInDaysNumber = Number(trimmedExpiresInDays);
+
+        if (!Number.isInteger(expiresInDaysNumber) || expiresInDaysNumber <= 0) {
+            setErrorMessage("Срок действия должен быть положительным целым числом");
+            return;
+        }
+
         setIsSubmitting(true);
 
         const payload: CreateInviteRequest = {
-            email: email.trim() || undefined,
-            expiresInDays: expiresInDays.trim() ? Number(expiresInDays) : undefined,
+            email: trimmedEmail,
+            expiresInDays: expiresInDaysNumber,
         };
 
         try {
             const created = await trainerApi.createInvite(payload);
             setInvites((prev) => [created, ...prev]);
+            setEmail("");
+            setExpiresInDays("");
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
+            if (axios.isAxiosError(error)) {
                 setErrorMessage(error.response?.data?.message ?? "Не удалось создать приглашение");
             } else {
                 setErrorMessage("Неизвестная ошибка");
@@ -170,6 +193,7 @@ export default function InvitesPage() {
                                 value={email}
                                 onChange={(event) => setEmail(event.target.value)}
                                 placeholder="client@test.local"
+                                required
                             />
                         </div>
 
@@ -182,6 +206,7 @@ export default function InvitesPage() {
                                 max="365"
                                 value={expiresInDays}
                                 onChange={(event) => setExpiresInDays(event.target.value)}
+                                required
                             />
                         </div>
                     </div>
