@@ -31,8 +31,6 @@ services:
       SERVER_PORT: ${SERVER_PORT}
     expose:
       - "8080"
-    ports:
-      - "8080:8080"
 
   frontend:
     build:
@@ -41,8 +39,24 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2
+    container_name: fitapp-caddy
+    restart: unless-stopped
+    depends_on:
+      - frontend
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
 
 volumes:
   fitapp_postgres_data:
+  caddy_data:
+  caddy_config:

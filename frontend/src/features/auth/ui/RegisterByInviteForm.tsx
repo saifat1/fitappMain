@@ -1,21 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+
 import { useAuth } from "../model/AuthContext";
 import type { ApiErrorResponse } from "../model/auth.types";
-import axios from "axios";
 
 type Props = {
     token: string;
+    initialEmail?: string;
 };
 
-export default function RegisterByInviteForm({ token }: Props) {
+export default function RegisterByInviteForm({
+                                                 token,
+                                                 initialEmail = "",
+                                             }: Props) {
     const { registerByInvite } = useAuth();
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("client@test.local");
-    const [password, setPassword] = useState("123456");
-    const [firstName, setFirstName] = useState("Ivan");
-    const [lastName, setLastName] = useState("Client");
+    const [email, setEmail] = useState(initialEmail);
+    const [password, setPassword] = useState("");
+    const [firstName, setFirstName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -46,7 +51,7 @@ export default function RegisterByInviteForm({ token }: Props) {
     };
 
     return (
-        <form className="form" onSubmit={handleSubmit}>
+        <form className="form" onSubmit={handleSubmit} autoComplete="off">
             <div className="form-row">
                 <label htmlFor="reg-email">Email</label>
                 <input
@@ -81,6 +86,7 @@ export default function RegisterByInviteForm({ token }: Props) {
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
                     placeholder="Введите имя"
+                    autoComplete="off"
                     required
                 />
             </div>
@@ -93,6 +99,7 @@ export default function RegisterByInviteForm({ token }: Props) {
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
                     placeholder="Введите фамилию"
+                    autoComplete="off"
                     required
                 />
             </div>

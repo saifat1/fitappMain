@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import ru.fitapp.backend.auth.dto.AuthResponse;
 import ru.fitapp.backend.auth.dto.CurrentUserResponse;
+import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
 import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
 import ru.fitapp.backend.auth.service.AuthService;
@@ -21,6 +22,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @GetMapping("/invites/{token}")
+    public InviteDetailsResponse getInviteDetails(@PathVariable String token) {
+        return authService.getInviteDetails(token);
     }
 
     @PostMapping("/register-by-invite")

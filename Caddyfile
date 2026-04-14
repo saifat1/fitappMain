@@ -1,0 +1,3 @@
+89-111-137-65.swtest.ru {
+    reverse_proxy frontend:80
+}

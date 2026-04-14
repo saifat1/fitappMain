@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.auth.dto.AuthResponse;
 import ru.fitapp.backend.auth.dto.CurrentUserResponse;
+import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
 import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
 import ru.fitapp.backend.auth.security.JwtService;
@@ -28,10 +29,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public AuthService(UserService userService,
-                       InviteService inviteService, TrainerClientService trainerClientService,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService) {
+    public AuthService(
+            UserService userService,
+            InviteService inviteService,
+            TrainerClientService trainerClientService,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService
+    ) {
         this.userService = userService;
         this.inviteService = inviteService;
         this.trainerClientService = trainerClientService;
@@ -55,6 +59,14 @@ public class AuthService {
         return buildAuthResponse(user, token);
     }
 
+    @Transactional(readOnly = true)
+    public InviteDetailsResponse getInviteDetails(String token) {
+        Invite invite = inviteService.validateForRegistration(token);
+
+        return new InviteDetailsResponse()
+                .setEmail(invite.getEmail());
+    }
+
     public AuthResponse registerByInvite(RegisterByInviteRequest request) {
         Invite invite = inviteService.validateForRegistration(request.getToken());
 
@@ -75,7 +87,6 @@ public class AuthService {
         );
 
         trainerClientService.linkTrainerToClient(invite.getTrainer(), client);
-
         inviteService.markAsUsed(invite);
 
         String token = jwtService.generateToken(client);

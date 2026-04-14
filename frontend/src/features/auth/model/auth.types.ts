@@ -11,6 +11,10 @@ export type RegisterByInviteRequest = {
     lastName: string;
 };
 
+export type InviteDetailsResponse = {
+    email: string;
+};
+
 export type AuthResponse = {
     accessToken: string;
     tokenType: string;

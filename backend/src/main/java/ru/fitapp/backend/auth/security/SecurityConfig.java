@@ -39,7 +39,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/ping",
                                 "/api/auth/login",
-                                "/api/auth/register-by-invite"
+                                "/api/auth/register-by-invite",
+                                "/api/auth/invites/**"
                         ).permitAll()
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
                         .anyRequest().authenticated()
