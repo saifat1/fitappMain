@@ -1,5 +1,6 @@
 package ru.fitapp.backend.trainer.invite.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.security.CurrentUserService;
@@ -20,6 +21,9 @@ public class TrainerInviteService {
 
     private final InviteRepository inviteRepository;
     private final CurrentUserService currentUserService;
+
+    @Value("${app.public-base-url}")
+    private String publicBaseUrl;
 
     public TrainerInviteService(InviteRepository inviteRepository,
                                 CurrentUserService currentUserService) {
@@ -62,7 +66,7 @@ public class TrainerInviteService {
                 .setStatus(invite.getStatus().name())
                 .setExpiresAt(invite.getExpiresAt())
                 .setUsedAt(invite.getUsedAt())
-                .setRegistrationLink("http://89.111.137.65:8081/invite/" + invite.getToken());
+                .setRegistrationLink(publicBaseUrl + "/invite/" + invite.getToken());
     }
 
     private String generateToken() {
