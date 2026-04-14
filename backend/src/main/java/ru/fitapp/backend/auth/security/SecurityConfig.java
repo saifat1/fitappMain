@@ -33,7 +33,7 @@ public class SecurityConfig {
         return http
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -58,7 +58,9 @@ public class SecurityConfig {
                 "http://localhost:5174",
                 "http://localhost:5173",
                 "http://89.111.137.65:8081",
-                "http://89-111-137-65.swtest.ru:8081"));
+                "http://89-111-137-65.swtest.ru:8081",
+                "https://89-111-137-65.swtest.ru",
+                "https://89.111.137.65"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(false);
