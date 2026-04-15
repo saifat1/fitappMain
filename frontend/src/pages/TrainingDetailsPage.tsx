@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
+
 import { trainingApi } from "../shared/api/trainingApi";
-import { useAuth } from "../features/auth/model/AuthContext";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
+import { useAuth } from "../features/auth/model/AuthContext";
+
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
-import ExerciseTimerPanel from "../features/timer/ui/ExerciseTimerPanel";
-import RestTimerPanel from "../features/timer/ui/RestTimerPanel";
-import WorkoutFlowPanel from "../features/timer/ui/WorkoutFlowPanel";
 import type {
     TrainingResponse,
     UpdateTrainingRequest,
@@ -17,57 +17,6 @@ import type {
     TrainingExerciseResponse,
     UpdateTrainingExerciseRequest,
 } from "../features/training-exercise/model/trainingExercise.types";
-
-function formatClientName(training: TrainingResponse): string {
-    const fullName = [training.clientFirstName, training.clientLastName]
-        .filter(Boolean)
-        .join(" ");
-
-    if (fullName) {
-        return `${fullName} (${training.clientEmail})`;
-    }
-
-    return training.clientEmail;
-}
-
-function formatExerciseLoad(exercise: TrainingExerciseResponse): string {
-    const parts: string[] = [];
-
-    if (exercise.sets != null) parts.push(`подходы: ${exercise.sets}`);
-    if (exercise.reps != null) parts.push(`повторы: ${exercise.reps}`);
-    if (exercise.durationSeconds != null) {
-        parts.push(`длительность: ${exercise.durationSeconds} сек`);
-    }
-    if (exercise.restSeconds != null) parts.push(`отдых: ${exercise.restSeconds} сек`);
-
-    return parts.length > 0 ? parts.join(", ") : "Параметры не заданы";
-}
-
-function getTrainingStatusLabel(status: string): string {
-    switch (status) {
-        case "PLANNED":
-            return "Запланирована";
-        case "COMPLETED":
-            return "Завершена";
-        case "CANCELLED":
-            return "Отменена";
-        default:
-            return status;
-    }
-}
-
-function getTrainingStatusClass(status: string): string {
-    switch (status) {
-        case "PLANNED":
-            return "training-status-badge planned";
-        case "COMPLETED":
-            return "training-status-badge completed";
-        case "CANCELLED":
-            return "training-status-badge cancelled";
-        default:
-            return "training-status-badge";
-    }
-}
 
 type ExerciseFormState = {
     title: string;
@@ -89,6 +38,119 @@ const emptyExerciseForm: ExerciseFormState = {
     trainerNote: "",
 };
 
+function resolveApiError(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+
+    return fallback;
+}
+
+function formatClientName(training: TrainingResponse): string {
+    const fullName = [training.clientFirstName, training.clientLastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
+    return fullName || training.clientEmail || `Клиент #${training.clientId}`;
+}
+
+function formatTimeRange(startTime?: string | null, endTime?: string | null): string {
+    if (!startTime && !endTime) {
+        return "Время не указано";
+    }
+
+    if (startTime && endTime) {
+        return `${startTime}–${endTime}`;
+    }
+
+    return startTime ?? endTime ?? "Время не указано";
+}
+
+function getTrainingStatusLabel(status: string): string {
+    switch (status) {
+        case "PLANNED":
+            return "Запланирована";
+        case "COMPLETED":
+            return "Завершена";
+        case "CANCELLED":
+            return "Отменена";
+        default:
+            return status;
+    }
+}
+
+function getTrainingStatusClass(status: string): string {
+    switch (status) {
+        case "PLANNED":
+            return "training-status training-status--planned";
+        case "COMPLETED":
+            return "training-status training-status--completed";
+        case "CANCELLED":
+            return "training-status training-status--cancelled";
+        default:
+            return "training-status";
+    }
+}
+
+function getExerciseStatusLabel(exercise: TrainingExerciseResponse, isActive: boolean): string {
+    if (exercise.isCompleted) {
+        return "Готово";
+    }
+
+    if (isActive) {
+        return "Открыто";
+    }
+
+    return "План";
+}
+
+function getExerciseStatusClass(exercise: TrainingExerciseResponse, isActive: boolean): string {
+    if (exercise.isCompleted) {
+        return "exercise-compact-status exercise-compact-status--completed";
+    }
+
+    if (isActive) {
+        return "exercise-compact-status exercise-compact-status--active";
+    }
+
+    return "exercise-compact-status exercise-compact-status--planned";
+}
+
+function formatExerciseSummary(exercise: TrainingExerciseResponse): string {
+    const parts: string[] = [];
+
+    if (exercise.sets != null) {
+        parts.push(`${exercise.sets} подх.`);
+    }
+
+    if (exercise.reps != null) {
+        parts.push(`${exercise.reps} повт.`);
+    }
+
+    if (exercise.durationSeconds != null) {
+        parts.push(`${exercise.durationSeconds} сек.`);
+    }
+
+    if (exercise.restSeconds != null) {
+        parts.push(`отдых ${exercise.restSeconds} сек.`);
+    }
+
+    return parts.length > 0 ? parts.join(" • ") : "Параметры не заданы";
+}
+
+function buildExercisePayload(form: ExerciseFormState): CreateTrainingExerciseRequest {
+    return {
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        sets: form.sets.trim() ? Number(form.sets) : undefined,
+        reps: form.reps.trim() ? Number(form.reps) : undefined,
+        durationSeconds: form.durationSeconds.trim() ? Number(form.durationSeconds) : undefined,
+        restSeconds: form.restSeconds.trim() ? Number(form.restSeconds) : undefined,
+        trainerNote: form.trainerNote.trim() || undefined,
+    };
+}
+
 export default function TrainingDetailsPage() {
     const { trainingId } = useParams();
     const navigate = useNavigate();
@@ -96,21 +158,17 @@ export default function TrainingDetailsPage() {
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
     const [exercises, setExercises] = useState<TrainingExerciseResponse[]>([]);
+
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingExercises, setIsLoadingExercises] = useState(true);
-    const [isEditing, setIsEditing] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [isCancelling, setIsCancelling] = useState(false);
-    const [isCreatingExercise, setIsCreatingExercise] = useState(false);
-    const [savingExerciseId, setSavingExerciseId] = useState<number | null>(null);
-    const [deletingExerciseId, setDeletingExerciseId] = useState<number | null>(null);
-    const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
-    const [togglingExerciseId, setTogglingExerciseId] = useState<number | null>(null);
-    const [savingTrainerNoteId, setSavingTrainerNoteId] = useState<number | null>(null);
-    const [savingClientNoteId, setSavingClientNoteId] = useState<number | null>(null);
 
     const [errorMessage, setErrorMessage] = useState("");
     const [exerciseErrorMessage, setExerciseErrorMessage] = useState("");
+
+    const [isEditingTraining, setIsEditingTraining] = useState(false);
+    const [isSavingTraining, setIsSavingTraining] = useState(false);
+    const [isCancellingTraining, setIsCancellingTraining] = useState(false);
+    const [isCompletingTraining, setIsCompletingTraining] = useState(false);
 
     const [trainingDate, setTrainingDate] = useState("");
     const [startTime, setStartTime] = useState("");
@@ -118,54 +176,35 @@ export default function TrainingDetailsPage() {
     const [status, setStatus] = useState("");
     const [trainerNote, setTrainerNote] = useState("");
 
-    const [createExerciseForm, setCreateExerciseForm] =
-        useState<ExerciseFormState>(emptyExerciseForm);
-    const [editExerciseForm, setEditExerciseForm] =
-        useState<ExerciseFormState>(emptyExerciseForm);
-    const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
+    const [isCreateExerciseOpen, setIsCreateExerciseOpen] = useState(false);
+    const [isCreatingExercise, setIsCreatingExercise] = useState(false);
+    const [createExerciseForm, setCreateExerciseForm] = useState<ExerciseFormState>(emptyExerciseForm);
 
-    const [trainerNotesDraft, setTrainerNotesDraft] = useState<Record<number, string>>({});
-    const [clientNotesDraft, setClientNotesDraft] = useState<Record<number, string>>({});
+    const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
+    const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
+    const [editExerciseForm, setEditExerciseForm] = useState<ExerciseFormState>(emptyExerciseForm);
+
+    const [savingExerciseId, setSavingExerciseId] = useState<number | null>(null);
+    const [deletingExerciseId, setDeletingExerciseId] = useState<number | null>(null);
+    const [togglingExerciseId, setTogglingExerciseId] = useState<number | null>(null);
 
     const isTrainer = currentUser?.role === "TRAINER";
     const isClient = currentUser?.role === "CLIENT";
 
-    async function loadExercises() {
-        if (!trainingId) {
-            setExerciseErrorMessage("Не указан id тренировки");
-            setIsLoadingExercises(false);
-            return;
-        }
+    const sortedExercises = useMemo(
+        () => [...exercises].sort((a, b) => a.orderNum - b.orderNum),
+        [exercises]
+    );
 
-        setExerciseErrorMessage("");
-        setIsLoadingExercises(true);
+    const completedCount = useMemo(
+        () => sortedExercises.filter((item) => item.isCompleted).length,
+        [sortedExercises]
+    );
 
-        try {
-            const data = await trainingExerciseApi.getExercises(Number(trainingId));
-            setExercises(data);
-
-            const trainerDrafts: Record<number, string> = {};
-            const clientDrafts: Record<number, string> = {};
-
-            data.forEach((exercise) => {
-                trainerDrafts[exercise.id] = exercise.trainerNote ?? "";
-                clientDrafts[exercise.id] = exercise.clientNote ?? "";
-            });
-
-            setTrainerNotesDraft(trainerDrafts);
-            setClientNotesDraft(clientDrafts);
-        } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось загрузить упражнения"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
-        } finally {
-            setIsLoadingExercises(false);
-        }
-    }
+    const progressPercent =
+        sortedExercises.length > 0
+            ? Math.round((completedCount / sortedExercises.length) * 100)
+            : 0;
 
     useEffect(() => {
         async function loadTraining() {
@@ -179,58 +218,60 @@ export default function TrainingDetailsPage() {
             setIsLoading(true);
 
             try {
-                const trainingData = await trainingApi.getTraining(Number(trainingId));
-                setTraining(trainingData);
-
-                setTrainingDate(trainingData.trainingDate);
-                setStartTime(trainingData.startTime ?? "");
-                setEndTime(trainingData.endTime ?? "");
-                setStatus(trainingData.status);
-                setTrainerNote(trainingData.trainerNote ?? "");
+                const data = await trainingApi.getTraining(Number(trainingId));
+                setTraining(data);
+                setTrainingDate(data.trainingDate);
+                setStartTime(data.startTime ?? "");
+                setEndTime(data.endTime ?? "");
+                setStatus(data.status);
+                setTrainerNote(data.trainerNote ?? "");
             } catch (error) {
-                if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                    setErrorMessage(error.response?.data?.message ?? "Не удалось загрузить тренировку");
-                } else {
-                    setErrorMessage("Неизвестная ошибка");
-                }
+                setErrorMessage(resolveApiError(error, "Не удалось загрузить тренировку"));
             } finally {
                 setIsLoading(false);
             }
         }
 
-        loadTraining();
+        void loadTraining();
     }, [trainingId]);
 
     useEffect(() => {
-        loadExercises();
+        async function loadExercises() {
+            if (!trainingId) {
+                setExerciseErrorMessage("Не указан id тренировки");
+                setIsLoadingExercises(false);
+                return;
+            }
+
+            setExerciseErrorMessage("");
+            setIsLoadingExercises(true);
+
+            try {
+                const data = await trainingExerciseApi.getExercises(Number(trainingId));
+                setExercises(data);
+
+                if (data.length > 0) {
+                    setExpandedExerciseId((current) => current ?? data[0].id);
+                }
+            } catch (error) {
+                setExerciseErrorMessage(resolveApiError(error, "Не удалось загрузить упражнения"));
+            } finally {
+                setIsLoadingExercises(false);
+            }
+        }
+
+        void loadExercises();
     }, [trainingId]);
 
-    useEffect(() => {
-        if (exercises.length === 0) {
-            setActiveExerciseIndex(0);
+    const handleSaveTraining = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!training) {
             return;
         }
 
-        if (activeExerciseIndex > exercises.length - 1) {
-            setActiveExerciseIndex(exercises.length - 1);
-        }
-    }, [exercises, activeExerciseIndex]);
-
-    const completedCount = useMemo(
-        () => exercises.filter((item) => item.isCompleted).length,
-        [exercises]
-    );
-
-    const progressPercent =
-        exercises.length > 0 ? Math.round((completedCount / exercises.length) * 100) : 0;
-
-    const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-
-        if (!training) return;
-
         setErrorMessage("");
-        setIsSaving(true);
+        setIsSavingTraining(true);
 
         const payload: UpdateTrainingRequest = {
             trainingDate,
@@ -243,26 +284,47 @@ export default function TrainingDetailsPage() {
         try {
             const updated = await trainingApi.updateTraining(training.id, payload);
             setTraining(updated);
-            setIsEditing(false);
+            setIsEditingTraining(false);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(error.response?.data?.message ?? "Не удалось обновить тренировку");
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось обновить тренировку"));
         } finally {
-            setIsSaving(false);
+            setIsSavingTraining(false);
+        }
+    };
+
+    const handleCompleteTraining = async () => {
+        if (!training) {
+            return;
+        }
+
+        setErrorMessage("");
+        setIsCompletingTraining(true);
+
+        try {
+            const updated = await trainingApi.updateTraining(training.id, {
+                status: "COMPLETED",
+            });
+            setTraining(updated);
+            setStatus(updated.status);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось завершить тренировку"));
+        } finally {
+            setIsCompletingTraining(false);
         }
     };
 
     const handleCancelTraining = async () => {
-        if (!training) return;
+        if (!training) {
+            return;
+        }
 
         const confirmed = window.confirm("Отменить тренировку?");
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         setErrorMessage("");
-        setIsCancelling(true);
+        setIsCancellingTraining(true);
 
         try {
             await trainingApi.cancelTraining(training.id);
@@ -270,33 +332,23 @@ export default function TrainingDetailsPage() {
             setTraining(reloaded);
             setStatus(reloaded.status);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(error.response?.data?.message ?? "Не удалось отменить тренировку");
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось отменить тренировку"));
         } finally {
-            setIsCancelling(false);
+            setIsCancellingTraining(false);
         }
     };
 
-    const buildExercisePayload = (
-        form: ExerciseFormState
-    ): CreateTrainingExerciseRequest => ({
-        title: form.title.trim(),
-        description: form.description.trim() || undefined,
-        sets: form.sets.trim() ? Number(form.sets) : undefined,
-        reps: form.reps.trim() ? Number(form.reps) : undefined,
-        durationSeconds: form.durationSeconds.trim()
-            ? Number(form.durationSeconds)
-            : undefined,
-        restSeconds: form.restSeconds.trim() ? Number(form.restSeconds) : undefined,
-        trainerNote: form.trainerNote.trim() || undefined,
-    });
-
-    const handleCreateExercise = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleCreateExercise = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (!trainingId) return;
+
+        if (!trainingId) {
+            return;
+        }
+
+        if (!createExerciseForm.title.trim()) {
+            setExerciseErrorMessage("Укажи название упражнения");
+            return;
+        }
 
         setExerciseErrorMessage("");
         setIsCreatingExercise(true);
@@ -306,18 +358,13 @@ export default function TrainingDetailsPage() {
                 Number(trainingId),
                 buildExercisePayload(createExerciseForm)
             );
+
             setExercises((prev) => [...prev, created]);
             setCreateExerciseForm(emptyExerciseForm);
-            setTrainerNotesDraft((prev) => ({ ...prev, [created.id]: created.trainerNote ?? "" }));
-            setClientNotesDraft((prev) => ({ ...prev, [created.id]: created.clientNote ?? "" }));
+            setIsCreateExerciseOpen(false);
+            setExpandedExerciseId(created.id);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось создать упражнение"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
+            setExerciseErrorMessage(resolveApiError(error, "Не удалось создать упражнение"));
         } finally {
             setIsCreatingExercise(false);
         }
@@ -325,13 +372,13 @@ export default function TrainingDetailsPage() {
 
     const startEditExercise = (exercise: TrainingExerciseResponse) => {
         setEditingExerciseId(exercise.id);
+        setExpandedExerciseId(exercise.id);
         setEditExerciseForm({
             title: exercise.title ?? "",
             description: exercise.description ?? "",
             sets: exercise.sets != null ? String(exercise.sets) : "",
             reps: exercise.reps != null ? String(exercise.reps) : "",
-            durationSeconds:
-                exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
+            durationSeconds: exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
             restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : "",
             trainerNote: exercise.trainerNote ?? "",
         });
@@ -343,7 +390,14 @@ export default function TrainingDetailsPage() {
     };
 
     const handleSaveExercise = async (exerciseId: number) => {
-        if (!trainingId) return;
+        if (!trainingId) {
+            return;
+        }
+
+        if (!editExerciseForm.title.trim()) {
+            setExerciseErrorMessage("Укажи название упражнения");
+            return;
+        }
 
         setExerciseErrorMessage("");
         setSavingExerciseId(exerciseId);
@@ -372,27 +426,23 @@ export default function TrainingDetailsPage() {
             setExercises((prev) =>
                 prev.map((exercise) => (exercise.id === exerciseId ? updated : exercise))
             );
-            setTrainerNotesDraft((prev) => ({ ...prev, [updated.id]: updated.trainerNote ?? "" }));
-            setClientNotesDraft((prev) => ({ ...prev, [updated.id]: updated.clientNote ?? "" }));
             cancelEditExercise();
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось обновить упражнение"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
+            setExerciseErrorMessage(resolveApiError(error, "Не удалось обновить упражнение"));
         } finally {
             setSavingExerciseId(null);
         }
     };
 
     const handleDeleteExercise = async (exerciseId: number) => {
-        if (!trainingId) return;
+        if (!trainingId) {
+            return;
+        }
 
         const confirmed = window.confirm("Удалить упражнение?");
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         setExerciseErrorMessage("");
         setDeletingExerciseId(exerciseId);
@@ -400,24 +450,16 @@ export default function TrainingDetailsPage() {
         try {
             await trainingExerciseApi.deleteExercise(Number(trainingId), exerciseId);
             setExercises((prev) => prev.filter((exercise) => exercise.id !== exerciseId));
-            setTrainerNotesDraft((prev) => {
-                const copy = { ...prev };
-                delete copy[exerciseId];
-                return copy;
-            });
-            setClientNotesDraft((prev) => {
-                const copy = { ...prev };
-                delete copy[exerciseId];
-                return copy;
-            });
-        } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось удалить упражнение"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
+
+            if (expandedExerciseId === exerciseId) {
+                setExpandedExerciseId(null);
             }
+
+            if (editingExerciseId === exerciseId) {
+                cancelEditExercise();
+            }
+        } catch (error) {
+            setExerciseErrorMessage(resolveApiError(error, "Не удалось удалить упражнение"));
         } finally {
             setDeletingExerciseId(null);
         }
@@ -427,7 +469,9 @@ export default function TrainingDetailsPage() {
         exercise: TrainingExerciseResponse,
         nextValue: boolean
     ) => {
-        if (!trainingId) return;
+        if (!trainingId) {
+            return;
+        }
 
         setExerciseErrorMessage("");
         setTogglingExerciseId(exercise.id);
@@ -442,88 +486,18 @@ export default function TrainingDetailsPage() {
             setExercises((prev) =>
                 prev.map((item) => (item.id === exercise.id ? updated : item))
             );
-            setTrainerNotesDraft((prev) => ({ ...prev, [updated.id]: updated.trainerNote ?? "" }));
-            setClientNotesDraft((prev) => ({ ...prev, [updated.id]: updated.clientNote ?? "" }));
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось обновить выполнение"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
+            setExerciseErrorMessage(resolveApiError(error, "Не удалось обновить выполнение"));
         } finally {
             setTogglingExerciseId(null);
         }
     };
 
-    const handleSaveTrainerNote = async (exerciseId: number) => {
-        if (!trainingId) return;
-
-        setExerciseErrorMessage("");
-        setSavingTrainerNoteId(exerciseId);
-
-        try {
-            const updated = await trainingExerciseApi.updateExercise(
-                Number(trainingId),
-                exerciseId,
-                { trainerNote: trainerNotesDraft[exerciseId] ?? "" }
-            );
-
-            setExercises((prev) =>
-                prev.map((item) => (item.id === exerciseId ? updated : item))
-            );
-            setTrainerNotesDraft((prev) => ({ ...prev, [updated.id]: updated.trainerNote ?? "" }));
-            setClientNotesDraft((prev) => ({ ...prev, [updated.id]: updated.clientNote ?? "" }));
-        } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось сохранить заметку тренера"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
-        } finally {
-            setSavingTrainerNoteId(null);
-        }
-    };
-
-    const handleSaveClientNote = async (exerciseId: number) => {
-        if (!trainingId) return;
-
-        setExerciseErrorMessage("");
-        setSavingClientNoteId(exerciseId);
-
-        try {
-            const updated = await trainingExerciseApi.updateExercise(
-                Number(trainingId),
-                exerciseId,
-                { clientNote: clientNotesDraft[exerciseId] ?? "" }
-            );
-
-            setExercises((prev) =>
-                prev.map((item) => (item.id === exerciseId ? updated : item))
-            );
-            setTrainerNotesDraft((prev) => ({ ...prev, [updated.id]: updated.trainerNote ?? "" }));
-            setClientNotesDraft((prev) => ({ ...prev, [updated.id]: updated.clientNote ?? "" }));
-        } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setExerciseErrorMessage(
-                    error.response?.data?.message ?? "Не удалось сохранить заметку клиента"
-                );
-            } else {
-                setExerciseErrorMessage("Неизвестная ошибка");
-            }
-        } finally {
-            setSavingClientNoteId(null);
-        }
-    };
-
     if (isLoading) {
         return (
-            <div className="training-details-page">
-                <section className="training-details-panel">
-                    <p>Загрузка...</p>
+            <div className="training-details-page training-details-page-compact entity-page-compact">
+                <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                    <div className="training-empty-block">Загрузка...</div>
                 </section>
             </div>
         );
@@ -531,213 +505,146 @@ export default function TrainingDetailsPage() {
 
     if (errorMessage && !training) {
         return (
-            <div className="training-details-page">
-                <section className="training-details-panel">
-                    <div className="error-box">{errorMessage}</div>
-                    <div className="details-actions top-gap">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/trainings")}
-                        >
-                            Назад к тренировкам
-                        </button>
-                    </div>
-                </section>
+            <div className="training-details-page training-details-page-compact entity-page-compact">
+                <div className="error-box">{errorMessage}</div>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary"
+                    onClick={() => navigate("/trainings")}
+                >
+                    Назад к тренировкам
+                </button>
             </div>
         );
     }
 
     if (!training) {
         return (
-            <div className="training-details-page">
-                <section className="training-details-panel">
-                    <p>Тренировка не найдена.</p>
-                    <div className="details-actions top-gap">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/trainings")}
-                        >
-                            Назад к тренировкам
-                        </button>
-                    </div>
+            <div className="training-details-page training-details-page-compact entity-page-compact">
+                <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                    <div className="training-empty-block">Тренировка не найдена.</div>
                 </section>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary"
+                    onClick={() => navigate("/trainings")}
+                >
+                    Назад к тренировкам
+                </button>
             </div>
         );
     }
 
     return (
-        <div className="training-details-page">
-            <section className="training-details-hero">
-                <div className="training-details-hero-main">
-                    <div className="training-details-kicker">Тренировка #{training.id}</div>
-                    <h1 className="training-details-title">
-                        {isTrainer ? formatClientName(training) : "Детали тренировки"}
+        <div className="training-details-page training-details-page-compact entity-page-compact">
+            <section className="training-details-header-bar entity-header-bar">
+                <div className="training-details-header-main entity-header-main">
+                    <h1 className="training-details-header-title entity-header-title">
+                        Тренировка #{training.id}
                     </h1>
-                    <p className="training-details-subtitle">
-                        {training.trainingDate}
-                        {training.startTime || training.endTime
-                            ? ` · ${training.startTime ?? "--:--"} — ${training.endTime ?? "--:--"}`
-                            : ""}
-                    </p>
 
-                    <div className="training-details-hero-actions">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/trainings")}
-                        >
-                            Назад к тренировкам
-                        </button>
-
-                        {isTrainer && !isEditing && (
-                            <>
-                                <button
-                                    type="button"
-                                    className="dashboard-btn dashboard-btn-primary"
-                                    onClick={() => setIsEditing(true)}
-                                >
-                                    Редактировать
-                                </button>
-                                <button
-                                    type="button"
-                                    className="dashboard-btn dashboard-btn-secondary"
-                                    onClick={handleCancelTraining}
-                                    disabled={isCancelling || training.status === "CANCELLED"}
-                                >
-                                    {isCancelling ? "Отменяем..." : "Отменить тренировку"}
-                                </button>
-                            </>
-                        )}
-
-                        {isClient && training.status !== "CANCELLED" && (
-                            <button
-                                type="button"
-                                className="dashboard-btn dashboard-btn-primary"
-                                onClick={() => navigate(`/trainings/${training.id}/reschedule-request`)}
-                            >
-                                Запросить перенос
-                            </button>
-                        )}
+                    <div className="training-details-subline">
+                        <span>{training.trainingDate}</span>
+                        <span>{formatTimeRange(training.startTime, training.endTime)}</span>
+                        <span>{isTrainer ? formatClientName(training) : "Детали тренировки"}</span>
                     </div>
-                </div>
 
-                <div className="training-details-summary">
-                    <div className="training-details-summary-top">
+                    <div className="training-details-summary-row entity-summary-row">
             <span className={getTrainingStatusClass(training.status)}>
               {getTrainingStatusLabel(training.status)}
             </span>
-                    </div>
 
-                    <div className="training-details-summary-grid">
-                        <div className="training-summary-item">
-                            <span>Упражнений</span>
-                            <strong>{exercises.length}</strong>
-                        </div>
-                        <div className="training-summary-item">
-                            <span>Выполнено</span>
-                            <strong>{completedCount}</strong>
-                        </div>
-                        <div className="training-summary-item">
-                            <span>Прогресс</span>
-                            <strong>{progressPercent}%</strong>
-                        </div>
-                    </div>
+                        <span className="entity-summary-chip">
+              <strong>{sortedExercises.length}</strong>
+              <span>Упражнений</span>
+            </span>
 
-                    <div className="training-progress">
-                        <div className="training-progress-bar">
-                            <div
-                                className="training-progress-fill"
-                                style={{ width: `${progressPercent}%` }}
-                            />
-                        </div>
-                    </div>
+                        <span className="entity-summary-chip entity-summary-chip--positive">
+              <strong>{completedCount}</strong>
+              <span>Выполнено</span>
+            </span>
 
-                    <div className="training-note-preview">
-                        <div className="training-note-preview-label">Заметка тренера</div>
-                        <div className="training-note-preview-text">
-                            {training.trainerNote?.trim() ? training.trainerNote : "Нет заметки"}
-                        </div>
+                        <span className="entity-summary-chip entity-summary-chip--info">
+              <strong>{progressPercent}%</strong>
+              <span>Прогресс</span>
+            </span>
                     </div>
+                </div>
+
+                <div className="training-details-header-actions">
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                        onClick={() => navigate("/trainings")}
+                    >
+                        Назад
+                    </button>
+
+                    {isTrainer && training.status === "PLANNED" && (
+                        <>
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                onClick={() => setIsEditingTraining((prev) => !prev)}
+                            >
+                                {isEditingTraining ? "Скрыть настройки" : "Настройки"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-primary entity-header-action"
+                                onClick={() => setIsCreateExerciseOpen((prev) => !prev)}
+                            >
+                                {isCreateExerciseOpen ? "Скрыть форму" : "Добавить упражнение"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                onClick={() => void handleCompleteTraining()}
+                                disabled={isCompletingTraining}
+                            >
+                                {isCompletingTraining ? "Завершаем..." : "Завершить"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                onClick={() => void handleCancelTraining()}
+                                disabled={isCancellingTraining}
+                            >
+                                {isCancellingTraining ? "Отменяем..." : "Отменить"}
+                            </button>
+                        </>
+                    )}
+
+                    {isClient && training.status !== "CANCELLED" && (
+                        <button
+                            type="button"
+                            className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                            onClick={() => navigate(`/trainings/${training.id}/reschedule-request`)}
+                        >
+                            Запросить перенос
+                        </button>
+                    )}
                 </div>
             </section>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
+            {exerciseErrorMessage && <div className="error-box">{exerciseErrorMessage}</div>}
 
-            {!isEditing ? (
-                <section className="training-details-grid">
-                    <div className="training-details-panel">
-                        <div className="training-details-panel-header">
-                            <div>
-                                <div className="training-details-panel-kicker">Сводка</div>
-                                <h2 className="training-details-panel-title">Параметры тренировки</h2>
-                            </div>
-                        </div>
-
-                        <div className="training-meta-grid">
-                            <div className="training-meta-item">
-                                <span>Дата</span>
-                                <strong>{training.trainingDate}</strong>
-                            </div>
-                            <div className="training-meta-item">
-                                <span>Начало</span>
-                                <strong>{training.startTime ?? "—"}</strong>
-                            </div>
-                            <div className="training-meta-item">
-                                <span>Окончание</span>
-                                <strong>{training.endTime ?? "—"}</strong>
-                            </div>
-                            <div className="training-meta-item">
-                                <span>Клиент</span>
-                                <strong>{formatClientName(training)}</strong>
-                            </div>
-                            <div className="training-meta-item training-meta-item-wide">
-                                <span>Заметка тренера</span>
-                                <strong>{training.trainerNote ?? "—"}</strong>
-                            </div>
-                            <div className="training-meta-item training-meta-item-wide">
-                                <span>Заметка клиента</span>
-                                <strong>{training.clientNote ?? "—"}</strong>
-                            </div>
-                        </div>
+            {isEditingTraining && isTrainer && (
+                <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                    <div className="training-details-section-head entity-section-head">
+                        <h2 className="training-details-section-title entity-section-title">
+                            Параметры тренировки
+                        </h2>
                     </div>
 
-                    <div className="training-details-panel">
-                        <div className="training-details-panel-header">
-                            <div>
-                                <div className="training-details-panel-kicker">Система</div>
-                                <h2 className="training-details-panel-title">Метаданные</h2>
-                            </div>
-                        </div>
-
-                        <div className="dashboard-info-list">
-                            <div className="dashboard-info-row">
-                                <span>Статус</span>
-                                <strong>{getTrainingStatusLabel(training.status)}</strong>
-                            </div>
-                            <div className="dashboard-info-row">
-                                <span>Создано</span>
-                                <strong>{new Date(training.createdAt).toLocaleString()}</strong>
-                            </div>
-                            <div className="dashboard-info-row">
-                                <span>Обновлено</span>
-                                <strong>{new Date(training.updatedAt).toLocaleString()}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            ) : (
-                <section className="training-details-panel">
-                    <div className="training-details-panel-header">
-                        <div>
-                            <div className="training-details-panel-kicker">Редактирование</div>
-                            <h2 className="training-details-panel-title">Изменить тренировку</h2>
-                        </div>
-                    </div>
-
-                    <form className="trainings-form" onSubmit={handleSave}>
-                        <div className="trainings-form-grid">
+                    <form className="training-details-inline-form" onSubmit={handleSaveTraining}>
+                        <div className="training-details-inline-grid">
                             <div className="form-row">
                                 <label htmlFor="training-date">Дата</label>
                                 <input
@@ -750,9 +657,9 @@ export default function TrainingDetailsPage() {
                             </div>
 
                             <div className="form-row">
-                                <label htmlFor="start-time">Начало</label>
+                                <label htmlFor="training-start-time">Начало</label>
                                 <input
-                                    id="start-time"
+                                    id="training-start-time"
                                     type="time"
                                     value={startTime}
                                     onChange={(event) => setStartTime(event.target.value)}
@@ -760,9 +667,9 @@ export default function TrainingDetailsPage() {
                             </div>
 
                             <div className="form-row">
-                                <label htmlFor="end-time">Окончание</label>
+                                <label htmlFor="training-end-time">Окончание</label>
                                 <input
-                                    id="end-time"
+                                    id="training-end-time"
                                     type="time"
                                     value={endTime}
                                     onChange={(event) => setEndTime(event.target.value)}
@@ -776,36 +683,37 @@ export default function TrainingDetailsPage() {
                                     value={status}
                                     onChange={(event) => setStatus(event.target.value)}
                                 >
-                                    <option value="PLANNED">PLANNED</option>
-                                    <option value="COMPLETED">COMPLETED</option>
-                                    <option value="CANCELLED">CANCELLED</option>
+                                    <option value="PLANNED">Запланирована</option>
+                                    <option value="COMPLETED">Завершена</option>
+                                    <option value="CANCELLED">Отменена</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="form-row">
-                            <label htmlFor="trainer-note">Заметка тренера</label>
+                            <label htmlFor="training-note">Заметка тренера</label>
                             <textarea
-                                id="trainer-note"
+                                id="training-note"
+                                rows={4}
                                 value={trainerNote}
                                 onChange={(event) => setTrainerNote(event.target.value)}
-                                rows={4}
                             />
                         </div>
 
-                        <div className="details-actions">
+                        <div className="training-details-inline-actions">
                             <button
                                 type="submit"
                                 className="dashboard-btn dashboard-btn-primary"
-                                disabled={isSaving}
+                                disabled={isSavingTraining}
                             >
-                                {isSaving ? "Сохраняем..." : "Сохранить"}
+                                {isSavingTraining ? "Сохраняем..." : "Сохранить"}
                             </button>
+
                             <button
                                 type="button"
                                 className="dashboard-btn dashboard-btn-secondary"
-                                onClick={() => setIsEditing(false)}
-                                disabled={isSaving}
+                                onClick={() => setIsEditingTraining(false)}
+                                disabled={isSavingTraining}
                             >
                                 Отмена
                             </button>
@@ -814,91 +722,43 @@ export default function TrainingDetailsPage() {
                 </section>
             )}
 
-            <section className="training-details-panel">
-                <div className="training-details-panel-header">
-                    <div>
-                        <div className="training-details-panel-kicker">Flow</div>
-                        <h2 className="training-details-panel-title">Упражнения</h2>
-                    </div>
-                </div>
-
-                <div className="training-flow-layout">
-                    <div className="training-flow-main">
-                        <WorkoutFlowPanel
-                            currentIndex={activeExerciseIndex}
-                            total={exercises.length}
-                            onPrev={() => setActiveExerciseIndex((prev) => Math.max(0, prev - 1))}
-                            onNext={() =>
-                                setActiveExerciseIndex((prev) =>
-                                    Math.min(exercises.length - 1, prev + 1)
-                                )
-                            }
-                        />
+            {isCreateExerciseOpen && isTrainer && (
+                <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                    <div className="training-details-section-head entity-section-head">
+                        <h2 className="training-details-section-title entity-section-title">
+                            Новое упражнение
+                        </h2>
                     </div>
 
-                    <div className="training-flow-side">
-                        <div className="training-flow-side-card">
-                            <span>Текущий индекс</span>
-                            <strong>{exercises.length > 0 ? activeExerciseIndex + 1 : 0}</strong>
-                        </div>
-                        <div className="training-flow-side-card">
-                            <span>Всего упражнений</span>
-                            <strong>{exercises.length}</strong>
-                        </div>
-                        <div className="training-flow-side-card">
-                            <span>Выполнено</span>
-                            <strong>{completedCount}</strong>
-                        </div>
-                    </div>
-                </div>
-
-                {isTrainer && (
-                    <form className="trainings-form top-gap" onSubmit={handleCreateExercise}>
-                        <div className="training-details-panel-header">
-                            <div>
-                                <div className="training-details-panel-kicker">Добавление</div>
-                                <h3 className="training-details-subpanel-title">Новое упражнение</h3>
+                    <form className="training-details-inline-form" onSubmit={handleCreateExercise}>
+                        <div className="training-details-inline-grid training-details-inline-grid--exercise">
+                            <div className="form-row">
+                                <label htmlFor="exercise-title">Название</label>
+                                <input
+                                    id="exercise-title"
+                                    value={createExerciseForm.title}
+                                    onChange={(event) =>
+                                        setCreateExerciseForm((prev) => ({
+                                            ...prev,
+                                            title: event.target.value,
+                                        }))
+                                    }
+                                    required
+                                />
                             </div>
-                        </div>
 
-                        <div className="form-row">
-                            <label htmlFor="exercise-title">Название</label>
-                            <input
-                                id="exercise-title"
-                                type="text"
-                                value={createExerciseForm.title}
-                                onChange={(event) =>
-                                    setCreateExerciseForm((prev) => ({ ...prev, title: event.target.value }))
-                                }
-                                required
-                            />
-                        </div>
-
-                        <div className="form-row">
-                            <label htmlFor="exercise-description">Описание</label>
-                            <textarea
-                                id="exercise-description"
-                                value={createExerciseForm.description}
-                                onChange={(event) =>
-                                    setCreateExerciseForm((prev) => ({
-                                        ...prev,
-                                        description: event.target.value,
-                                    }))
-                                }
-                                rows={3}
-                            />
-                        </div>
-
-                        <div className="trainings-form-grid">
                             <div className="form-row">
                                 <label htmlFor="exercise-sets">Подходы</label>
                                 <input
                                     id="exercise-sets"
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     value={createExerciseForm.sets}
                                     onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({ ...prev, sets: event.target.value }))
+                                        setCreateExerciseForm((prev) => ({
+                                            ...prev,
+                                            sets: event.target.value,
+                                        }))
                                     }
                                 />
                             </div>
@@ -908,10 +768,13 @@ export default function TrainingDetailsPage() {
                                 <input
                                     id="exercise-reps"
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     value={createExerciseForm.reps}
                                     onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({ ...prev, reps: event.target.value }))
+                                        setCreateExerciseForm((prev) => ({
+                                            ...prev,
+                                            reps: event.target.value,
+                                        }))
                                     }
                                 />
                             </div>
@@ -921,7 +784,7 @@ export default function TrainingDetailsPage() {
                                 <input
                                     id="exercise-duration"
                                     type="number"
-                                    min="1"
+                                    min="0"
                                     value={createExerciseForm.durationSeconds}
                                     onChange={(event) =>
                                         setCreateExerciseForm((prev) => ({
@@ -950,9 +813,25 @@ export default function TrainingDetailsPage() {
                         </div>
 
                         <div className="form-row">
-                            <label htmlFor="exercise-trainer-note">Заметка тренера</label>
+                            <label htmlFor="exercise-description">Описание</label>
                             <textarea
-                                id="exercise-trainer-note"
+                                id="exercise-description"
+                                rows={3}
+                                value={createExerciseForm.description}
+                                onChange={(event) =>
+                                    setCreateExerciseForm((prev) => ({
+                                        ...prev,
+                                        description: event.target.value,
+                                    }))
+                                }
+                            />
+                        </div>
+
+                        <div className="form-row">
+                            <label htmlFor="exercise-note">Заметка тренера</label>
+                            <textarea
+                                id="exercise-note"
+                                rows={3}
                                 value={createExerciseForm.trainerNote}
                                 onChange={(event) =>
                                     setCreateExerciseForm((prev) => ({
@@ -960,338 +839,324 @@ export default function TrainingDetailsPage() {
                                         trainerNote: event.target.value,
                                     }))
                                 }
-                                rows={3}
                             />
                         </div>
 
-                        <div className="details-actions">
+                        <div className="training-details-inline-actions">
                             <button
                                 type="submit"
                                 className="dashboard-btn dashboard-btn-primary"
                                 disabled={isCreatingExercise}
                             >
-                                {isCreatingExercise ? "Создаём..." : "Добавить упражнение"}
+                                {isCreatingExercise ? "Добавляем..." : "Добавить"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-secondary"
+                                onClick={() => setIsCreateExerciseOpen(false)}
+                                disabled={isCreatingExercise}
+                            >
+                                Отмена
                             </button>
                         </div>
                     </form>
-                )}
+                </section>
+            )}
 
-                {exerciseErrorMessage && <div className="error-box top-gap">{exerciseErrorMessage}</div>}
+            <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                <div className="training-details-section-head entity-section-head">
+                    <h2 className="training-details-section-title entity-section-title">
+                        Упражнения
+                    </h2>
+                    <span className="entity-section-count">{sortedExercises.length}</span>
+                </div>
 
-                {isLoadingExercises && <p className="top-gap">Загрузка упражнений...</p>}
-
-                {!isLoadingExercises && !exerciseErrorMessage && exercises.length === 0 && (
-                    <div className="training-empty-block top-gap">
-                        <div className="trainings-empty-title">В этой тренировке пока нет упражнений</div>
-                        <div className="trainings-empty-text">
-                            Добавь первое упражнение, чтобы начать собирать занятие.
-                        </div>
+                {isLoadingExercises ? (
+                    <div className="training-empty-block">Загрузка упражнений...</div>
+                ) : sortedExercises.length === 0 ? (
+                    <div className="training-empty-block">
+                        Упражнений пока нет. Добавь первое упражнение.
                     </div>
-                )}
-
-                {!isLoadingExercises && !exerciseErrorMessage && exercises.length > 0 && (
-                    <div className="exercise-list top-gap">
-                        {exercises.map((exercise, index) => {
-                            const isActiveExercise = index === activeExerciseIndex;
-                            const isEditingExercise = editingExerciseId === exercise.id;
-                            const isSavingExercise = savingExerciseId === exercise.id;
-                            const isDeletingExercise = deletingExerciseId === exercise.id;
-                            const isToggling = togglingExerciseId === exercise.id;
-                            const isSavingTrainerNote = savingTrainerNoteId === exercise.id;
-                            const isSavingClientNote = savingClientNoteId === exercise.id;
+                ) : (
+                    <section className="exercise-compact-list">
+                        {sortedExercises.map((exercise) => {
+                            const isExpanded = expandedExerciseId === exercise.id;
+                            const isEditing = editingExerciseId === exercise.id;
 
                             return (
-                                <div
+                                <article
                                     key={exercise.id}
-                                    className={isActiveExercise ? "exercise-card active" : "exercise-card"}
+                                    className={`exercise-compact-card ${isExpanded ? "is-expanded" : ""}`}
                                 >
-                                    {!isEditingExercise ? (
-                                        <>
-                                            <div className="exercise-card-header">
-                                                <div className="exercise-card-header-main">
-                                                    <div className="exercise-order-badge">{exercise.orderNum}</div>
-                                                    <div>
-                                                        <h3 className="exercise-card-title">{exercise.title}</h3>
-                                                        <div className="exercise-card-subtitle">
-                                                            {formatExerciseLoad(exercise)}
-                                                        </div>
+                                    <div className="exercise-compact-row">
+                                        <div className="exercise-compact-order">{exercise.orderNum}</div>
+
+                                        <div className="exercise-compact-main">
+                                            <div className="exercise-compact-top">
+                                                <div className="exercise-compact-title-block">
+                                                    <div className="exercise-compact-title">{exercise.title}</div>
+                                                    <div className="exercise-compact-summary">
+                                                        {formatExerciseSummary(exercise)}
                                                     </div>
                                                 </div>
 
-                                                <div className="exercise-card-header-right">
-                                                    <label className="exercise-toggle">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={exercise.isCompleted}
-                                                            disabled={isToggling}
-                                                            onChange={(event) =>
-                                                                handleToggleCompletion(exercise, event.target.checked)
-                                                            }
-                                                        />
-                                                        <span
-                                                            className={
-                                                                exercise.isCompleted
-                                                                    ? "exercise-status completed"
-                                                                    : "exercise-status"
-                                                            }
-                                                        >
-                              {exercise.isCompleted ? "Выполнено" : "Не выполнено"}
-                            </span>
-                                                    </label>
+                                                <div className={getExerciseStatusClass(exercise, isExpanded)}>
+                                                    {getExerciseStatusLabel(exercise, isExpanded)}
                                                 </div>
                                             </div>
 
-                                            <div className="exercise-card-body">
-                                                <div className="exercise-info-grid">
-                                                    <div className="exercise-info-card">
-                                                        <span>Описание</span>
-                                                        <strong>{exercise.description ?? "Описание не указано"}</strong>
-                                                    </div>
-
-                                                    <div className="exercise-info-card">
-                                                        <span>Параметры</span>
-                                                        <strong>{formatExerciseLoad(exercise)}</strong>
-                                                    </div>
+                                            {exercise.trainerNote && !isExpanded && (
+                                                <div className="exercise-compact-note-preview">
+                                                    {exercise.trainerNote}
                                                 </div>
+                                            )}
+                                        </div>
 
-                                                <div className="exercise-timers-row">
-                                                    <div className="exercise-timer-card">
-                                                        <ExerciseTimerPanel durationSeconds={exercise.durationSeconds} />
-                                                    </div>
-                                                    <div className="exercise-timer-card">
-                                                        <RestTimerPanel restSeconds={exercise.restSeconds} />
-                                                    </div>
-                                                </div>
+                                        <div className="exercise-compact-actions">
+                                            <button
+                                                type="button"
+                                                className="card-action-btn card-action-btn-neutral"
+                                                onClick={() =>
+                                                    setExpandedExerciseId((current) =>
+                                                        current === exercise.id ? null : exercise.id
+                                                    )
+                                                }
+                                                title="Открыть"
+                                            >
+                                                {isExpanded ? "˄" : "›"}
+                                            </button>
 
-                                                {isTrainer ? (
+                                            {isTrainer && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-success"
+                                                        onClick={() =>
+                                                            void handleToggleCompletion(exercise, !exercise.isCompleted)
+                                                        }
+                                                        disabled={togglingExerciseId === exercise.id}
+                                                        title={
+                                                            exercise.isCompleted
+                                                                ? "Снять выполнение"
+                                                                : "Отметить выполненным"
+                                                        }
+                                                    >
+                                                        {togglingExerciseId === exercise.id
+                                                            ? "..."
+                                                            : exercise.isCompleted
+                                                                ? "↺"
+                                                                : "✓"}
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-neutral"
+                                                        onClick={() => startEditExercise(exercise)}
+                                                        title="Редактировать"
+                                                    >
+                                                        ✎
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-danger"
+                                                        onClick={() => void handleDeleteExercise(exercise.id)}
+                                                        disabled={deletingExerciseId === exercise.id}
+                                                        title="Удалить"
+                                                    >
+                                                        {deletingExerciseId === exercise.id ? "..." : "×"}
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {isExpanded && (
+                                        <div className="exercise-compact-expanded">
+                                            {isEditing ? (
+                                                <div className="exercise-compact-editor">
+                                                    <div className="training-details-inline-grid training-details-inline-grid--exercise">
+                                                        <div className="form-row">
+                                                            <label>Название</label>
+                                                            <input
+                                                                value={editExerciseForm.title}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        title: event.target.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div className="form-row">
+                                                            <label>Подходы</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={editExerciseForm.sets}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        sets: event.target.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div className="form-row">
+                                                            <label>Повторы</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={editExerciseForm.reps}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        reps: event.target.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div className="form-row">
+                                                            <label>Длительность, сек</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={editExerciseForm.durationSeconds}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        durationSeconds: event.target.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+
+                                                        <div className="form-row">
+                                                            <label>Отдых, сек</label>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={editExerciseForm.restSeconds}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        restSeconds: event.target.value,
+                                                                    }))
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="form-row">
+                                                        <label>Описание</label>
+                                                        <textarea
+                                                            rows={3}
+                                                            value={editExerciseForm.description}
+                                                            onChange={(event) =>
+                                                                setEditExerciseForm((prev) => ({
+                                                                    ...prev,
+                                                                    description: event.target.value,
+                                                                }))
+                                                            }
+                                                        />
+                                                    </div>
+
                                                     <div className="form-row">
                                                         <label>Заметка тренера</label>
                                                         <textarea
-                                                            value={trainerNotesDraft[exercise.id] ?? ""}
+                                                            rows={3}
+                                                            value={editExerciseForm.trainerNote}
                                                             onChange={(event) =>
-                                                                setTrainerNotesDraft((prev) => ({
+                                                                setEditExerciseForm((prev) => ({
                                                                     ...prev,
-                                                                    [exercise.id]: event.target.value,
+                                                                    trainerNote: event.target.value,
                                                                 }))
                                                             }
-                                                            rows={3}
                                                         />
-                                                        <div className="details-actions">
-                                                            <button
-                                                                type="button"
-                                                                className="dashboard-btn dashboard-btn-secondary"
-                                                                onClick={() => handleSaveTrainerNote(exercise.id)}
-                                                                disabled={isSavingTrainerNote}
-                                                            >
-                                                                {isSavingTrainerNote
-                                                                    ? "Сохраняем..."
-                                                                    : "Сохранить заметку тренера"}
-                                                            </button>
-                                                        </div>
                                                     </div>
-                                                ) : (
-                                                    <div className="exercise-note-box">
-                                                        <span>Заметка тренера</span>
-                                                        <strong>{exercise.trainerNote ?? "Нет заметки"}</strong>
-                                                    </div>
-                                                )}
 
-                                                <div className="form-row">
-                                                    <label>Заметка клиента</label>
-                                                    <textarea
-                                                        value={clientNotesDraft[exercise.id] ?? ""}
-                                                        onChange={(event) =>
-                                                            setClientNotesDraft((prev) => ({
-                                                                ...prev,
-                                                                [exercise.id]: event.target.value,
-                                                            }))
-                                                        }
-                                                        rows={3}
-                                                    />
-                                                    <div className="details-actions">
-                                                        <button
-                                                            type="button"
-                                                            className="dashboard-btn dashboard-btn-secondary"
-                                                            onClick={() => handleSaveClientNote(exercise.id)}
-                                                            disabled={isSavingClientNote}
-                                                        >
-                                                            {isSavingClientNote
-                                                                ? "Сохраняем..."
-                                                                : "Сохранить заметку клиента"}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="exercise-card-actions">
-                                                <button
-                                                    type="button"
-                                                    className="dashboard-btn dashboard-btn-secondary"
-                                                    onClick={() => setActiveExerciseIndex(index)}
-                                                >
-                                                    Сделать текущим
-                                                </button>
-
-                                                {isTrainer && (
-                                                    <>
+                                                    <div className="training-details-inline-actions">
                                                         <button
                                                             type="button"
                                                             className="dashboard-btn dashboard-btn-primary"
-                                                            onClick={() => startEditExercise(exercise)}
+                                                            onClick={() => void handleSaveExercise(exercise.id)}
+                                                            disabled={savingExerciseId === exercise.id}
                                                         >
-                                                            Редактировать
+                                                            {savingExerciseId === exercise.id ? "Сохраняем..." : "Сохранить"}
                                                         </button>
+
                                                         <button
                                                             type="button"
                                                             className="dashboard-btn dashboard-btn-secondary"
-                                                            onClick={() => handleDeleteExercise(exercise.id)}
-                                                            disabled={isDeletingExercise}
+                                                            onClick={cancelEditExercise}
+                                                            disabled={savingExerciseId === exercise.id}
                                                         >
-                                                            {isDeletingExercise ? "Удаляем..." : "Удалить"}
+                                                            Отмена
                                                         </button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="trainings-form">
-                                            <div className="training-details-panel-header">
-                                                <div>
-                                                    <div className="training-details-panel-kicker">Редактирование</div>
-                                                    <h3 className="training-details-subpanel-title">
-                                                        Изменить упражнение
-                                                    </h3>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="exercise-compact-details">
+                                                    {exercise.description && (
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Описание</span>
+                                                            <strong>{exercise.description}</strong>
+                                                        </div>
+                                                    )}
 
-                                            <div className="form-row">
-                                                <label>Название</label>
-                                                <input
-                                                    type="text"
-                                                    value={editExerciseForm.title}
-                                                    onChange={(event) =>
-                                                        setEditExerciseForm((prev) => ({
-                                                            ...prev,
-                                                            title: event.target.value,
-                                                        }))
-                                                    }
-                                                />
-                                            </div>
+                                                    <div className="exercise-compact-detail-grid">
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Подходы</span>
+                                                            <strong>{exercise.sets ?? "—"}</strong>
+                                                        </div>
 
-                                            <div className="form-row">
-                                                <label>Описание</label>
-                                                <textarea
-                                                    value={editExerciseForm.description}
-                                                    onChange={(event) =>
-                                                        setEditExerciseForm((prev) => ({
-                                                            ...prev,
-                                                            description: event.target.value,
-                                                        }))
-                                                    }
-                                                    rows={3}
-                                                />
-                                            </div>
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Повторы</span>
+                                                            <strong>{exercise.reps ?? "—"}</strong>
+                                                        </div>
 
-                                            <div className="trainings-form-grid">
-                                                <div className="form-row">
-                                                    <label>Подходы</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={editExerciseForm.sets}
-                                                        onChange={(event) =>
-                                                            setEditExerciseForm((prev) => ({
-                                                                ...prev,
-                                                                sets: event.target.value,
-                                                            }))
-                                                        }
-                                                    />
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Длительность</span>
+                                                            <strong>
+                                                                {exercise.durationSeconds != null
+                                                                    ? `${exercise.durationSeconds} сек`
+                                                                    : "—"}
+                                                            </strong>
+                                                        </div>
+
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Отдых</span>
+                                                            <strong>
+                                                                {exercise.restSeconds != null
+                                                                    ? `${exercise.restSeconds} сек`
+                                                                    : "—"}
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="exercise-compact-detail-grid">
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Заметка тренера</span>
+                                                            <strong>{exercise.trainerNote || "Нет заметки"}</strong>
+                                                        </div>
+
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Заметка клиента</span>
+                                                            <strong>{exercise.clientNote || "Нет заметки"}</strong>
+                                                        </div>
+                                                    </div>
                                                 </div>
-
-                                                <div className="form-row">
-                                                    <label>Повторы</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={editExerciseForm.reps}
-                                                        onChange={(event) =>
-                                                            setEditExerciseForm((prev) => ({
-                                                                ...prev,
-                                                                reps: event.target.value,
-                                                            }))
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <div className="form-row">
-                                                    <label>Длительность, сек</label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={editExerciseForm.durationSeconds}
-                                                        onChange={(event) =>
-                                                            setEditExerciseForm((prev) => ({
-                                                                ...prev,
-                                                                durationSeconds: event.target.value,
-                                                            }))
-                                                        }
-                                                    />
-                                                </div>
-
-                                                <div className="form-row">
-                                                    <label>Отдых, сек</label>
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={editExerciseForm.restSeconds}
-                                                        onChange={(event) =>
-                                                            setEditExerciseForm((prev) => ({
-                                                                ...prev,
-                                                                restSeconds: event.target.value,
-                                                            }))
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="form-row">
-                                                <label>Заметка тренера</label>
-                                                <textarea
-                                                    value={editExerciseForm.trainerNote}
-                                                    onChange={(event) =>
-                                                        setEditExerciseForm((prev) => ({
-                                                            ...prev,
-                                                            trainerNote: event.target.value,
-                                                        }))
-                                                    }
-                                                    rows={3}
-                                                />
-                                            </div>
-
-                                            <div className="details-actions">
-                                                <button
-                                                    type="button"
-                                                    className="dashboard-btn dashboard-btn-primary"
-                                                    onClick={() => handleSaveExercise(exercise.id)}
-                                                    disabled={isSavingExercise}
-                                                >
-                                                    {isSavingExercise ? "Сохраняем..." : "Сохранить"}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="dashboard-btn dashboard-btn-secondary"
-                                                    onClick={cancelEditExercise}
-                                                    disabled={isSavingExercise}
-                                                >
-                                                    Отмена
-                                                </button>
-                                            </div>
+                                            )}
                                         </div>
                                     )}
-                                </div>
+                                </article>
                             );
                         })}
-                    </div>
+                    </section>
                 )}
             </section>
         </div>

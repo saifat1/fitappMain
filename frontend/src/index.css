@@ -4469,4 +4469,306 @@ input:focus {
       align-items: stretch;
     }
   }
+  /* ===== Compact Training details redesign ===== */
+
+  .training-details-page-compact {
+    display: grid;
+    gap: 16px;
+  }
+
+  .training-details-header-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  }
+
+  .training-details-header-main {
+    min-width: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .training-details-header-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 26px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  .training-details-subline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .training-details-summary-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .training-details-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .training-details-panel-compact {
+    padding: 16px 18px;
+    border-radius: 20px;
+  }
+
+  .training-details-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .training-details-section-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .training-details-inline-form {
+    display: grid;
+    gap: 12px;
+  }
+
+  .training-details-inline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .training-details-inline-grid--exercise {
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+  }
+
+  .training-details-inline-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .exercise-compact-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .exercise-compact-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    overflow: hidden;
+  }
+
+  .exercise-compact-card.is-expanded {
+    border-color: #b7efe7;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
+  }
+
+  .exercise-compact-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+    padding: 12px 14px;
+  }
+
+  .exercise-compact-order {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2f7;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .exercise-compact-main {
+    min-width: 0;
+    display: grid;
+    gap: 6px;
+  }
+
+  .exercise-compact-top {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .exercise-compact-title-block {
+    min-width: 0;
+  }
+
+  .exercise-compact-title {
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .exercise-compact-summary {
+    margin-top: 2px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .exercise-compact-note-preview {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  .exercise-compact-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .exercise-compact-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .exercise-compact-status--planned {
+    background: #eef2f7;
+    color: #475569;
+  }
+
+  .exercise-compact-status--active {
+    background: #e0f2fe;
+    color: #0369a1;
+  }
+
+  .exercise-compact-status--completed {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .exercise-compact-expanded {
+    padding: 0 14px 14px;
+  }
+
+  .exercise-compact-editor,
+  .exercise-compact-details {
+    display: grid;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .exercise-compact-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .exercise-compact-detail {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.82);
+  }
+
+  .exercise-compact-detail span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .exercise-compact-detail strong {
+    color: #0f172a;
+    font-size: 13px;
+    line-height: 1.5;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  @media (max-width: 760px) {
+    .training-details-header-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .training-details-header-title {
+      font-size: 22px;
+    }
+
+    .training-details-header-actions {
+      justify-content: stretch;
+      flex-direction: column;
+    }
+
+    .training-details-inline-grid,
+    .training-details-inline-grid--exercise,
+    .exercise-compact-detail-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .training-details-inline-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .exercise-compact-row {
+      grid-template-columns: 32px minmax(0, 1fr);
+      grid-template-areas:
+      "order main"
+      "actions actions";
+      gap: 10px 12px;
+    }
+
+    .exercise-compact-order {
+      grid-area: order;
+      width: 32px;
+      height: 32px;
+    }
+
+    .exercise-compact-main {
+      grid-area: main;
+    }
+
+    .exercise-compact-actions {
+      grid-area: actions;
+      justify-content: flex-start;
+    }
+  }
 }
