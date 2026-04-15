@@ -4967,4 +4967,53 @@ input:focus {
       min-width: 0;
     }
   }
+  /* ===== Mobile topbar compact ===== */
+
+  @media (max-width: 760px) {
+    .app-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 56px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      background: rgba(248, 250, 252, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+
+    .app-topbar > div:first-child {
+      min-width: 0;
+    }
+
+    .app-topbar-kicker {
+      display: none;
+    }
+
+    .app-topbar-title {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .app-topbar-user-pill {
+      display: none;
+    }
+
+    .app-content-shell {
+      min-width: 0;
+    }
+
+    .app-main {
+      padding-top: 0;
+    }
+
+    .app-page-container {
+      padding-top: 0;
+    }
+  }
 }
