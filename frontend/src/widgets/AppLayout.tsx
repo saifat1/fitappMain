@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/model/AuthContext";
+import MobileBottomNav from "../shared/ui/MobileBottomNav";
 
 type Props = {
     children: ReactNode;
@@ -163,10 +164,12 @@ export default function AppLayout({ children }: Props) {
                     )}
                 </header>
 
-                <main className="app-main">
+                <main className="app-main app-main-with-mobile-nav">
                     <div className="app-page-container">{children}</div>
                 </main>
             </div>
+
+            <MobileBottomNav isTrainer={isTrainer} />
         </div>
     );
 }

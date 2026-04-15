@@ -13,6 +13,7 @@ import AppLayout from "../widgets/AppLayout";
 import RescheduleRequestsPage from "../pages/RescheduleRequestsPage";
 import RescheduleRequestDetailsPage from "../pages/RescheduleRequestDetailsPage";
 import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
+import MorePage from "../pages/MorePage";
 
 export const router = createBrowserRouter([
     {
@@ -78,10 +79,6 @@ export const router = createBrowserRouter([
         ),
     },
     {
-        path: "*",
-        element: <NotFoundPage />,
-    },
-    {
         path: "/reschedule-requests",
         element: (
             <ProtectedRoute>
@@ -110,5 +107,19 @@ export const router = createBrowserRouter([
                 </AppLayout>
             </ProtectedRoute>
         ),
+    },
+    {
+        path: "/more",
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <MorePage />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "*",
+        element: <NotFoundPage />,
     },
 ]);
