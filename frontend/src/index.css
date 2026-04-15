@@ -3113,3 +3113,65 @@ input:focus {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
+.trainings-desktop-only {
+  display: block;
+}
+
+.trainings-mobile-only {
+  display: none;
+}
+
+.trainings-hero-compact-mobile {
+  align-items: center;
+}
+
+.trainings-create-btn {
+  width: 100%;
+  max-width: 420px;
+  justify-self: end;
+}
+
+@media (max-width: 760px) {
+  .trainings-desktop-only {
+    display: none;
+  }
+
+  .trainings-mobile-only {
+    display: grid;
+    gap: 20px;
+  }
+
+  .trainings-hero-compact-mobile {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .trainings-hero-compact-mobile .trainings-title {
+    margin-bottom: 8px;
+  }
+
+  .trainings-hero-compact-mobile .trainings-subtitle {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .trainings-create-btn {
+    width: 100%;
+    max-width: none;
+    min-height: 52px;
+    justify-self: stretch;
+  }
+
+  .trainings-panel-header {
+    margin-bottom: 14px;
+  }
+
+  .trainings-panel-title {
+    font-size: 24px;
+  }
+
+  .trainings-list {
+    gap: 14px;
+  }
+}

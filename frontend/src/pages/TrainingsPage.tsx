@@ -188,16 +188,19 @@ export default function TrainingsPage() {
 
     return (
         <div className="trainings-page">
-            <section className="trainings-hero">
-                <div>
-                    <h1>Тренировки</h1>
-                    <p>Фокус на сегодня</p>
+            <section className="trainings-hero trainings-hero-compact-mobile">
+                <div className="trainings-hero-main">
+                    <div className="trainings-kicker">Тренировки</div>
+                    <h1 className="trainings-title">Фокус на сегодня</h1>
+                    <p className="trainings-subtitle">
+                        Сначала список тренировок, затем фильтры и дополнительная информация.
+                    </p>
                 </div>
 
                 {isTrainer && (
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-primary"
+                        className="dashboard-btn dashboard-btn-primary trainings-create-btn"
                         onClick={() => setIsCreateOpen(true)}
                     >
                         Создать тренировку
@@ -205,45 +208,47 @@ export default function TrainingsPage() {
                 )}
             </section>
 
-            <TrainingsStats trainings={trainings} />
+            <div className="trainings-desktop-only">
+                <TrainingsStats trainings={trainings} />
 
-            <TrainingQuickFilters
-                viewMode={viewMode}
-                draftFrom={draftFrom}
-                draftTo={draftTo}
-                isLoading={isLoading}
-                onSelectToday={() => {
-                    const range = getTodayRange();
-                    setViewMode("today");
-                    setFrom(range.from);
-                    setTo(range.to);
-                    setDraftFrom(range.from);
-                    setDraftTo(range.to);
-                }}
-                onSelectWeek={() => {
-                    const range = getWeekRange();
-                    setViewMode("week");
-                    setFrom(range.from);
-                    setTo(range.to);
-                    setDraftFrom(range.from);
-                    setDraftTo(range.to);
-                }}
-                onSelectRange={() => setViewMode("range")}
-                onChangeDraftFrom={setDraftFrom}
-                onChangeDraftTo={setDraftTo}
-                onApplyRange={(e) => {
-                    e.preventDefault();
+                <TrainingQuickFilters
+                    viewMode={viewMode}
+                    draftFrom={draftFrom}
+                    draftTo={draftTo}
+                    isLoading={isLoading}
+                    onSelectToday={() => {
+                        const range = getTodayRange();
+                        setViewMode("today");
+                        setFrom(range.from);
+                        setTo(range.to);
+                        setDraftFrom(range.from);
+                        setDraftTo(range.to);
+                    }}
+                    onSelectWeek={() => {
+                        const range = getWeekRange();
+                        setViewMode("week");
+                        setFrom(range.from);
+                        setTo(range.to);
+                        setDraftFrom(range.from);
+                        setDraftTo(range.to);
+                    }}
+                    onSelectRange={() => setViewMode("range")}
+                    onChangeDraftFrom={setDraftFrom}
+                    onChangeDraftTo={setDraftTo}
+                    onApplyRange={(e) => {
+                        e.preventDefault();
 
-                    if (draftFrom > draftTo) {
-                        setErrorMessage("Дата начала периода не может быть позже даты окончания");
-                        return;
-                    }
+                        if (draftFrom > draftTo) {
+                            setErrorMessage("Дата начала периода не может быть позже даты окончания");
+                            return;
+                        }
 
-                    setErrorMessage("");
-                    setFrom(draftFrom);
-                    setTo(draftTo);
-                }}
-            />
+                        setErrorMessage("");
+                        setFrom(draftFrom);
+                        setTo(draftTo);
+                    }}
+                />
+            </div>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
@@ -320,6 +325,48 @@ export default function TrainingsPage() {
                     )}
                 </section>
             )}
+
+            <div className="trainings-mobile-only">
+                <TrainingQuickFilters
+                    viewMode={viewMode}
+                    draftFrom={draftFrom}
+                    draftTo={draftTo}
+                    isLoading={isLoading}
+                    onSelectToday={() => {
+                        const range = getTodayRange();
+                        setViewMode("today");
+                        setFrom(range.from);
+                        setTo(range.to);
+                        setDraftFrom(range.from);
+                        setDraftTo(range.to);
+                    }}
+                    onSelectWeek={() => {
+                        const range = getWeekRange();
+                        setViewMode("week");
+                        setFrom(range.from);
+                        setTo(range.to);
+                        setDraftFrom(range.from);
+                        setDraftTo(range.to);
+                    }}
+                    onSelectRange={() => setViewMode("range")}
+                    onChangeDraftFrom={setDraftFrom}
+                    onChangeDraftTo={setDraftTo}
+                    onApplyRange={(e) => {
+                        e.preventDefault();
+
+                        if (draftFrom > draftTo) {
+                            setErrorMessage("Дата начала периода не может быть позже даты окончания");
+                            return;
+                        }
+
+                        setErrorMessage("");
+                        setFrom(draftFrom);
+                        setTo(draftTo);
+                    }}
+                />
+
+                <TrainingsStats trainings={trainings} />
+            </div>
 
             {isTrainer && (
                 <TrainingCreateModal
