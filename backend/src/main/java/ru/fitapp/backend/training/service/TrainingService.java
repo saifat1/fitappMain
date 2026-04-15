@@ -254,4 +254,15 @@ public class TrainingService {
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
     }
+
+    public TrainingResponse completeTraining(Long trainingId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+
+        training.setStatus(TrainingStatus.COMPLETED);
+
+        Training saved = trainingRepository.save(training);
+        return mapToResponse(saved);
+    }
+
 }

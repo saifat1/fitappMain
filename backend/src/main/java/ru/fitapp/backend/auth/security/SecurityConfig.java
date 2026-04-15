@@ -2,6 +2,7 @@ package ru.fitapp.backend.auth.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -43,6 +44,11 @@ public class SecurityConfig {
                                 "/api/auth/invites/**"
                         ).permitAll()
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.GET, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
+                        .requestMatchers(HttpMethod.POST, "/api/trainings/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PUT, "/api/trainings/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/trainings/**").hasRole("TRAINER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/trainings/**").hasRole("TRAINER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -40,13 +40,25 @@ public class TrainingController {
     }
 
     @PutMapping("/{trainingId}")
-    public TrainingResponse updateTraining(@PathVariable Long trainingId,
-                                           @Valid @RequestBody UpdateTrainingRequest request) {
+    public TrainingResponse updateTraining(
+            @PathVariable Long trainingId,
+            @Valid @RequestBody UpdateTrainingRequest request
+    ) {
         return trainingService.updateTraining(trainingId, request);
     }
 
     @DeleteMapping("/{trainingId}")
     public void cancelTraining(@PathVariable Long trainingId) {
         trainingService.cancelTraining(trainingId);
+    }
+
+    @PatchMapping("/{trainingId}/cancel")
+    public void cancelTrainingPatch(@PathVariable Long trainingId) {
+        trainingService.cancelTraining(trainingId);
+    }
+
+    @PatchMapping("/{trainingId}/complete")
+    public TrainingResponse completeTraining(@PathVariable Long trainingId) {
+        return trainingService.completeTraining(trainingId);
     }
 }

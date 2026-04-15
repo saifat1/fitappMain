@@ -1,40 +1,21 @@
 import { apiClient } from "./axios";
-import type {
-    CreateTrainingRequest,
-    TrainingResponse,
-    UpdateTrainingRequest,
-} from "../../features/training/model/training.types";
 
 export const trainingApi = {
-    getTrainings: async (from: string, to: string): Promise<TrainingResponse[]> => {
-        const response = await apiClient.get<TrainingResponse[]>("/trainings", {
-            params: { from, to },
-        });
-        return response.data;
-    },
+    getTrainings: (from: string, to: string) =>
+        apiClient.get(`/trainings?from=${from}&to=${to}`).then(r => r.data),
 
-    getTraining: async (trainingId: number): Promise<TrainingResponse> => {
-        const response = await apiClient.get<TrainingResponse>(`/trainings/${trainingId}`);
-        return response.data;
-    },
+    getTraining: (id: number) =>
+        apiClient.get(`/trainings/${id}`).then(r => r.data),
 
-    createTraining: async (payload: CreateTrainingRequest): Promise<TrainingResponse> => {
-        const response = await apiClient.post<TrainingResponse>("/trainings", payload);
-        return response.data;
-    },
+    createTraining: (payload: unknown) =>
+        apiClient.post("/trainings", payload).then(r => r.data),
 
-    updateTraining: async (
-        trainingId: number,
-        payload: UpdateTrainingRequest
-    ): Promise<TrainingResponse> => {
-        const response = await apiClient.put<TrainingResponse>(
-            `/trainings/${trainingId}`,
-            payload
-        );
-        return response.data;
-    },
+    updateTraining: (id: number, payload: unknown) =>
+        apiClient.put(`/trainings/${id}`, payload).then(r => r.data),
 
-    cancelTraining: async (trainingId: number): Promise<void> => {
-        await apiClient.delete(`/trainings/${trainingId}`);
-    },
+    completeTraining: (id: number) =>
+        apiClient.patch(`/trainings/${id}/complete`).then(r => r.data),
+
+    cancelTraining: (id: number) =>
+        apiClient.patch(`/trainings/${id}/cancel`).then(r => r.data),
 };
