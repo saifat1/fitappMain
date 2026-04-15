@@ -259,15 +259,17 @@ export default function ClientsPage() {
                                                     Редактировать
                                                 </button>
 
-                                                <button
-                                                    type="button"
-                                                    className="card-action-btn card-action-btn-danger client-icon-action entity-icon-btn"
-                                                    onClick={() => void handleDeactivate(client.id)}
-                                                    disabled={isDeactivating || client.status === "INACTIVE"}
-                                                    title="Деактивировать"
-                                                >
-                                                    {isDeactivating ? "..." : "×"}
-                                                </button>
+                                                {client.status === "ACTIVE" && (
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-danger client-icon-action entity-icon-btn"
+                                                        onClick={() => void handleDeactivate(client.id)}
+                                                        disabled={isDeactivating}
+                                                        title="Деактивировать"
+                                                    >
+                                                        {isDeactivating ? "..." : "×"}
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>

@@ -4375,4 +4375,98 @@ input:focus {
       align-items: stretch;
     }
   }
+  /* ===== Clients mobile tightening ===== */
+
+  @media (max-width: 760px) {
+    .client-card-compact {
+      padding: 12px 14px;
+      border-radius: 14px;
+    }
+
+    .client-card-row.entity-card-row {
+      grid-template-columns: 44px minmax(0, 1fr);
+      grid-template-areas:
+      "avatar content"
+      "actions actions";
+      gap: 10px 12px;
+      align-items: start;
+    }
+
+    .client-avatar-compact {
+      grid-area: avatar;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    .client-card-content {
+      grid-area: content;
+      gap: 3px;
+    }
+
+    .client-card-name-row {
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .client-card-name {
+      font-size: 16px;
+      line-height: 1.25;
+    }
+
+    .client-card-email {
+      font-size: 14px;
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+
+    .client-card-meta-row.entity-meta-row {
+      gap: 8px;
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 2px;
+    }
+
+    .client-status-badge {
+      min-height: 28px;
+      padding: 0 10px;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+
+    .client-card-actions-compact.entity-actions-compact {
+      grid-area: actions;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      margin-top: 2px;
+    }
+
+    .client-action-btn.entity-secondary-btn {
+      flex: 0 1 auto;
+      min-height: 34px;
+      padding: 0 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .client-icon-action.entity-icon-btn {
+      margin-left: auto;
+      min-width: 34px;
+      height: 34px;
+    }
+
+    .client-edit-inline {
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    .client-edit-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
 }
