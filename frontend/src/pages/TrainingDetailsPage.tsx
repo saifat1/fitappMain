@@ -190,6 +190,7 @@ export default function TrainingDetailsPage() {
     const [deletingExerciseId, setDeletingExerciseId] = useState<number | null>(null);
     const [togglingExerciseId, setTogglingExerciseId] = useState<number | null>(null);
     const [movingExerciseId, setMovingExerciseId] = useState<number | null>(null);
+    const [isMobileActionsOpen, setIsMobileActionsOpen] = useState(false);
 
     const isTrainer = currentUser?.role === "TRAINER";
     const isClient = currentUser?.role === "CLIENT";
@@ -642,7 +643,7 @@ export default function TrainingDetailsPage() {
                 <div className="training-details-header-actions">
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                        className="dashboard-btn dashboard-btn-secondary entity-header-action training-details-action-desktop-only"
                         onClick={() => navigate("/trainings")}
                     >
                         Назад
@@ -652,7 +653,7 @@ export default function TrainingDetailsPage() {
                         <>
                             <button
                                 type="button"
-                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action training-details-action-desktop-only"
                                 onClick={() => setIsEditingTraining((prev) => !prev)}
                             >
                                 {isEditingTraining ? "Скрыть настройки" : "Настройки"}
@@ -660,7 +661,7 @@ export default function TrainingDetailsPage() {
 
                             <button
                                 type="button"
-                                className="dashboard-btn dashboard-btn-primary entity-header-action"
+                                className="dashboard-btn dashboard-btn-primary entity-header-action training-details-add-primary"
                                 onClick={() => setIsCreateExerciseOpen((prev) => !prev)}
                             >
                                 {isCreateExerciseOpen ? "Скрыть форму" : "Добавить упражнение"}
@@ -668,7 +669,7 @@ export default function TrainingDetailsPage() {
 
                             <button
                                 type="button"
-                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action training-details-action-desktop-only"
                                 onClick={() => void handleCompleteTraining()}
                                 disabled={isCompletingTraining}
                             >
@@ -677,11 +678,20 @@ export default function TrainingDetailsPage() {
 
                             <button
                                 type="button"
-                                className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                                className="dashboard-btn dashboard-btn-secondary entity-header-action training-details-action-desktop-only"
                                 onClick={() => void handleCancelTraining()}
                                 disabled={isCancellingTraining}
                             >
                                 {isCancellingTraining ? "Отменяем..." : "Отменить"}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="card-action-btn card-action-btn-neutral training-details-mobile-more"
+                                onClick={() => setIsMobileActionsOpen(true)}
+                                title="Дополнительные действия"
+                            >
+                                ⋯
                             </button>
                         </>
                     )}
@@ -697,6 +707,72 @@ export default function TrainingDetailsPage() {
                     )}
                 </div>
             </section>
+
+            {isMobileActionsOpen && (
+                <>
+                    <div
+                        className="training-details-mobile-actions-overlay"
+                        onClick={() => setIsMobileActionsOpen(false)}
+                    />
+
+                    <section className="training-details-mobile-actions-sheet">
+                        <div className="training-details-mobile-actions-handle" />
+
+                        <div className="training-details-mobile-actions-title">
+                            Действия с тренировкой
+                        </div>
+
+                        <div className="training-details-mobile-actions-list">
+                            {isTrainer && training.status === "PLANNED" && (
+                                <>
+                                    <button
+                                        type="button"
+                                        className="training-details-mobile-action-btn"
+                                        onClick={() => {
+                                            setIsEditingTraining((prev) => !prev);
+                                            setIsMobileActionsOpen(false);
+                                        }}
+                                    >
+                                        {isEditingTraining ? "Скрыть настройки" : "Настройки"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="training-details-mobile-action-btn"
+                                        onClick={() => {
+                                            void handleCompleteTraining();
+                                            setIsMobileActionsOpen(false);
+                                        }}
+                                        disabled={isCompletingTraining}
+                                    >
+                                        {isCompletingTraining ? "Завершаем..." : "Завершить тренировку"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="training-details-mobile-action-btn training-details-mobile-action-btn-danger"
+                                        onClick={() => {
+                                            void handleCancelTraining();
+                                            setIsMobileActionsOpen(false);
+                                        }}
+                                        disabled={isCancellingTraining}
+                                    >
+                                        {isCancellingTraining ? "Отменяем..." : "Отменить тренировку"}
+                                    </button>
+                                </>
+                            )}
+
+                            <button
+                                type="button"
+                                className="training-details-mobile-action-btn"
+                                onClick={() => setIsMobileActionsOpen(false)}
+                            >
+                                Закрыть
+                            </button>
+                        </div>
+                    </section>
+                </>
+            )}
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
             {exerciseErrorMessage && <div className="error-box">{exerciseErrorMessage}</div>}

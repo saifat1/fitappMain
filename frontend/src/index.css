@@ -4870,4 +4870,101 @@ input:focus {
       padding-top: 10px;
     }
   }
+  /* ===== Training details mobile action cleanup ===== */
+
+  .training-details-action-desktop-only {
+    display: inline-flex;
+  }
+
+  .training-details-mobile-more {
+    display: none;
+  }
+
+  .training-details-add-primary {
+    min-width: 220px;
+  }
+
+  .training-details-mobile-actions-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.44);
+    z-index: 90;
+  }
+
+  .training-details-mobile-actions-sheet {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 91;
+    padding: 12px;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+  }
+
+  .training-details-mobile-actions-handle {
+    width: 44px;
+    height: 5px;
+    margin: 0 auto 12px;
+    border-radius: 999px;
+    background: #d7dee7;
+  }
+
+  .training-details-mobile-actions-title {
+    margin-bottom: 12px;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .training-details-mobile-actions-list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .training-details-mobile-action-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid #dbe3ea;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .training-details-mobile-action-btn-danger {
+    color: #991b1b;
+    background: #fff5f5;
+    border-color: #fecaca;
+  }
+
+  @media (max-width: 760px) {
+    .training-details-header-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .training-details-action-desktop-only {
+      display: none;
+    }
+
+    .training-details-mobile-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      border-radius: 12px;
+    }
+
+    .training-details-add-primary {
+      width: 100%;
+      min-width: 0;
+    }
+  }
 }
