@@ -53,6 +53,7 @@ export default function TrainingsPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
     const [processingTrainingId, setProcessingTrainingId] = useState<number | null>(null);
+    const [isMobileMetaOpen, setIsMobileMetaOpen] = useState(false);
 
     const [clientId, setClientId] = useState("");
     const [trainingDate, setTrainingDate] = useState(formatDateForInput(new Date()));
@@ -102,6 +103,37 @@ export default function TrainingsPage() {
             setClientId(String(clients[0].id));
         }
     }, [clients, clientId]);
+
+    const applyToday = () => {
+        const range = getTodayRange();
+        setViewMode("today");
+        setFrom(range.from);
+        setTo(range.to);
+        setDraftFrom(range.from);
+        setDraftTo(range.to);
+    };
+
+    const applyWeek = () => {
+        const range = getWeekRange();
+        setViewMode("week");
+        setFrom(range.from);
+        setTo(range.to);
+        setDraftFrom(range.from);
+        setDraftTo(range.to);
+    };
+
+    const applyRange = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        if (draftFrom > draftTo) {
+            setErrorMessage("Дата начала периода не может быть позже даты окончания");
+            return;
+        }
+
+        setErrorMessage("");
+        setFrom(draftFrom);
+        setTo(draftTo);
+    };
 
     const handleCreateTraining = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -187,20 +219,41 @@ export default function TrainingsPage() {
     const otherItems = rangeIncludesToday ? otherTrainings : trainings;
 
     return (
-        <div className="trainings-page">
-            <section className="trainings-hero trainings-hero-compact-mobile">
-                <div className="trainings-hero-main">
-                    <div className="trainings-kicker">Тренировки</div>
-                    <h1 className="trainings-title">Фокус на сегодня</h1>
-                    <p className="trainings-subtitle">
-                        Сначала список тренировок, затем фильтры и дополнительная информация.
-                    </p>
+        <div className="trainings-page trainings-page-compact">
+            <section className="trainings-header-bar">
+                <div className="trainings-header-main">
+                    <h1 className="trainings-header-title">Тренировки</h1>
+                    <div className="trainings-period-switch">
+                        <button
+                            type="button"
+                            className={`trainings-period-btn ${viewMode === "today" ? "is-active" : ""}`}
+                            onClick={applyToday}
+                        >
+                            Сегодня
+                        </button>
+
+                        <button
+                            type="button"
+                            className={`trainings-period-btn ${viewMode === "week" ? "is-active" : ""}`}
+                            onClick={applyWeek}
+                        >
+                            7 дней
+                        </button>
+
+                        <button
+                            type="button"
+                            className={`trainings-period-btn ${viewMode === "range" ? "is-active" : ""}`}
+                            onClick={() => setViewMode("range")}
+                        >
+                            Период
+                        </button>
+                    </div>
                 </div>
 
                 {isTrainer && (
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-primary trainings-create-btn"
+                        className="dashboard-btn dashboard-btn-primary trainings-create-top-btn"
                         onClick={() => setIsCreateOpen(true)}
                     >
                         Создать тренировку
@@ -208,60 +261,18 @@ export default function TrainingsPage() {
                 )}
             </section>
 
-            <div className="trainings-desktop-only">
-                <TrainingsStats trainings={trainings} />
-
-                <TrainingQuickFilters
-                    viewMode={viewMode}
-                    draftFrom={draftFrom}
-                    draftTo={draftTo}
-                    isLoading={isLoading}
-                    onSelectToday={() => {
-                        const range = getTodayRange();
-                        setViewMode("today");
-                        setFrom(range.from);
-                        setTo(range.to);
-                        setDraftFrom(range.from);
-                        setDraftTo(range.to);
-                    }}
-                    onSelectWeek={() => {
-                        const range = getWeekRange();
-                        setViewMode("week");
-                        setFrom(range.from);
-                        setTo(range.to);
-                        setDraftFrom(range.from);
-                        setDraftTo(range.to);
-                    }}
-                    onSelectRange={() => setViewMode("range")}
-                    onChangeDraftFrom={setDraftFrom}
-                    onChangeDraftTo={setDraftTo}
-                    onApplyRange={(e) => {
-                        e.preventDefault();
-
-                        if (draftFrom > draftTo) {
-                            setErrorMessage("Дата начала периода не может быть позже даты окончания");
-                            return;
-                        }
-
-                        setErrorMessage("");
-                        setFrom(draftFrom);
-                        setTo(draftTo);
-                    }}
-                />
-            </div>
-
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
             {showTodaySection && (
-                <section className="trainings-panel">
-                    <div className="trainings-panel-header">
-                        <div>
-                            <div className="trainings-panel-kicker">Сегодня</div>
-                            <h2 className="trainings-panel-title">Тренировки на сегодня</h2>
-                        </div>
+                <section className="trainings-panel trainings-panel-compact">
+                    <div className="trainings-section-head">
+                        <h2 className="trainings-section-title">Сегодня</h2>
+                        <span className="trainings-section-count">{todayTrainings.length}</span>
                     </div>
 
-                    {todayTrainings.length === 0 ? (
+                    {isLoading ? (
+                        <div className="trainings-empty-text">Загрузка...</div>
+                    ) : todayTrainings.length === 0 ? (
                         <div className="trainings-empty">
                             <div className="trainings-empty-title">На сегодня тренировок нет</div>
                             <div className="trainings-empty-text">
@@ -269,7 +280,7 @@ export default function TrainingsPage() {
                             </div>
                         </div>
                     ) : (
-                        <section className="trainings-list">
+                        <section className="trainings-list trainings-list-compact">
                             {todayTrainings.map((training) => (
                                 <TrainingCard
                                     key={training.id}
@@ -287,21 +298,17 @@ export default function TrainingsPage() {
             )}
 
             {showOtherSection && (
-                <section className="trainings-panel">
-                    <div className="trainings-panel-header">
-                        <div>
-                            <div className="trainings-panel-kicker">
-                                {viewMode === "week" ? "7 дней" : "Период"}
-                            </div>
-                            <h2 className="trainings-panel-title">
-                                {rangeIncludesToday
-                                    ? "Остальные тренировки в периоде"
-                                    : "Тренировки в выбранном периоде"}
-                            </h2>
-                        </div>
+                <section className="trainings-panel trainings-panel-compact">
+                    <div className="trainings-section-head">
+                        <h2 className="trainings-section-title">
+                            {rangeIncludesToday ? "Остальные" : "Тренировки"}
+                        </h2>
+                        <span className="trainings-section-count">{otherItems.length}</span>
                     </div>
 
-                    {otherItems.length === 0 ? (
+                    {isLoading ? (
+                        <div className="trainings-empty-text">Загрузка...</div>
+                    ) : otherItems.length === 0 ? (
                         <div className="trainings-empty">
                             <div className="trainings-empty-title">Тренировок нет</div>
                             <div className="trainings-empty-text">
@@ -309,7 +316,7 @@ export default function TrainingsPage() {
                             </div>
                         </div>
                     ) : (
-                        <section className="trainings-list">
+                        <section className="trainings-list trainings-list-compact">
                             {otherItems.map((training) => (
                                 <TrainingCard
                                     key={training.id}
@@ -326,47 +333,52 @@ export default function TrainingsPage() {
                 </section>
             )}
 
-            <div className="trainings-mobile-only">
+            <section className="trainings-meta-panel desktop-meta-panel">
                 <TrainingQuickFilters
                     viewMode={viewMode}
                     draftFrom={draftFrom}
                     draftTo={draftTo}
                     isLoading={isLoading}
-                    onSelectToday={() => {
-                        const range = getTodayRange();
-                        setViewMode("today");
-                        setFrom(range.from);
-                        setTo(range.to);
-                        setDraftFrom(range.from);
-                        setDraftTo(range.to);
-                    }}
-                    onSelectWeek={() => {
-                        const range = getWeekRange();
-                        setViewMode("week");
-                        setFrom(range.from);
-                        setTo(range.to);
-                        setDraftFrom(range.from);
-                        setDraftTo(range.to);
-                    }}
+                    onSelectToday={applyToday}
+                    onSelectWeek={applyWeek}
                     onSelectRange={() => setViewMode("range")}
                     onChangeDraftFrom={setDraftFrom}
                     onChangeDraftTo={setDraftTo}
-                    onApplyRange={(e) => {
-                        e.preventDefault();
-
-                        if (draftFrom > draftTo) {
-                            setErrorMessage("Дата начала периода не может быть позже даты окончания");
-                            return;
-                        }
-
-                        setErrorMessage("");
-                        setFrom(draftFrom);
-                        setTo(draftTo);
-                    }}
+                    onApplyRange={applyRange}
                 />
 
                 <TrainingsStats trainings={trainings} />
-            </div>
+            </section>
+
+            <section className="trainings-meta-panel mobile-meta-panel">
+                <button
+                    type="button"
+                    className="trainings-mobile-meta-toggle"
+                    onClick={() => setIsMobileMetaOpen((prev) => !prev)}
+                >
+                    <span>Фильтры и статистика</span>
+                    <strong>{isMobileMetaOpen ? "Скрыть" : "Показать"}</strong>
+                </button>
+
+                {isMobileMetaOpen && (
+                    <div className="trainings-mobile-meta-content">
+                        <TrainingQuickFilters
+                            viewMode={viewMode}
+                            draftFrom={draftFrom}
+                            draftTo={draftTo}
+                            isLoading={isLoading}
+                            onSelectToday={applyToday}
+                            onSelectWeek={applyWeek}
+                            onSelectRange={() => setViewMode("range")}
+                            onChangeDraftFrom={setDraftFrom}
+                            onChangeDraftTo={setDraftTo}
+                            onApplyRange={applyRange}
+                        />
+
+                        <TrainingsStats trainings={trainings} />
+                    </div>
+                )}
+            </section>
 
             {isTrainer && (
                 <TrainingCreateModal

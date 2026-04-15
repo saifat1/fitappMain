@@ -9,6 +9,19 @@ type Props = {
     onCancel?: (id: number) => void;
 };
 
+function getStatusLabel(status: string): string {
+    switch (status) {
+        case "PLANNED":
+            return "Запланирована";
+        case "COMPLETED":
+            return "Завершена";
+        case "CANCELLED":
+            return "Отменена";
+        default:
+            return status;
+    }
+}
+
 export default function TrainingCard({
                                          training,
                                          isTrainer,
@@ -29,8 +42,8 @@ export default function TrainingCard({
     const statusClassName = `training-status training-status--${training.status.toLowerCase()}`;
 
     return (
-        <div
-            className="training-card"
+        <article
+            className="training-card training-card-compact"
             onClick={() => onOpen(training.id)}
             role="button"
             tabIndex={0}
@@ -41,45 +54,70 @@ export default function TrainingCard({
                 }
             }}
         >
-            <div className="training-card-main">
-                <div className="training-title">
-                    {training.trainingDate} {training.startTime ?? ""}
+            <div className="training-card-row">
+                <div className="training-card-time-block">
+                    <div className="training-card-time">
+                        {training.startTime ?? "—"}
+                        {training.endTime ? `–${training.endTime}` : ""}
+                    </div>
+                    <div className="training-card-date">{training.trainingDate}</div>
                 </div>
 
-                <div className="training-client">
-                    {fullName || training.clientEmail || `Клиент #${training.clientId}`}
+                <div className="training-card-content">
+                    <div className="training-card-client">
+                        {fullName || training.clientEmail || `Клиент #${training.clientId}`}
+                    </div>
+
+                    {training.trainerNote && (
+                        <div className="training-card-note">{training.trainerNote}</div>
+                    )}
                 </div>
 
-                <div className={statusClassName}>{training.status}</div>
+                <div className="training-card-side">
+                    <div className={statusClassName}>{getStatusLabel(training.status)}</div>
+
+                    <div className="training-card-actions">
+                        {canManageTraining && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="card-action-btn card-action-btn-success"
+                                    disabled={isProcessing}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onComplete?.(training.id);
+                                    }}
+                                >
+                                    {isProcessing ? "..." : "✓"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="card-action-btn card-action-btn-danger"
+                                    disabled={isProcessing}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onCancel?.(training.id);
+                                    }}
+                                >
+                                    {isProcessing ? "..." : "×"}
+                                </button>
+                            </>
+                        )}
+
+                        <button
+                            type="button"
+                            className="card-action-btn card-action-btn-neutral"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpen(training.id);
+                            }}
+                        >
+                            ›
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            {canManageTraining && (
-                <div className="training-card-actions">
-                    <button
-                        type="button"
-                        className="btn btn-success"
-                        disabled={isProcessing}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onComplete?.(training.id);
-                        }}
-                    >
-                        {isProcessing ? "Обновляем..." : "Завершить"}
-                    </button>
-
-                    <button
-                        type="button"
-                        className="btn btn-danger"
-                        disabled={isProcessing}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onCancel?.(training.id);
-                        }}
-                    >
-                        {isProcessing ? "Обновляем..." : "Отменить"}
-                    </button>
-                </div>
-            )}
-        </div>
+        </article>
     );
 }
