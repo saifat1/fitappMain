@@ -4771,4 +4771,103 @@ input:focus {
       justify-content: flex-start;
     }
   }
+  /* ===== Training details second pass ===== */
+
+  .training-details-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.44);
+    z-index: 70;
+  }
+
+  .exercise-compact-actions {
+    gap: 6px;
+  }
+
+  .exercise-compact-card {
+    border-radius: 14px;
+  }
+
+  .exercise-compact-row {
+    padding: 10px 12px;
+  }
+
+  .exercise-compact-expanded {
+    padding: 0 12px 12px;
+  }
+
+  .exercise-compact-summary {
+    font-size: 12px;
+  }
+
+  .exercise-compact-note-preview {
+    font-size: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .training-details-create-sheet {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      z-index: 80;
+      max-height: min(82vh, 720px);
+      overflow: auto;
+      border-radius: 18px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    }
+
+    .training-details-create-sheet .training-details-inline-form {
+      gap: 10px;
+    }
+
+    .training-details-header-actions .entity-header-action {
+      width: 100%;
+    }
+
+    .exercise-compact-card {
+      border-radius: 12px;
+    }
+
+    .exercise-compact-row {
+      padding: 10px;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 8px 10px;
+    }
+
+    .exercise-compact-order {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
+
+    .exercise-compact-title {
+      font-size: 14px;
+    }
+
+    .exercise-compact-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: flex-start;
+    }
+
+    .card-action-btn {
+      min-width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .exercise-compact-expanded {
+      padding: 0 10px 10px;
+    }
+
+    .exercise-compact-editor,
+    .exercise-compact-details {
+      gap: 10px;
+      padding-top: 10px;
+    }
+  }
 }

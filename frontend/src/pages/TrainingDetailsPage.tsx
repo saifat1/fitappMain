@@ -93,24 +93,24 @@ function getTrainingStatusClass(status: string): string {
     }
 }
 
-function getExerciseStatusLabel(exercise: TrainingExerciseResponse, isActive: boolean): string {
+function getExerciseStatusLabel(exercise: TrainingExerciseResponse, isExpanded: boolean): string {
     if (exercise.isCompleted) {
         return "Готово";
     }
 
-    if (isActive) {
+    if (isExpanded) {
         return "Открыто";
     }
 
     return "План";
 }
 
-function getExerciseStatusClass(exercise: TrainingExerciseResponse, isActive: boolean): string {
+function getExerciseStatusClass(exercise: TrainingExerciseResponse, isExpanded: boolean): string {
     if (exercise.isCompleted) {
         return "exercise-compact-status exercise-compact-status--completed";
     }
 
-    if (isActive) {
+    if (isExpanded) {
         return "exercise-compact-status exercise-compact-status--active";
     }
 
@@ -178,15 +178,18 @@ export default function TrainingDetailsPage() {
 
     const [isCreateExerciseOpen, setIsCreateExerciseOpen] = useState(false);
     const [isCreatingExercise, setIsCreatingExercise] = useState(false);
-    const [createExerciseForm, setCreateExerciseForm] = useState<ExerciseFormState>(emptyExerciseForm);
+    const [createExerciseForm, setCreateExerciseForm] =
+        useState<ExerciseFormState>(emptyExerciseForm);
 
     const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
     const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
-    const [editExerciseForm, setEditExerciseForm] = useState<ExerciseFormState>(emptyExerciseForm);
+    const [editExerciseForm, setEditExerciseForm] =
+        useState<ExerciseFormState>(emptyExerciseForm);
 
     const [savingExerciseId, setSavingExerciseId] = useState<number | null>(null);
     const [deletingExerciseId, setDeletingExerciseId] = useState<number | null>(null);
     const [togglingExerciseId, setTogglingExerciseId] = useState<number | null>(null);
+    const [movingExerciseId, setMovingExerciseId] = useState<number | null>(null);
 
     const isTrainer = currentUser?.role === "TRAINER";
     const isClient = currentUser?.role === "CLIENT";
@@ -301,9 +304,7 @@ export default function TrainingDetailsPage() {
         setIsCompletingTraining(true);
 
         try {
-            const updated = await trainingApi.updateTraining(training.id, {
-                status: "COMPLETED",
-            });
+            const updated = await trainingApi.completeTraining(training.id);
             setTraining(updated);
             setStatus(updated.status);
         } catch (error) {
@@ -378,7 +379,8 @@ export default function TrainingDetailsPage() {
             description: exercise.description ?? "",
             sets: exercise.sets != null ? String(exercise.sets) : "",
             reps: exercise.reps != null ? String(exercise.reps) : "",
-            durationSeconds: exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
+            durationSeconds:
+                exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
             restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : "",
             trainerNote: exercise.trainerNote ?? "",
         });
@@ -490,6 +492,70 @@ export default function TrainingDetailsPage() {
             setExerciseErrorMessage(resolveApiError(error, "Не удалось обновить выполнение"));
         } finally {
             setTogglingExerciseId(null);
+        }
+    };
+
+    const handleMoveExercise = async (exerciseId: number, direction: -1 | 1) => {
+        if (!trainingId) {
+            return;
+        }
+
+        const currentIndex = sortedExercises.findIndex((item) => item.id === exerciseId);
+        const targetIndex = currentIndex + direction;
+
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= sortedExercises.length) {
+            return;
+        }
+
+        const currentExercise = sortedExercises[currentIndex];
+        const targetExercise = sortedExercises[targetIndex];
+        const previous = exercises;
+
+        setExerciseErrorMessage("");
+        setMovingExerciseId(exerciseId);
+
+        setExercises((prev) =>
+            prev.map((item) => {
+                if (item.id === currentExercise.id) {
+                    return { ...item, orderNum: targetExercise.orderNum };
+                }
+
+                if (item.id === targetExercise.id) {
+                    return { ...item, orderNum: currentExercise.orderNum };
+                }
+
+                return item;
+            })
+        );
+
+        try {
+            const [updatedCurrent, updatedTarget] = await Promise.all([
+                trainingExerciseApi.updateExercise(Number(trainingId), currentExercise.id, {
+                    orderNum: targetExercise.orderNum,
+                }),
+                trainingExerciseApi.updateExercise(Number(trainingId), targetExercise.id, {
+                    orderNum: currentExercise.orderNum,
+                }),
+            ]);
+
+            setExercises((prev) =>
+                prev.map((item) => {
+                    if (item.id === updatedCurrent.id) {
+                        return updatedCurrent;
+                    }
+
+                    if (item.id === updatedTarget.id) {
+                        return updatedTarget;
+                    }
+
+                    return item;
+                })
+            );
+        } catch (error) {
+            setExercises(previous);
+            setExerciseErrorMessage(resolveApiError(error, "Не удалось изменить порядок упражнений"));
+        } finally {
+            setMovingExerciseId(null);
         }
     };
 
@@ -723,11 +789,27 @@ export default function TrainingDetailsPage() {
             )}
 
             {isCreateExerciseOpen && isTrainer && (
-                <section className="training-details-panel training-details-panel-compact entity-panel-compact">
+                <div
+                    className="training-details-sheet-overlay"
+                    onClick={() => setIsCreateExerciseOpen(false)}
+                />
+            )}
+
+            {isCreateExerciseOpen && isTrainer && (
+                <section className="training-details-panel training-details-panel-compact entity-panel-compact training-details-create-sheet">
                     <div className="training-details-section-head entity-section-head">
                         <h2 className="training-details-section-title entity-section-title">
                             Новое упражнение
                         </h2>
+
+                        <button
+                            type="button"
+                            className="card-action-btn card-action-btn-neutral"
+                            onClick={() => setIsCreateExerciseOpen(false)}
+                            title="Закрыть"
+                        >
+                            ×
+                        </button>
                     </div>
 
                     <form className="training-details-inline-form" onSubmit={handleCreateExercise}>
@@ -929,6 +1011,32 @@ export default function TrainingDetailsPage() {
 
                                             {isTrainer && (
                                                 <>
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-neutral"
+                                                        onClick={() => void handleMoveExercise(exercise.id, -1)}
+                                                        disabled={
+                                                            movingExerciseId === exercise.id ||
+                                                            sortedExercises[0]?.id === exercise.id
+                                                        }
+                                                        title="Выше"
+                                                    >
+                                                        ↑
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="card-action-btn card-action-btn-neutral"
+                                                        onClick={() => void handleMoveExercise(exercise.id, 1)}
+                                                        disabled={
+                                                            movingExerciseId === exercise.id ||
+                                                            sortedExercises[sortedExercises.length - 1]?.id === exercise.id
+                                                        }
+                                                        title="Ниже"
+                                                    >
+                                                        ↓
+                                                    </button>
+
                                                     <button
                                                         type="button"
                                                         className="card-action-btn card-action-btn-success"
