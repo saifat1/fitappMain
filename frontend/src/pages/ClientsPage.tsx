@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
     TrainerClientResponse,
@@ -12,6 +13,14 @@ type EditState = {
     lastName: string;
 };
 
+function resolveApiError(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+
+    return fallback;
+}
+
 function getClientDisplayName(client: TrainerClientResponse): string {
     const fullName = [client.firstName, client.lastName].filter(Boolean).join(" ").trim();
     return fullName || "Имя не заполнено";
@@ -20,10 +29,9 @@ function getClientDisplayName(client: TrainerClientResponse): string {
 function getClientInitials(client: TrainerClientResponse): string {
     const first = client.firstName?.[0] ?? "";
     const last = client.lastName?.[0] ?? "";
-
     const initials = `${first}${last}`.trim().toUpperCase();
-    if (initials) return initials;
 
+    if (initials) return initials;
     return client.email?.[0]?.toUpperCase() ?? "C";
 }
 
@@ -49,15 +57,21 @@ function getClientStatusClass(status: string): string {
     }
 }
 
+function formatCreatedAt(value: string): string {
+    return new Date(value).toLocaleDateString();
+}
+
 export default function ClientsPage() {
     const [clients, setClients] = useState<TrainerClientResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+
     const [editingClientId, setEditingClientId] = useState<number | null>(null);
     const [editState, setEditState] = useState<EditState>({
         firstName: "",
         lastName: "",
     });
+
     const [savingClientId, setSavingClientId] = useState<number | null>(null);
     const [deactivatingClientId, setDeactivatingClientId] = useState<number | null>(null);
 
@@ -69,19 +83,26 @@ export default function ClientsPage() {
             const data = await trainerApi.getClients();
             setClients(data);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(error.response?.data?.message ?? "Не удалось загрузить клиентов");
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось загрузить клиентов"));
         } finally {
             setIsLoading(false);
         }
     }
 
     useEffect(() => {
-        loadClients();
+        void loadClients();
     }, []);
+
+    const stats = useMemo(() => {
+        const active = clients.filter((item) => item.status === "ACTIVE").length;
+        const inactive = clients.filter((item) => item.status === "INACTIVE").length;
+
+        return {
+            total: clients.length,
+            active,
+            inactive,
+        };
+    }, [clients]);
 
     const startEditing = (client: TrainerClientResponse) => {
         setEditingClientId(client.id);
@@ -110,18 +131,12 @@ export default function ClientsPage() {
 
         try {
             const updated = await trainerApi.updateClient(clientId, payload);
-
             setClients((prev) =>
                 prev.map((client) => (client.id === clientId ? updated : client))
             );
-
             cancelEditing();
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(error.response?.data?.message ?? "Не удалось обновить клиента");
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось обновить клиента"));
         } finally {
             setSavingClientId(null);
         }
@@ -138,142 +153,107 @@ export default function ClientsPage() {
 
         try {
             await trainerApi.deactivateClient(clientId);
-
             setClients((prev) =>
                 prev.map((client) =>
                     client.id === clientId ? { ...client, status: "INACTIVE" } : client
                 )
             );
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(error.response?.data?.message ?? "Не удалось деактивировать клиента");
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось деактивировать клиента"));
         } finally {
             setDeactivatingClientId(null);
         }
     };
 
-    const stats = useMemo(() => {
-        const active = clients.filter((item) => item.status === "ACTIVE").length;
-        const inactive = clients.filter((item) => item.status === "INACTIVE").length;
-
-        return {
-            total: clients.length,
-            active,
-            inactive,
-        };
-    }, [clients]);
-
     return (
-        <div className="clients-page">
-            <section className="clients-hero">
-                <div className="clients-hero-main">
-                    <div className="clients-kicker">Клиенты</div>
-                    <h1 className="clients-title">Клиентская база тренера</h1>
-                    <p className="clients-subtitle">
-                        Просматривай список клиентов, редактируй данные и контролируй их статус
-                        без перегрузки таблицами и лишними действиями.
-                    </p>
+        <div className="clients-page clients-page-compact entity-page-compact">
+            <section className="clients-header-bar entity-header-bar">
+                <div className="clients-header-main entity-header-main">
+                    <h1 className="clients-header-title entity-header-title">Клиенты</h1>
+
+                    <div className="clients-summary-row entity-summary-row">
+            <span className="clients-summary-chip entity-summary-chip">
+              <strong>{stats.total}</strong>
+              <span>Всего</span>
+            </span>
+
+                        <span className="clients-summary-chip active entity-summary-chip entity-summary-chip--positive">
+              <strong>{stats.active}</strong>
+              <span>Активные</span>
+            </span>
+
+                        <span className="clients-summary-chip inactive entity-summary-chip entity-summary-chip--muted">
+              <strong>{stats.inactive}</strong>
+              <span>Неактивные</span>
+            </span>
+                    </div>
                 </div>
 
-                <div className="clients-hero-stats">
-                    <div className="clients-stat-card">
-                        <span>Всего клиентов</span>
-                        <strong>{stats.total}</strong>
-                    </div>
-                    <div className="clients-stat-card">
-                        <span>Активные</span>
-                        <strong>{stats.active}</strong>
-                    </div>
-                    <div className="clients-stat-card">
-                        <span>Неактивные</span>
-                        <strong>{stats.inactive}</strong>
-                    </div>
-                </div>
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary clients-refresh-btn entity-header-action"
+                    onClick={() => void loadClients()}
+                    disabled={isLoading}
+                >
+                    {isLoading ? "Обновляем..." : "Обновить"}
+                </button>
             </section>
 
-            <section className="clients-panel">
-                <div className="clients-panel-header">
-                    <div>
-                        <div className="clients-panel-kicker">Список</div>
-                        <h2 className="clients-panel-title">Все клиенты</h2>
-                    </div>
+            {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-                    <button
-                        type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
-                        onClick={loadClients}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Обновляем..." : "Обновить"}
-                    </button>
+            <section className="clients-panel clients-panel-compact entity-panel-compact">
+                <div className="clients-section-head entity-section-head">
+                    <h2 className="clients-section-title entity-section-title">Список клиентов</h2>
+                    <span className="clients-section-count entity-section-count">{clients.length}</span>
                 </div>
 
-                {isLoading && <p>Загрузка...</p>}
-                {errorMessage && <div className="error-box">{errorMessage}</div>}
-
-                {!isLoading && !errorMessage && clients.length === 0 && (
+                {isLoading ? (
+                    <div className="clients-empty-text">Загрузка...</div>
+                ) : !errorMessage && clients.length === 0 ? (
                     <div className="clients-empty">
                         <div className="clients-empty-title">Клиентов пока нет</div>
                         <div className="clients-empty-text">
                             Здесь появятся пользователи, закреплённые за тренером.
                         </div>
                     </div>
-                )}
-
-                {!isLoading && !errorMessage && clients.length > 0 && (
-                    <div className="clients-list">
+                ) : (
+                    <section className="clients-list clients-list-compact entity-list-compact">
                         {clients.map((client) => {
                             const isEditing = editingClientId === client.id;
                             const isSaving = savingClientId === client.id;
                             const isDeactivating = deactivatingClientId === client.id;
 
                             return (
-                                <article key={client.id} className="client-card">
-                                    <div className="client-card-top">
-                                        <div className="client-card-main">
-                                            <div className="client-avatar">{getClientInitials(client)}</div>
-                                            <div>
-                                                <h3 className="client-card-title">{getClientDisplayName(client)}</h3>
-                                                <div className="client-card-email">{client.email}</div>
+                                <article
+                                    key={client.id}
+                                    className="client-card client-card-compact entity-card-compact"
+                                >
+                                    <div className="client-card-row entity-card-row">
+                                        <div className="client-avatar client-avatar-compact">
+                                            {getClientInitials(client)}
+                                        </div>
+
+                                        <div className="client-card-content entity-card-main">
+                                            <div className="client-card-name-row">
+                                                <div className="client-card-name">{getClientDisplayName(client)}</div>
+                                                <div className={getClientStatusClass(client.status)}>
+                                                    {getClientStatusLabel(client.status)}
+                                                </div>
+                                            </div>
+
+                                            <div className="client-card-email">{client.email}</div>
+
+                                            <div className="client-card-meta-row entity-meta-row">
+                                                <span>ID {client.id}</span>
+                                                <span>Создан {formatCreatedAt(client.createdAt)}</span>
                                             </div>
                                         </div>
 
-                                        <span className={getClientStatusClass(client.status)}>
-                      {getClientStatusLabel(client.status)}
-                    </span>
-                                    </div>
-
-                                    {!isEditing ? (
-                                        <>
-                                            <div className="client-card-grid">
-                                                <div className="client-card-item">
-                                                    <span>ID</span>
-                                                    <strong>{client.id}</strong>
-                                                </div>
-
-                                                <div className="client-card-item">
-                                                    <span>Имя</span>
-                                                    <strong>{client.firstName ?? "—"}</strong>
-                                                </div>
-
-                                                <div className="client-card-item">
-                                                    <span>Фамилия</span>
-                                                    <strong>{client.lastName ?? "—"}</strong>
-                                                </div>
-
-                                                <div className="client-card-item">
-                                                    <span>Создан</span>
-                                                    <strong>{new Date(client.createdAt).toLocaleString()}</strong>
-                                                </div>
-                                            </div>
-
-                                            <div className="client-card-actions">
+                                        {!isEditing && (
+                                            <div className="client-card-actions client-card-actions-compact entity-actions-compact">
                                                 <button
                                                     type="button"
-                                                    className="dashboard-btn dashboard-btn-primary"
+                                                    className="dashboard-btn dashboard-btn-secondary client-action-btn entity-secondary-btn"
                                                     onClick={() => startEditing(client)}
                                                 >
                                                     Редактировать
@@ -281,24 +261,24 @@ export default function ClientsPage() {
 
                                                 <button
                                                     type="button"
-                                                    className="dashboard-btn dashboard-btn-secondary"
-                                                    onClick={() => handleDeactivate(client.id)}
+                                                    className="card-action-btn card-action-btn-danger client-icon-action entity-icon-btn"
+                                                    onClick={() => void handleDeactivate(client.id)}
                                                     disabled={isDeactivating || client.status === "INACTIVE"}
+                                                    title="Деактивировать"
                                                 >
-                                                    {isDeactivating ? "Деактивируем..." : "Деактивировать"}
+                                                    {isDeactivating ? "..." : "×"}
                                                 </button>
                                             </div>
-                                        </>
-                                    ) : (
-                                        <div className="trainings-form">
-                                            <div className="clients-edit-title">Редактирование клиента</div>
+                                        )}
+                                    </div>
 
-                                            <div className="trainings-form-grid">
+                                    {isEditing && (
+                                        <div className="client-edit-inline">
+                                            <div className="client-edit-grid entity-inline-form entity-inline-form--2">
                                                 <div className="form-row">
                                                     <label htmlFor={`client-first-name-${client.id}`}>Имя</label>
                                                     <input
                                                         id={`client-first-name-${client.id}`}
-                                                        type="text"
                                                         value={editState.firstName}
                                                         onChange={(event) =>
                                                             setEditState((prev) => ({
@@ -313,7 +293,6 @@ export default function ClientsPage() {
                                                     <label htmlFor={`client-last-name-${client.id}`}>Фамилия</label>
                                                     <input
                                                         id={`client-last-name-${client.id}`}
-                                                        type="text"
                                                         value={editState.lastName}
                                                         onChange={(event) =>
                                                             setEditState((prev) => ({
@@ -325,11 +304,11 @@ export default function ClientsPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="client-card-actions">
+                                            <div className="client-edit-actions">
                                                 <button
                                                     type="button"
                                                     className="dashboard-btn dashboard-btn-primary"
-                                                    onClick={() => handleSave(client.id)}
+                                                    onClick={() => void handleSave(client.id)}
                                                     disabled={isSaving}
                                                 >
                                                     {isSaving ? "Сохраняем..." : "Сохранить"}
@@ -349,7 +328,7 @@ export default function ClientsPage() {
                                 </article>
                             );
                         })}
-                    </div>
+                    </section>
                 )}
             </section>
         </div>

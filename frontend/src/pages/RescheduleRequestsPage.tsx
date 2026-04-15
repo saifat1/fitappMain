@@ -1,21 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
 import { useAuth } from "../features/auth/model/AuthContext";
 import { rescheduleApi } from "../shared/api/rescheduleApi";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type { RescheduleRequestResponse } from "../features/reschedule/model/reschedule.types";
 
-function formatTimeRange(
-    startTime: string | null,
-    endTime: string | null
-): string {
+function resolveApiError(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+
+    return fallback;
+}
+
+function formatTimeRange(startTime: string | null, endTime: string | null): string {
     if (!startTime && !endTime) {
         return "Время не указано";
     }
 
     if (startTime && endTime) {
-        return `${startTime} - ${endTime}`;
+        return `${startTime}–${endTime}`;
     }
 
     return startTime ?? endTime ?? "Время не указано";
@@ -51,15 +57,18 @@ function getRequestStatusClass(status: string): string {
     }
 }
 
+function formatCreatedAt(value: string): string {
+    return new Date(value).toLocaleDateString();
+}
+
 export default function RescheduleRequestsPage() {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+    const isTrainer = currentUser?.role === "TRAINER";
 
     const [requests, setRequests] = useState<RescheduleRequestResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
-
-    const isTrainer = currentUser?.role === "TRAINER";
 
     async function loadRequests() {
         setErrorMessage("");
@@ -69,20 +78,14 @@ export default function RescheduleRequestsPage() {
             const data = await rescheduleApi.getRequests();
             setRequests(data);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(
-                    error.response?.data?.message ?? "Не удалось загрузить запросы"
-                );
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось загрузить запросы"));
         } finally {
             setIsLoading(false);
         }
     }
 
     useEffect(() => {
-        loadRequests();
+        void loadRequests();
     }, []);
 
     const stats = useMemo(() => {
@@ -101,130 +104,120 @@ export default function RescheduleRequestsPage() {
     }, [requests]);
 
     return (
-        <div className="reschedule-page">
-            <section className="reschedule-hero">
-                <div className="reschedule-hero-main">
-                    <div className="reschedule-kicker">Переносы</div>
-                    <h1 className="reschedule-title">
-                        {isTrainer ? "Запросы на перенос тренировок" : "Мои запросы на перенос"}
-                    </h1>
-                    <p className="reschedule-subtitle">
-                        {isTrainer
-                            ? "Смотри новые обращения клиентов, быстро выделяй pending-запросы и переходи к принятию решения."
-                            : "Смотри свои запросы на перенос, отслеживай статусы и открывай детали каждого обращения."}
-                    </p>
+        <div className="reschedule-page reschedule-page-compact entity-page-compact">
+            <section className="reschedule-header-bar entity-header-bar">
+                <div className="reschedule-header-main entity-header-main">
+                    <h1 className="reschedule-header-title entity-header-title">Переносы</h1>
+
+                    <div className="reschedule-summary-row entity-summary-row">
+            <span className="reschedule-summary-chip entity-summary-chip">
+              <strong>{stats.total}</strong>
+              <span>Всего</span>
+            </span>
+
+                        <span className="reschedule-summary-chip pending entity-summary-chip entity-summary-chip--info">
+              <strong>{stats.pending}</strong>
+              <span>Ожидают</span>
+            </span>
+
+                        <span className="reschedule-summary-chip approved entity-summary-chip entity-summary-chip--positive">
+              <strong>{stats.approved}</strong>
+              <span>Подтверждены</span>
+            </span>
+
+                        <span className="reschedule-summary-chip muted entity-summary-chip entity-summary-chip--muted">
+              <strong>{stats.rejected + stats.cancelled}</strong>
+              <span>Архив</span>
+            </span>
+                    </div>
                 </div>
 
-                <div className="reschedule-hero-stats">
-                    <div className="reschedule-stat-card">
-                        <span>Всего</span>
-                        <strong>{stats.total}</strong>
-                    </div>
-                    <div className="reschedule-stat-card">
-                        <span>Ожидают решения</span>
-                        <strong>{stats.pending}</strong>
-                    </div>
-                    <div className="reschedule-stat-card">
-                        <span>Подтверждены</span>
-                        <strong>{stats.approved}</strong>
-                    </div>
-                    <div className="reschedule-stat-card">
-                        <span>Отклонены / отменены</span>
-                        <strong>{stats.rejected + stats.cancelled}</strong>
-                    </div>
-                </div>
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary reschedule-refresh-btn entity-header-action"
+                    onClick={() => void loadRequests()}
+                    disabled={isLoading}
+                >
+                    {isLoading ? "Обновляем..." : "Обновить"}
+                </button>
             </section>
 
-            <section className="reschedule-panel">
-                <div className="reschedule-panel-header">
-                    <div>
-                        <div className="reschedule-panel-kicker">Список</div>
-                        <h2 className="reschedule-panel-title">Все запросы</h2>
-                    </div>
+            {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-                    <button
-                        type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
-                        onClick={loadRequests}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Обновляем..." : "Обновить"}
-                    </button>
+            <section className="reschedule-panel reschedule-panel-compact entity-panel-compact">
+                <div className="reschedule-section-head entity-section-head">
+                    <h2 className="reschedule-section-title entity-section-title">
+                        {isTrainer ? "Все запросы" : "Мои запросы"}
+                    </h2>
+                    <span className="reschedule-section-count entity-section-count">{requests.length}</span>
                 </div>
 
-                {errorMessage && <div className="error-box">{errorMessage}</div>}
-
-                {isLoading && <p>Загрузка...</p>}
-
-                {!isLoading && !errorMessage && requests.length === 0 && (
+                {isLoading ? (
+                    <div className="reschedule-empty-text">Загрузка...</div>
+                ) : requests.length === 0 ? (
                     <div className="reschedule-empty">
                         <div className="reschedule-empty-title">Запросов пока нет</div>
                         <div className="reschedule-empty-text">
                             Здесь появятся запросы на перенос тренировок.
                         </div>
                     </div>
-                )}
-
-                {!isLoading && !errorMessage && requests.length > 0 && (
-                    <div className="reschedule-list">
+                ) : (
+                    <section className="reschedule-list reschedule-list-compact entity-list-compact">
                         {requests.map((item) => (
                             <article
                                 key={item.id}
-                                className={
-                                    item.status === "PENDING"
-                                        ? "reschedule-card reschedule-card-pending"
-                                        : "reschedule-card"
-                                }
+                                className={`reschedule-card reschedule-card-compact entity-card-compact ${
+                                    item.status === "PENDING" ? "reschedule-card-pending" : ""
+                                }`}
                             >
-                                <div className="reschedule-card-top">
-                                    <div>
-                                        <div className="reschedule-card-kicker">
-                                            Запрос #{item.id} · Тренировка #{item.trainingId}
+                                <div className="reschedule-card-row entity-card-row">
+                                    <div className="reschedule-card-main-compact entity-card-main">
+                                        <div className="reschedule-card-title-row entity-title-row">
+                                            <div className="reschedule-card-title-compact entity-title">
+                                                {item.requestedTrainingDate} · {formatTimeRange(item.requestedStartTime, item.requestedEndTime)}
+                                            </div>
+                                            <div className={getRequestStatusClass(item.status)}>
+                                                {getRequestStatusLabel(item.status)}
+                                            </div>
                                         </div>
-                                        <h3 className="reschedule-card-title">
-                                            {item.requestedTrainingDate}
-                                        </h3>
-                                        <div className="reschedule-card-time">
-                                            {formatTimeRange(item.requestedStartTime, item.requestedEndTime)}
+
+                                        <div className="reschedule-card-meta-row entity-meta-row">
+                                            <span>Запрос #{item.id}</span>
+                                            <span>Тренировка #{item.trainingId}</span>
+                                            <span>Создан {formatCreatedAt(item.createdAt)}</span>
+                                            {isTrainer && <span>Клиент {item.requesterEmail}</span>}
+                                        </div>
+
+                                        <div className="reschedule-inline-notes">
+                                            <div className="reschedule-inline-note">
+                                                <span>Комментарий клиента</span>
+                                                <strong>
+                                                    {item.clientComment?.trim() ? item.clientComment : "Нет комментария"}
+                                                </strong>
+                                            </div>
+
+                                            <div className="reschedule-inline-note">
+                                                <span>Комментарий тренера</span>
+                                                <strong>
+                                                    {item.trainerComment?.trim() ? item.trainerComment : "Нет комментария"}
+                                                </strong>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <span className={getRequestStatusClass(item.status)}>
-                    {getRequestStatusLabel(item.status)}
-                  </span>
-                                </div>
-
-                                <div className="reschedule-card-grid">
-                                    {isTrainer && (
-                                        <div className="reschedule-card-item">
-                                            <span>Кто запросил</span>
-                                            <strong>{item.requesterEmail}</strong>
-                                        </div>
-                                    )}
-
-                                    <div className="reschedule-card-item">
-                                        <span>Комментарий клиента</span>
-                                        <strong>{item.clientComment?.trim() ? item.clientComment : "Нет комментария"}</strong>
+                                    <div className="reschedule-card-actions reschedule-card-actions-compact entity-actions-compact">
+                                        <button
+                                            type="button"
+                                            className="dashboard-btn dashboard-btn-secondary reschedule-action-btn entity-secondary-btn"
+                                            onClick={() => navigate(`/reschedule-requests/${item.id}`)}
+                                        >
+                                            Открыть
+                                        </button>
                                     </div>
-
-                                    <div className="reschedule-card-item">
-                                        <span>Комментарий тренера</span>
-                                        <strong>{item.trainerComment?.trim() ? item.trainerComment : "Нет комментария"}</strong>
-                                    </div>
-                                </div>
-
-                                <div className="reschedule-card-actions">
-                                    <button
-                                        type="button"
-                                        className="dashboard-btn dashboard-btn-primary"
-                                        onClick={() => navigate(`/reschedule-requests/${item.id}`)}
-                                    >
-                                        Открыть
-                                    </button>
                                 </div>
                             </article>
                         ))}
-                    </div>
+                    </section>
                 )}
             </section>
         </div>

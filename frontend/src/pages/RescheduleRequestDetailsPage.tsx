@@ -1,24 +1,31 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+
 import { useAuth } from "../features/auth/model/AuthContext";
 import { rescheduleApi } from "../shared/api/rescheduleApi";
+
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type {
     ProcessRescheduleRequestRequest,
     RescheduleRequestResponse,
 } from "../features/reschedule/model/reschedule.types";
 
-function formatTimeRange(
-    startTime: string | null,
-    endTime: string | null
-): string {
+function resolveApiError(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+
+    return fallback;
+}
+
+function formatTimeRange(startTime: string | null, endTime: string | null): string {
     if (!startTime && !endTime) {
         return "Время не указано";
     }
 
     if (startTime && endTime) {
-        return `${startTime} - ${endTime}`;
+        return `${startTime}–${endTime}`;
     }
 
     return startTime ?? endTime ?? "Время не указано";
@@ -54,6 +61,14 @@ function getRequestStatusClass(status: string): string {
     }
 }
 
+function formatDateTime(value: string | null): string {
+    if (!value) {
+        return "—";
+    }
+
+    return new Date(value).toLocaleString();
+}
+
 export default function RescheduleRequestDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -85,19 +100,13 @@ export default function RescheduleRequestDetailsPage() {
                 setRequest(data);
                 setTrainerComment(data.trainerComment ?? "");
             } catch (error) {
-                if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                    setErrorMessage(
-                        error.response?.data?.message ?? "Не удалось загрузить запрос"
-                    );
-                } else {
-                    setErrorMessage("Неизвестная ошибка");
-                }
+                setErrorMessage(resolveApiError(error, "Не удалось загрузить запрос"));
             } finally {
                 setIsLoading(false);
             }
         }
 
-        loadRequest();
+        void loadRequest();
     }, [id]);
 
     const handleProcess = async (decision: "APPROVED" | "REJECTED") => {
@@ -118,13 +127,7 @@ export default function RescheduleRequestDetailsPage() {
             setRequest(updated);
             setTrainerComment(updated.trainerComment ?? "");
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(
-                    error.response?.data?.message ?? "Не удалось обработать запрос"
-                );
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось обработать запрос"));
         } finally {
             setIsProcessing(false);
         }
@@ -148,13 +151,7 @@ export default function RescheduleRequestDetailsPage() {
             const updated = await rescheduleApi.getRequest(Number(id));
             setRequest(updated);
         } catch (error) {
-            if (axios.isAxiosError<ApiErrorResponse>(error)) {
-                setErrorMessage(
-                    error.response?.data?.message ?? "Не удалось отменить запрос"
-                );
-            } else {
-                setErrorMessage("Неизвестная ошибка");
-            }
+            setErrorMessage(resolveApiError(error, "Не удалось отменить запрос"));
         } finally {
             setIsCancelling(false);
         }
@@ -162,9 +159,9 @@ export default function RescheduleRequestDetailsPage() {
 
     if (isLoading) {
         return (
-            <div className="reschedule-page">
-                <section className="reschedule-panel">
-                    <p>Загрузка...</p>
+            <div className="reschedule-details-page reschedule-details-page-compact entity-page-compact">
+                <section className="reschedule-details-panel reschedule-details-panel-compact entity-panel-compact">
+                    <div className="reschedule-empty-text">Загрузка...</div>
                 </section>
             </div>
         );
@@ -172,38 +169,37 @@ export default function RescheduleRequestDetailsPage() {
 
     if (errorMessage && !request) {
         return (
-            <div className="reschedule-page">
-                <section className="reschedule-panel">
-                    <div className="error-box">{errorMessage}</div>
-                    <div className="details-actions top-gap">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/reschedule-requests")}
-                        >
-                            Назад к запросам
-                        </button>
-                    </div>
-                </section>
+            <div className="reschedule-details-page reschedule-details-page-compact entity-page-compact">
+                <div className="error-box">{errorMessage}</div>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary"
+                    onClick={() => navigate("/reschedule-requests")}
+                >
+                    Назад к запросам
+                </button>
             </div>
         );
     }
 
     if (!request) {
         return (
-            <div className="reschedule-page">
-                <section className="reschedule-panel">
-                    <p>Запрос не найден.</p>
-                    <div className="details-actions top-gap">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/reschedule-requests")}
-                        >
-                            Назад к запросам
-                        </button>
+            <div className="reschedule-details-page reschedule-details-page-compact entity-page-compact">
+                <section className="reschedule-details-panel reschedule-details-panel-compact entity-panel-compact">
+                    <div className="reschedule-empty-title">Запрос не найден</div>
+                    <div className="reschedule-empty-text">
+                        Возможно, он был удалён или недоступен текущему пользователю.
                     </div>
                 </section>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary"
+                    onClick={() => navigate("/reschedule-requests")}
+                >
+                    Назад к запросам
+                </button>
             </div>
         );
     }
@@ -211,159 +207,152 @@ export default function RescheduleRequestDetailsPage() {
     const isPending = request.status === "PENDING";
 
     return (
-        <div className="reschedule-page">
-            <section className="reschedule-details-hero">
-                <div className="reschedule-details-hero-main">
-                    <div className="reschedule-kicker">Запрос #{request.id}</div>
-                    <h1 className="reschedule-title">Перенос тренировки #{request.trainingId}</h1>
-                    <p className="reschedule-subtitle">
-                        Запрошенная дата: {request.requestedTrainingDate} ·{" "}
-                        {formatTimeRange(request.requestedStartTime, request.requestedEndTime)}
-                    </p>
+        <div className="reschedule-details-page reschedule-details-page-compact entity-page-compact">
+            <section className="reschedule-details-header-bar entity-header-bar">
+                <div className="reschedule-details-header-main entity-header-main">
+                    <h1 className="reschedule-details-header-title entity-header-title">
+                        Запрос #{request.id}
+                    </h1>
 
-                    <div className="training-details-hero-actions">
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={() => navigate("/reschedule-requests")}
-                        >
-                            Назад к запросам
-                        </button>
-                    </div>
-                </div>
+                    <div className="reschedule-details-summary-row entity-summary-row">
+            <span className="entity-summary-chip">
+              <strong>#{request.trainingId}</strong>
+              <span>Тренировка</span>
+            </span>
 
-                <div className="reschedule-details-summary">
-                    <div className="training-details-summary-top">
-            <span className={getRequestStatusClass(request.status)}>
+                        <span className="entity-summary-chip entity-summary-chip--info">
+              <strong>{request.requestedTrainingDate}</strong>
+              <span>{formatTimeRange(request.requestedStartTime, request.requestedEndTime)}</span>
+            </span>
+
+                        <span className={getRequestStatusClass(request.status)}>
               {getRequestStatusLabel(request.status)}
             </span>
                     </div>
-
-                    <div className="training-meta-grid">
-                        <div className="training-meta-item">
-                            <span>Training ID</span>
-                            <strong>{request.trainingId}</strong>
-                        </div>
-                        <div className="training-meta-item">
-                            <span>Requester</span>
-                            <strong>{request.requesterEmail}</strong>
-                        </div>
-                        <div className="training-meta-item">
-                            <span>Создан</span>
-                            <strong>{new Date(request.createdAt).toLocaleString()}</strong>
-                        </div>
-                        <div className="training-meta-item">
-                            <span>Обновлён</span>
-                            <strong>{new Date(request.updatedAt).toLocaleString()}</strong>
-                        </div>
-                    </div>
                 </div>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary entity-header-action"
+                    onClick={() => navigate("/reschedule-requests")}
+                >
+                    Назад
+                </button>
             </section>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-            <section className="training-details-grid">
-                <div className="reschedule-panel">
-                    <div className="reschedule-panel-header">
-                        <div>
-                            <div className="reschedule-panel-kicker">Содержание</div>
-                            <h2 className="reschedule-panel-title">Детали запроса</h2>
-                        </div>
+            <section className="reschedule-details-panel reschedule-details-panel-compact entity-panel-compact">
+                <div className="reschedule-details-section-head entity-section-head">
+                    <h2 className="reschedule-details-section-title entity-section-title">Детали запроса</h2>
+                </div>
+
+                <div className="reschedule-details-grid-compact">
+                    <div className="reschedule-details-item">
+                        <span>Запрошенная дата</span>
+                        <strong>{request.requestedTrainingDate}</strong>
                     </div>
 
-                    <div className="training-meta-grid">
-                        <div className="training-meta-item">
-                            <span>Запрошенная дата</span>
-                            <strong>{request.requestedTrainingDate}</strong>
-                        </div>
-                        <div className="training-meta-item">
-                            <span>Запрошенное время</span>
-                            <strong>{formatTimeRange(request.requestedStartTime, request.requestedEndTime)}</strong>
-                        </div>
-                        <div className="training-meta-item training-meta-item-wide">
-                            <span>Комментарий клиента</span>
-                            <strong>{request.clientComment ?? "Нет комментария"}</strong>
-                        </div>
-                        <div className="training-meta-item training-meta-item-wide">
-                            <span>Комментарий тренера</span>
-                            <strong>{request.trainerComment ?? "Нет комментария"}</strong>
-                        </div>
-                        <div className="training-meta-item">
-                            <span>Обработан</span>
-                            <strong>
-                                {request.processedAt
-                                    ? new Date(request.processedAt).toLocaleString()
-                                    : "Ещё не обработан"}
-                            </strong>
-                        </div>
+                    <div className="reschedule-details-item">
+                        <span>Запрошенное время</span>
+                        <strong>{formatTimeRange(request.requestedStartTime, request.requestedEndTime)}</strong>
+                    </div>
+
+                    <div className="reschedule-details-item">
+                        <span>Отправитель</span>
+                        <strong>{request.requesterEmail}</strong>
+                    </div>
+
+                    <div className="reschedule-details-item">
+                        <span>Создан</span>
+                        <strong>{formatDateTime(request.createdAt)}</strong>
+                    </div>
+
+                    <div className="reschedule-details-item">
+                        <span>Обновлён</span>
+                        <strong>{formatDateTime(request.updatedAt)}</strong>
+                    </div>
+
+                    <div className="reschedule-details-item">
+                        <span>Обработан</span>
+                        <strong>{formatDateTime(request.processedAt)}</strong>
                     </div>
                 </div>
 
-                <div className="reschedule-panel">
-                    <div className="reschedule-panel-header">
-                        <div>
-                            <div className="reschedule-panel-kicker">Действия</div>
-                            <h2 className="reschedule-panel-title">Работа с запросом</h2>
-                        </div>
+                <div className="reschedule-details-notes">
+                    <div className="reschedule-inline-note">
+                        <span>Комментарий клиента</span>
+                        <strong>{request.clientComment?.trim() ? request.clientComment : "Нет комментария"}</strong>
                     </div>
 
-                    {isTrainer && isPending ? (
-                        <div className="trainings-form">
-                            <div className="form-row">
-                                <label htmlFor="trainer-comment">Комментарий тренера</label>
-                                <textarea
-                                    id="trainer-comment"
-                                    value={trainerComment}
-                                    onChange={(event) => setTrainerComment(event.target.value)}
-                                    rows={5}
-                                    placeholder="Добавь пояснение к решению, если это нужно"
-                                />
-                            </div>
+                    <div className="reschedule-inline-note">
+                        <span>Комментарий тренера</span>
+                        <strong>{request.trainerComment?.trim() ? request.trainerComment : "Нет комментария"}</strong>
+                    </div>
+                </div>
+            </section>
 
-                            <div className="details-actions">
-                                <button
-                                    type="button"
-                                    className="dashboard-btn dashboard-btn-primary"
-                                    onClick={() => handleProcess("APPROVED")}
-                                    disabled={isProcessing}
-                                >
-                                    {isProcessing ? "Обрабатываем..." : "Подтвердить перенос"}
-                                </button>
+            <section className="reschedule-details-panel reschedule-details-panel-compact entity-panel-compact">
+                <div className="reschedule-details-section-head entity-section-head">
+                    <h2 className="reschedule-details-section-title entity-section-title">Действия</h2>
+                </div>
 
-                                <button
-                                    type="button"
-                                    className="dashboard-btn dashboard-btn-secondary"
-                                    onClick={() => handleProcess("REJECTED")}
-                                    disabled={isProcessing}
-                                >
-                                    {isProcessing ? "Обрабатываем..." : "Отклонить"}
-                                </button>
-                            </div>
+                {isTrainer && isPending ? (
+                    <div className="reschedule-details-action-block">
+                        <div className="form-row">
+                            <label htmlFor="trainer-comment">Комментарий тренера</label>
+                            <textarea
+                                id="trainer-comment"
+                                value={trainerComment}
+                                onChange={(event) => setTrainerComment(event.target.value)}
+                                rows={5}
+                                placeholder="Добавь пояснение к решению, если это нужно"
+                            />
                         </div>
-                    ) : null}
 
-                    {isClient && isPending ? (
-                        <div className="details-actions">
+                        <div className="reschedule-details-actions">
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-primary"
+                                onClick={() => void handleProcess("APPROVED")}
+                                disabled={isProcessing}
+                            >
+                                {isProcessing ? "Обрабатываем..." : "Подтвердить"}
+                            </button>
+
                             <button
                                 type="button"
                                 className="dashboard-btn dashboard-btn-secondary"
-                                onClick={handleCancel}
-                                disabled={isCancelling}
+                                onClick={() => void handleProcess("REJECTED")}
+                                disabled={isProcessing}
                             >
-                                {isCancelling ? "Отменяем..." : "Отменить запрос"}
+                                {isProcessing ? "Обрабатываем..." : "Отклонить"}
                             </button>
                         </div>
-                    ) : null}
+                    </div>
+                ) : null}
 
-                    {!isPending && (
-                        <div className="reschedule-note-box">
-                            <div className="reschedule-note-box-title">Статус финализирован</div>
-                            <div className="reschedule-note-box-text">
-                                Для этого запроса дополнительные действия сейчас не требуются.
-                            </div>
+                {isClient && isPending ? (
+                    <div className="reschedule-details-actions">
+                        <button
+                            type="button"
+                            className="dashboard-btn dashboard-btn-secondary"
+                            onClick={() => void handleCancel()}
+                            disabled={isCancelling}
+                        >
+                            {isCancelling ? "Отменяем..." : "Отменить запрос"}
+                        </button>
+                    </div>
+                ) : null}
+
+                {!isPending && (
+                    <div className="reschedule-note-box">
+                        <div className="reschedule-note-box-title">Статус финализирован</div>
+                        <div className="reschedule-note-box-text">
+                            Для этого запроса дополнительные действия сейчас не требуются.
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </section>
         </div>
     );

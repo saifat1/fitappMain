@@ -219,10 +219,11 @@ export default function TrainingsPage() {
     const otherItems = rangeIncludesToday ? otherTrainings : trainings;
 
     return (
-        <div className="trainings-page trainings-page-compact">
-            <section className="trainings-header-bar">
-                <div className="trainings-header-main">
-                    <h1 className="trainings-header-title">Тренировки</h1>
+        <div className="trainings-page trainings-page-compact entity-page-compact">
+            <section className="trainings-header-bar entity-header-bar">
+                <div className="trainings-header-main entity-header-main">
+                    <h1 className="trainings-header-title entity-header-title">Тренировки</h1>
+
                     <div className="trainings-period-switch">
                         <button
                             type="button"
@@ -253,7 +254,7 @@ export default function TrainingsPage() {
                 {isTrainer && (
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-primary trainings-create-top-btn"
+                        className="dashboard-btn dashboard-btn-primary trainings-create-top-btn entity-header-action"
                         onClick={() => setIsCreateOpen(true)}
                     >
                         Создать тренировку
@@ -264,10 +265,12 @@ export default function TrainingsPage() {
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
             {showTodaySection && (
-                <section className="trainings-panel trainings-panel-compact">
-                    <div className="trainings-section-head">
-                        <h2 className="trainings-section-title">Сегодня</h2>
-                        <span className="trainings-section-count">{todayTrainings.length}</span>
+                <section className="trainings-panel trainings-panel-compact entity-panel-compact">
+                    <div className="trainings-section-head entity-section-head">
+                        <h2 className="trainings-section-title entity-section-title">Сегодня</h2>
+                        <span className="trainings-section-count entity-section-count">
+              {todayTrainings.length}
+            </span>
                     </div>
 
                     {isLoading ? (
@@ -280,7 +283,7 @@ export default function TrainingsPage() {
                             </div>
                         </div>
                     ) : (
-                        <section className="trainings-list trainings-list-compact">
+                        <section className="trainings-list trainings-list-compact entity-list-compact">
                             {todayTrainings.map((training) => (
                                 <TrainingCard
                                     key={training.id}
@@ -298,12 +301,14 @@ export default function TrainingsPage() {
             )}
 
             {showOtherSection && (
-                <section className="trainings-panel trainings-panel-compact">
-                    <div className="trainings-section-head">
-                        <h2 className="trainings-section-title">
+                <section className="trainings-panel trainings-panel-compact entity-panel-compact">
+                    <div className="trainings-section-head entity-section-head">
+                        <h2 className="trainings-section-title entity-section-title">
                             {rangeIncludesToday ? "Остальные" : "Тренировки"}
                         </h2>
-                        <span className="trainings-section-count">{otherItems.length}</span>
+                        <span className="trainings-section-count entity-section-count">
+              {otherItems.length}
+            </span>
                     </div>
 
                     {isLoading ? (
@@ -316,7 +321,7 @@ export default function TrainingsPage() {
                             </div>
                         </div>
                     ) : (
-                        <section className="trainings-list trainings-list-compact">
+                        <section className="trainings-list trainings-list-compact entity-list-compact">
                             {otherItems.map((training) => (
                                 <TrainingCard
                                     key={training.id}
@@ -333,7 +338,7 @@ export default function TrainingsPage() {
                 </section>
             )}
 
-            <section className="trainings-meta-panel desktop-meta-panel">
+            <section className="trainings-meta-panel desktop-meta-panel entity-panel-compact">
                 <TrainingQuickFilters
                     viewMode={viewMode}
                     draftFrom={draftFrom}
@@ -350,7 +355,7 @@ export default function TrainingsPage() {
                 <TrainingsStats trainings={trainings} />
             </section>
 
-            <section className="trainings-meta-panel mobile-meta-panel">
+            <section className="trainings-meta-panel mobile-meta-panel entity-panel-compact">
                 <button
                     type="button"
                     className="trainings-mobile-meta-toggle"
