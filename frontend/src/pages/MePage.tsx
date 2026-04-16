@@ -97,6 +97,7 @@ export default function MePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingClients, setIsLoadingClients] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [processingTrainingId, setProcessingTrainingId] = useState<number | null>(null);
 
     const [errorMessage, setErrorMessage] = useState("");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -224,6 +225,53 @@ export default function MePage() {
         }
     };
 
+    const handleQuickCompleteTraining = async (trainingId: number) => {
+        setProcessingTrainingId(trainingId);
+        setErrorMessage("");
+
+        try {
+            await trainingApi.completeTraining(trainingId);
+            const updated = await trainingApi.getTraining(trainingId);
+
+            setTrainings((prev) =>
+                prev.map((item) => (item.id === trainingId ? updated : item))
+            );
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось завершить тренировку"));
+        } finally {
+            setProcessingTrainingId(null);
+        }
+    };
+
+    const handleQuickCancelTraining = async (trainingId: number) => {
+        const confirmed = window.confirm("Отменить тренировку?");
+        if (!confirmed) {
+            return;
+        }
+
+        setProcessingTrainingId(trainingId);
+        setErrorMessage("");
+
+        try {
+            await trainingApi.cancelTraining(trainingId);
+            const updated = await trainingApi.getTraining(trainingId);
+
+            setTrainings((prev) =>
+                prev.map((item) => (item.id === trainingId ? updated : item))
+            );
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось отменить тренировку"));
+        } finally {
+            setProcessingTrainingId(null);
+        }
+    };
+
+    const handleQuickRescheduleTraining = (trainingId: number) => {
+        navigate("/reschedule-requests", {
+            state: { trainingId, source: "calendar" },
+        });
+    };
+
     const handlePrevMonth = () => {
         const nextMonth = shiftMonth(currentMonth, -1);
         setCurrentMonth(nextMonth);
@@ -344,8 +392,12 @@ export default function MePage() {
                         selectedDate={selectedDate}
                         hourSlots={hourSlots}
                         trainings={selectedDayTrainings}
+                        processingTrainingId={processingTrainingId}
                         onOpenTraining={(trainingId) => navigate(`/trainings/${trainingId}`)}
                         onQuickAdd={handleOpenCreate}
+                        onCompleteTraining={handleQuickCompleteTraining}
+                        onCancelTraining={handleQuickCancelTraining}
+                        onRescheduleTraining={handleQuickRescheduleTraining}
                     />
                 </div>
             </div>

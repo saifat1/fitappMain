@@ -556,4 +556,514 @@
         flex-direction: column;
         align-items: stretch;
     }
+    /* ===== Coach calendar v3 actions + mobile modal ===== */
+
+    .coach-calendar-v3-action-btn {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid #d7dee7;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .coach-calendar-v3-action-btn:hover {
+        border-color: #99f6e4;
+        background: #f8fffe;
+    }
+
+    .coach-calendar-v3-action-btn--icon {
+        min-width: 36px;
+        padding: 0;
+        font-size: 18px;
+        color: #0f766e;
+    }
+
+    .coach-calendar-v3-action-btn--success {
+        min-width: 36px;
+        padding: 0;
+        color: #166534;
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .coach-calendar-v3-action-btn--neutral {
+        min-width: 36px;
+        padding: 0;
+        color: #0369a1;
+        background: #f0f9ff;
+        border-color: #bae6fd;
+    }
+
+    .coach-calendar-v3-action-btn--danger {
+        min-width: 36px;
+        padding: 0;
+        color: #991b1b;
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .coach-agenda-v3-panel {
+        min-width: 0;
+    }
+
+    .coach-agenda-v3-header {
+        margin-bottom: 12px;
+    }
+
+    .coach-agenda-v3-title {
+        margin: 0;
+        color: #0f172a;
+        font-size: 22px;
+        line-height: 1.2;
+    }
+
+    .coach-agenda-v3-subtitle {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .coach-agenda-v3-table {
+        display: grid;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-head {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+        padding: 0 12px;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .coach-agenda-v3-body {
+        display: grid;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-row {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+        min-height: 58px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .coach-agenda-v3-row--empty {
+        background: #f8fafc;
+    }
+
+    .coach-agenda-v3-time {
+        display: flex;
+        align-items: center;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .coach-agenda-v3-main {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .coach-agenda-v3-main-left {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+    }
+
+    .coach-agenda-v3-client {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .coach-agenda-v3-empty-title {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .coach-agenda-v3-meta {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .coach-agenda-v3-meta-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .coach-agenda-v3-status--planned {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .coach-agenda-v3-status--completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .coach-agenda-v3-status--cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .coach-agenda-v3-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    /* mobile modal fix */
+
+    @media (max-width: 760px) {
+        .coach-create-sheet {
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            transform: none;
+            width: auto;
+            height: calc(100dvh - 24px);
+            max-height: none;
+            padding: 14px;
+            border-radius: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .coach-create-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 0;
+            flex: 1 1 auto;
+        }
+
+        .coach-create-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .coach-create-form textarea {
+            min-height: 72px;
+        }
+
+        .coach-create-actions {
+            margin-top: auto;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .coach-agenda-v3-head {
+            display: none;
+        }
+
+        .coach-agenda-v3-row {
+            grid-template-columns: 60px minmax(0, 1fr);
+            gap: 10px;
+            min-height: 54px;
+            padding: 8px 10px;
+        }
+
+        .coach-agenda-v3-main {
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .coach-agenda-v3-time {
+            align-items: flex-start;
+            padding-top: 2px;
+        }
+
+        .coach-agenda-v3-actions {
+            justify-content: flex-start;
+        }
+
+        .coach-calendar-v3-action-btn {
+            min-height: 34px;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        .coach-calendar-v3-action-btn--icon,
+        .coach-calendar-v3-action-btn--success,
+        .coach-calendar-v3-action-btn--neutral,
+        .coach-calendar-v3-action-btn--danger {
+            min-width: 34px;
+        }
+    }
+    /* ===== Agenda v3 hard fix ===== */
+
+    .coach-calendar-v3-action-btn {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid #d7dee7;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .coach-calendar-v3-action-btn:hover {
+        border-color: #99f6e4;
+        background: #f8fffe;
+    }
+
+    .coach-calendar-v3-action-btn--icon {
+        min-width: 36px;
+        padding: 0;
+        font-size: 18px;
+        color: #0f766e;
+    }
+
+    .coach-calendar-v3-action-btn--success {
+        min-width: 36px;
+        padding: 0;
+        color: #166534;
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+    }
+
+    .coach-calendar-v3-action-btn--neutral {
+        min-width: 36px;
+        padding: 0;
+        color: #0369a1;
+        background: #f0f9ff;
+        border-color: #bae6fd;
+    }
+
+    .coach-calendar-v3-action-btn--danger {
+        min-width: 36px;
+        padding: 0;
+        color: #991b1b;
+        background: #fef2f2;
+        border-color: #fecaca;
+    }
+
+    .coach-agenda-v3-panel {
+        min-width: 0;
+    }
+
+    .coach-agenda-v3-header {
+        margin-bottom: 12px;
+    }
+
+    .coach-agenda-v3-title {
+        margin: 0;
+        color: #0f172a;
+        font-size: 22px;
+        line-height: 1.2;
+    }
+
+    .coach-agenda-v3-subtitle {
+        margin-top: 4px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .coach-agenda-v3-table {
+        display: grid;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-head {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+        padding: 0 12px;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .coach-agenda-v3-body {
+        display: grid;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-row {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+        min-height: 58px;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .coach-agenda-v3-row--empty {
+        background: #f8fafc;
+    }
+
+    .coach-agenda-v3-time {
+        display: flex;
+        align-items: center;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .coach-agenda-v3-main {
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .coach-agenda-v3-main-left {
+        min-width: 0;
+        display: grid;
+        gap: 4px;
+    }
+
+    .coach-agenda-v3-client {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    .coach-agenda-v3-empty-title {
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .coach-agenda-v3-meta {
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .coach-agenda-v3-meta-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .coach-agenda-v3-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .coach-agenda-v3-status--planned {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .coach-agenda-v3-status--completed {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .coach-agenda-v3-status--cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .coach-agenda-v3-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 760px) {
+        .coach-agenda-v3-head {
+            display: none;
+        }
+
+        .coach-agenda-v3-row {
+            grid-template-columns: 60px minmax(0, 1fr);
+            gap: 10px;
+            min-height: 54px;
+            padding: 8px 10px;
+        }
+
+        .coach-agenda-v3-main {
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .coach-agenda-v3-time {
+            align-items: flex-start;
+            padding-top: 2px;
+        }
+
+        .coach-agenda-v3-actions {
+            justify-content: flex-start;
+        }
+
+        .coach-calendar-v3-action-btn {
+            min-height: 34px;
+            padding: 0 10px;
+            font-size: 12px;
+        }
+
+        .coach-calendar-v3-action-btn--icon,
+        .coach-calendar-v3-action-btn--success,
+        .coach-calendar-v3-action-btn--neutral,
+        .coach-calendar-v3-action-btn--danger {
+            min-width: 34px;
+        }
+    }
 }

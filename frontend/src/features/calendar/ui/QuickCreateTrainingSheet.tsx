@@ -155,7 +155,7 @@ export default function QuickCreateTrainingSheet({
                         <label htmlFor="calendar-note">Заметка</label>
                         <textarea
                             id="calendar-note"
-                            rows={3}
+                            rows={2}
                             value={trainerNote}
                             onChange={(event) => setTrainerNote(event.target.value)}
                         />

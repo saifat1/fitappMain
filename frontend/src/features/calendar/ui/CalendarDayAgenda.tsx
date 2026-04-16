@@ -1,12 +1,17 @@
 import type { TrainingResponse } from "../../training/model/training.types";
 import { getClientDisplayName } from "../lib/trainerCalendar";
+import styles from "./CalendarDayAgenda.module.css";
 
 type Props = {
     selectedDate: string;
     hourSlots: string[];
     trainings: TrainingResponse[];
+    processingTrainingId: number | null;
     onOpenTraining: (trainingId: number) => void;
     onQuickAdd: (startTime?: string) => void;
+    onCompleteTraining: (trainingId: number) => void;
+    onCancelTraining: (trainingId: number) => void;
+    onRescheduleTraining: (trainingId: number) => void;
 };
 
 function formatDateTitle(value: string): string {
@@ -41,13 +46,13 @@ function getStatusLabel(status: string): string {
 function getStatusClass(status: string): string {
     switch (status) {
         case "PLANNED":
-            return "coach-agenda-v2-status coach-agenda-v2-status--planned";
+            return `${styles.status} ${styles.statusPlanned}`;
         case "COMPLETED":
-            return "coach-agenda-v2-status coach-agenda-v2-status--completed";
+            return `${styles.status} ${styles.statusCompleted}`;
         case "CANCELLED":
-            return "coach-agenda-v2-status coach-agenda-v2-status--cancelled";
+            return `${styles.status} ${styles.statusCancelled}`;
         default:
-            return "coach-agenda-v2-status";
+            return styles.status;
     }
 }
 
@@ -55,8 +60,12 @@ export default function CalendarDayAgenda({
                                               selectedDate,
                                               hourSlots,
                                               trainings,
+                                              processingTrainingId,
                                               onOpenTraining,
                                               onQuickAdd,
+                                              onCompleteTraining,
+                                              onCancelTraining,
+                                              onRescheduleTraining,
                                           }: Props) {
     const byHour = trainings.reduce<Record<string, TrainingResponse[]>>((acc, item) => {
         const key = normalizeTime(item.startTime) || "Без времени";
@@ -68,11 +77,11 @@ export default function CalendarDayAgenda({
     }, {});
 
     return (
-        <section className="coach-calendar-panel coach-agenda-v2-panel">
-            <div className="coach-agenda-v2-header">
+        <section className={styles.panel}>
+            <div className={styles.header}>
                 <div>
-                    <h2 className="coach-agenda-v2-title">{formatDateTitle(selectedDate)}</h2>
-                    <div className="coach-agenda-v2-subtitle">
+                    <h2 className={styles.title}>{formatDateTitle(selectedDate)}</h2>
+                    <div className={styles.subtitle}>
                         {trainings.length > 0
                             ? `Записей на день: ${trainings.length}`
                             : "На выбранный день записей нет"}
@@ -80,30 +89,30 @@ export default function CalendarDayAgenda({
                 </div>
             </div>
 
-            <div className="coach-agenda-v2-table">
-                <div className="coach-agenda-v2-head">
-                    <div className="coach-agenda-v2-head-time">Время</div>
-                    <div className="coach-agenda-v2-head-main">Запись</div>
+            <div className={styles.table}>
+                <div className={styles.head}>
+                    <div>Время</div>
+                    <div>Запись</div>
                 </div>
 
-                <div className="coach-agenda-v2-body">
+                <div className={styles.body}>
                     {hourSlots.map((slot) => {
                         const slotTrainings = byHour[slot] ?? [];
 
                         if (slotTrainings.length === 0) {
                             return (
-                                <div key={slot} className="coach-agenda-v2-row coach-agenda-v2-row--empty">
-                                    <div className="coach-agenda-v2-time">{slot}</div>
+                                <div key={slot} className={`${styles.row} ${styles.rowEmpty}`}>
+                                    <div className={styles.time}>{slot}</div>
 
-                                    <div className="coach-agenda-v2-main">
-                                        <div className="coach-agenda-v2-main-left">
-                                            <div className="coach-agenda-v2-empty-title">Свободно</div>
-                                            <div className="coach-agenda-v2-meta">Нет записи на этот час</div>
+                                    <div className={styles.main}>
+                                        <div className={styles.mainLeft}>
+                                            <div className={styles.emptyTitle}>Свободно</div>
+                                            <div className={styles.meta}>Нет записи на этот час</div>
                                         </div>
 
                                         <button
                                             type="button"
-                                            className="coach-calendar-v2-icon-btn"
+                                            className={`dashboard-btn dashboard-btn-secondary ${styles.iconBtn} ${styles.addBtn}`}
                                             onClick={() => onQuickAdd(slot)}
                                             title="Добавить тренировку"
                                         >
@@ -114,39 +123,79 @@ export default function CalendarDayAgenda({
                             );
                         }
 
-                        return slotTrainings.map((training) => (
-                            <div key={training.id} className="coach-agenda-v2-row">
-                                <div className="coach-agenda-v2-time">{slot}</div>
+                        return slotTrainings.map((training) => {
+                            const isBusy = processingTrainingId === training.id;
 
-                                <div className="coach-agenda-v2-main">
-                                    <div className="coach-agenda-v2-main-left">
-                                        <div className="coach-agenda-v2-client">
-                                            {getClientDisplayName(training)}
+                            return (
+                                <div key={training.id} className={styles.row}>
+                                    <div className={styles.time}>{slot}</div>
+
+                                    <div className={styles.main}>
+                                        <div className={styles.mainLeft}>
+                                            <div className={styles.client}>
+                                                {getClientDisplayName(training)}
+                                            </div>
+
+                                            <div className={styles.metaRow}>
+                        <span className={styles.meta}>
+                          {training.endTime
+                              ? `${slot}–${normalizeTime(training.endTime)}`
+                              : slot}
+                        </span>
+
+                                                <span className={getStatusClass(training.status)}>
+                          {getStatusLabel(training.status)}
+                        </span>
+                                            </div>
                                         </div>
 
-                                        <div className="coach-agenda-v2-meta-row">
-                      <span className="coach-agenda-v2-meta">
-                        {training.endTime
-                            ? `${slot}–${normalizeTime(training.endTime)}`
-                            : slot}
-                      </span>
+                                        <div className={styles.actions}>
+                                            <button
+                                                type="button"
+                                                className={`dashboard-btn dashboard-btn-secondary ${styles.openBtn}`}
+                                                onClick={() => onOpenTraining(training.id)}
+                                            >
+                                                Открыть
+                                            </button>
 
-                                            <span className={getStatusClass(training.status)}>
-                        {getStatusLabel(training.status)}
-                      </span>
+                                            {training.status === "PLANNED" && (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        className={`dashboard-btn dashboard-btn-secondary ${styles.iconBtn} ${styles.completeBtn}`}
+                                                        onClick={() => onCompleteTraining(training.id)}
+                                                        disabled={isBusy}
+                                                        title="Завершить тренировку"
+                                                    >
+                                                        ✓
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className={`dashboard-btn dashboard-btn-secondary ${styles.iconBtn} ${styles.rescheduleBtn}`}
+                                                        onClick={() => onRescheduleTraining(training.id)}
+                                                        disabled={isBusy}
+                                                        title="Перенос тренировки"
+                                                    >
+                                                        ↔
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className={`dashboard-btn dashboard-btn-secondary ${styles.iconBtn} ${styles.cancelBtn}`}
+                                                        onClick={() => onCancelTraining(training.id)}
+                                                        disabled={isBusy}
+                                                        title="Отменить тренировку"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        className="coach-calendar-v2-open-btn"
-                                        onClick={() => onOpenTraining(training.id)}
-                                    >
-                                        Открыть
-                                    </button>
                                 </div>
-                            </div>
-                        ));
+                            );
+                        });
                     })}
                 </div>
             </div>
