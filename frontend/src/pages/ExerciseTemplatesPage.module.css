@@ -120,37 +120,59 @@
 }
 
 .toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 12px;
-    flex-wrap: wrap;
+    align-items: end;
     margin-bottom: 12px;
 }
 
 .searchWrap {
-    min-width: 280px;
-    flex: 1 1 320px;
+    min-width: 0;
+}
+
+.searchInput {
+    min-height: 44px;
 }
 
 .toggleWrap {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: end;
 }
 
 .toggleLabel {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    min-height: 40px;
-    padding: 0 14px;
+    gap: 10px;
+    min-height: 44px;
+    padding: 10px 14px;
     border: 1px solid #d7dee7;
     border-radius: 12px;
     background: #ffffff;
     color: #0f172a;
     font-size: 14px;
+    line-height: 1.2;
     box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.checkbox {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px;
+    margin: 0;
+    padding: 0 !important;
+    border: none;
+    border-radius: 6px;
+    box-shadow: none;
+    background: transparent;
+    accent-color: #0f766e;
+    flex: 0 0 auto;
+}
+
+.toggleText {
+    display: inline-block;
+    line-height: 1.2;
 }
 
 .list {
@@ -169,7 +191,7 @@
 
 .card {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     padding: 14px;
     border: 1px solid #e2e8f0;
     border-radius: 18px;
@@ -315,15 +337,20 @@
 }
 
 @media (max-width: 760px) {
+    .page {
+        gap: 12px;
+    }
+
     .header {
         flex-direction: column;
         align-items: stretch;
-        padding: 14px;
-        border-radius: 18px;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 16px;
     }
 
     .title {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .headerActions {
@@ -332,18 +359,34 @@
 
     .headerActions :global(.dashboard-btn) {
         flex: 1 1 auto;
+        width: 100%;
     }
 
     .panel {
-        padding: 14px;
-        border-radius: 18px;
+        padding: 12px;
+        border-radius: 16px;
     }
 
     .panelHead,
-    .toolbar,
     .cardTop {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .toolbar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .toggleWrap {
+        width: 100%;
+    }
+
+    .toggleLabel {
+        width: 100%;
+        min-height: 40px;
+        padding: 10px 12px;
+        white-space: normal;
     }
 
     .grid,
@@ -352,17 +395,37 @@
         grid-template-columns: 1fr;
     }
 
+    .row textarea {
+        min-height: 72px;
+    }
+
     .searchWrap {
         min-width: 0;
     }
 
-    .cardActions {
+    .card {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    .detail {
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .noteBox {
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .cardActions,
+    .formActions {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .formActions {
-        flex-direction: column;
-        align-items: stretch;
+    .cardActions :global(.dashboard-btn),
+    .formActions :global(.dashboard-btn) {
+        width: 100%;
     }
 }

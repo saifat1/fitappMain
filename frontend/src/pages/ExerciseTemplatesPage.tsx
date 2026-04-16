@@ -278,6 +278,7 @@ export default function ExerciseTemplatesPage() {
                         <label htmlFor="template-search">Поиск</label>
                         <input
                             id="template-search"
+                            className={styles.searchInput}
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
                             placeholder="Название, описание, заметка"
@@ -288,10 +289,11 @@ export default function ExerciseTemplatesPage() {
                         <label className={styles.toggleLabel}>
                             <input
                                 type="checkbox"
+                                className={styles.checkbox}
                                 checked={includeArchived}
                                 onChange={(event) => setIncludeArchived(event.target.checked)}
                             />
-                            Показать архив
+                            <span className={styles.toggleText}>Показать архив</span>
                         </label>
                     </div>
                 </div>
