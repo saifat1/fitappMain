@@ -123,7 +123,7 @@ export default function MePage() {
         [trainingsByDate, selectedDate]
     );
 
-    const hourSlots = useMemo(() => buildHourSlots(8, 21), []);
+    const hourSlots = useMemo(() => buildHourSlots(6, 23), []);
 
     const daysWithPlannedTrainings = useMemo(() => {
         const unique = new Set(
