@@ -4,16 +4,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.exercisetemplate.dto.ApplyExerciseTemplateRequest;
+import ru.fitapp.backend.exercisetemplate.entity.ExerciseTemplate;
+import ru.fitapp.backend.exercisetemplate.service.ExerciseTemplateService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.service.TrainingService;
-import ru.fitapp.backend.user.entity.AppUser;
-import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.trainingexercise.dto.CreateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseResponse;
 import ru.fitapp.backend.trainingexercise.dto.UpdateExerciseCompletionRequest;
 import ru.fitapp.backend.trainingexercise.dto.UpdateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.entity.TrainingExercise;
 import ru.fitapp.backend.trainingexercise.repository.TrainingExerciseRepository;
+import ru.fitapp.backend.user.entity.AppUser;
+import ru.fitapp.backend.user.model.UserRole;
 
 import java.util.List;
 
@@ -24,13 +27,18 @@ public class TrainingExerciseService {
     private final TrainingExerciseRepository trainingExerciseRepository;
     private final TrainingService trainingService;
     private final CurrentUserService currentUserService;
+    private final ExerciseTemplateService exerciseTemplateService;
 
-    public TrainingExerciseService(TrainingExerciseRepository trainingExerciseRepository,
-                                   TrainingService trainingService,
-                                   CurrentUserService currentUserService) {
+    public TrainingExerciseService(
+            TrainingExerciseRepository trainingExerciseRepository,
+            TrainingService trainingService,
+            CurrentUserService currentUserService,
+            ExerciseTemplateService exerciseTemplateService
+    ) {
         this.trainingExerciseRepository = trainingExerciseRepository;
         this.trainingService = trainingService;
         this.currentUserService = currentUserService;
+        this.exerciseTemplateService = exerciseTemplateService;
     }
 
     @Transactional(readOnly = true)
@@ -46,12 +54,9 @@ public class TrainingExerciseService {
     public TrainingExerciseResponse createExercise(Long trainingId, CreateTrainingExerciseRequest request) {
         Training training = trainingService.getTrainerOwnedTrainingEntity(trainingId);
 
-        long currentCount = trainingExerciseRepository.countByTrainingId(trainingId);
-        int nextOrderNum = (int) currentCount + 1;
-
         TrainingExercise exercise = new TrainingExercise()
                 .setTraining(training)
-                .setOrderNum(nextOrderNum)
+                .setOrderNum(getNextOrderNum(trainingId))
                 .setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
                 .setSets(request.getSets())
@@ -65,18 +70,45 @@ public class TrainingExerciseService {
         return mapToResponse(saved);
     }
 
-    public TrainingExerciseResponse updateExercise(Long trainingId,
-                                                   Long exerciseId,
-                                                   UpdateTrainingExerciseRequest request) {
+    public TrainingExerciseResponse createExerciseFromTemplate(
+            Long trainingId,
+            ApplyExerciseTemplateRequest request
+    ) {
+        Training training = trainingService.getTrainerOwnedTrainingEntity(trainingId);
+        ExerciseTemplate template = exerciseTemplateService.getActiveTemplateEntity(request.getTemplateId());
+
+        TrainingExercise exercise = new TrainingExercise()
+                .setTraining(training)
+                .setOrderNum(getNextOrderNum(trainingId))
+                .setTitle(normalizeRequired(template.getName(), "Название упражнения обязательно"))
+                .setDescription(normalizeOptional(template.getDescription()))
+                .setSets(template.getSets())
+                .setReps(template.getReps())
+                .setDurationSeconds(template.getDurationSeconds())
+                .setRestSeconds(template.getRestSeconds())
+                .setTrainerNote(normalizeOptional(template.getTrainerNote()))
+                .setIsCompleted(false);
+
+        TrainingExercise saved = trainingExerciseRepository.save(exercise);
+        return mapToResponse(saved);
+    }
+
+    public TrainingExerciseResponse updateExercise(
+            Long trainingId,
+            Long exerciseId,
+            UpdateTrainingExerciseRequest request
+    ) {
         AppUser currentUser = currentUserService.getCurrentUser();
         Training training = trainingService.getAccessibleTrainingEntity(trainingId);
         TrainingExercise exercise = getExerciseOrThrow(trainingId, exerciseId);
 
-        boolean isTrainerOwner = currentUser.getRole() == UserRole.TRAINER
-                && training.getTrainer().getId().equals(currentUser.getId());
+        boolean isTrainerOwner =
+                currentUser.getRole() == UserRole.TRAINER
+                        && training.getTrainer().getId().equals(currentUser.getId());
 
-        boolean isClientOwner = currentUser.getRole() == UserRole.CLIENT
-                && training.getClient().getId().equals(currentUser.getId());
+        boolean isClientOwner =
+                currentUser.getRole() == UserRole.CLIENT
+                        && training.getClient().getId().equals(currentUser.getId());
 
         if (!isTrainerOwner && !isClientOwner) {
             throw new ApiException("ACCESS_DENIED", "Нет доступа к упражнению");
@@ -86,31 +118,24 @@ public class TrainingExerciseService {
             if (request.getTitle() != null) {
                 exercise.setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"));
             }
-
             if (request.getDescription() != null) {
                 exercise.setDescription(normalizeOptional(request.getDescription()));
             }
-
             if (request.getSets() != null) {
                 exercise.setSets(request.getSets());
             }
-
             if (request.getReps() != null) {
                 exercise.setReps(request.getReps());
             }
-
             if (request.getDurationSeconds() != null) {
                 exercise.setDurationSeconds(request.getDurationSeconds());
             }
-
             if (request.getRestSeconds() != null) {
                 exercise.setRestSeconds(request.getRestSeconds());
             }
-
             if (request.getTrainerNote() != null) {
                 exercise.setTrainerNote(normalizeOptional(request.getTrainerNote()));
             }
-
             if (request.getOrderNum() != null) {
                 exercise.setOrderNum(request.getOrderNum());
             }
@@ -137,21 +162,31 @@ public class TrainingExerciseService {
         trainingExerciseRepository.delete(exercise);
     }
 
-    public TrainingExerciseResponse updateCompletion(Long trainingId,
-                                                     Long exerciseId,
-                                                     UpdateExerciseCompletionRequest request) {
+    public TrainingExerciseResponse updateCompletion(
+            Long trainingId,
+            Long exerciseId,
+            UpdateExerciseCompletionRequest request
+    ) {
         trainingService.getAccessibleTrainingEntity(trainingId);
         TrainingExercise exercise = getExerciseOrThrow(trainingId, exerciseId);
-
         exercise.setIsCompleted(request.getIsCompleted());
-        TrainingExercise saved = trainingExerciseRepository.save(exercise);
 
+        TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
+    }
+
+    private int getNextOrderNum(Long trainingId) {
+        return trainingExerciseRepository.findTopByTrainingIdOrderByOrderNumDesc(trainingId)
+                .map(item -> item.getOrderNum() + 1)
+                .orElse(1);
     }
 
     private TrainingExercise getExerciseOrThrow(Long trainingId, Long exerciseId) {
         return trainingExerciseRepository.findByIdAndTrainingId(exerciseId, trainingId)
-                .orElseThrow(() -> new ApiException("TRAINING_EXERCISE_NOT_FOUND", "Упражнение не найдено"));
+                .orElseThrow(() -> new ApiException(
+                        "TRAINING_EXERCISE_NOT_FOUND",
+                        "Упражнение не найдено"
+                ));
     }
 
     private TrainingExerciseResponse mapToResponse(TrainingExercise exercise) {

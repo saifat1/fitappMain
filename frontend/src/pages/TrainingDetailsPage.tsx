@@ -3,8 +3,10 @@ import type { FormEvent } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
+import TrainingTemplatePreview from "../features/exercise-template/ui/TrainingTemplatePreview";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
+import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 import { useAuth } from "../features/auth/model/AuthContext";
 
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
@@ -17,6 +19,7 @@ import type {
     TrainingExerciseResponse,
     UpdateTrainingExerciseRequest,
 } from "../features/training-exercise/model/trainingExercise.types";
+import type { ExerciseTemplateResponse } from "../features/exercise-template/model/exerciseTemplate.types";
 
 type ExerciseFormState = {
     title: string;
@@ -27,6 +30,8 @@ type ExerciseFormState = {
     restSeconds: string;
     trainerNote: string;
 };
+
+type CreateExerciseMode = "manual" | "template";
 
 const emptyExerciseForm: ExerciseFormState = {
     title: "",
@@ -55,16 +60,27 @@ function formatClientName(training: TrainingResponse): string {
     return fullName || training.clientEmail || `Клиент #${training.clientId}`;
 }
 
+function normalizeTime(value?: string | null): string {
+    if (!value) {
+        return "";
+    }
+
+    return value.slice(0, 5);
+}
+
 function formatTimeRange(startTime?: string | null, endTime?: string | null): string {
-    if (!startTime && !endTime) {
+    const normalizedStart = normalizeTime(startTime);
+    const normalizedEnd = normalizeTime(endTime);
+
+    if (!normalizedStart && !normalizedEnd) {
         return "Время не указано";
     }
 
-    if (startTime && endTime) {
-        return `${startTime}–${endTime}`;
+    if (normalizedStart && normalizedEnd) {
+        return `${normalizedStart}–${normalizedEnd}`;
     }
 
-    return startTime ?? endTime ?? "Время не указано";
+    return normalizedStart || normalizedEnd || "Время не указано";
 }
 
 function getTrainingStatusLabel(status: string): string {
@@ -181,6 +197,12 @@ export default function TrainingDetailsPage() {
     const [createExerciseForm, setCreateExerciseForm] =
         useState<ExerciseFormState>(emptyExerciseForm);
 
+    const [createExerciseMode, setCreateExerciseMode] =
+        useState<CreateExerciseMode>("manual");
+    const [exerciseTemplates, setExerciseTemplates] = useState<ExerciseTemplateResponse[]>([]);
+    const [isLoadingExerciseTemplates, setIsLoadingExerciseTemplates] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState("");
+
     const [expandedExerciseId, setExpandedExerciseId] = useState<number | null>(null);
     const [editingExerciseId, setEditingExerciseId] = useState<number | null>(null);
     const [editExerciseForm, setEditExerciseForm] =
@@ -198,6 +220,12 @@ export default function TrainingDetailsPage() {
     const sortedExercises = useMemo(
         () => [...exercises].sort((a, b) => a.orderNum - b.orderNum),
         [exercises]
+    );
+
+    const selectedTemplate = useMemo(
+        () =>
+            exerciseTemplates.find((item) => String(item.id) === selectedTemplateId) ?? null,
+        [exerciseTemplates, selectedTemplateId]
     );
 
     const completedCount = useMemo(
@@ -225,8 +253,8 @@ export default function TrainingDetailsPage() {
                 const data = await trainingApi.getTraining(Number(trainingId));
                 setTraining(data);
                 setTrainingDate(data.trainingDate);
-                setStartTime(data.startTime ?? "");
-                setEndTime(data.endTime ?? "");
+                setStartTime(normalizeTime(data.startTime));
+                setEndTime(normalizeTime(data.endTime));
                 setStatus(data.status);
                 setTrainerNote(data.trainerNote ?? "");
             } catch (error) {
@@ -266,6 +294,40 @@ export default function TrainingDetailsPage() {
 
         void loadExercises();
     }, [trainingId]);
+
+    useEffect(() => {
+        async function loadTemplates() {
+            if (!isCreateExerciseOpen || !isTrainer) {
+                return;
+            }
+
+            setIsLoadingExerciseTemplates(true);
+
+            try {
+                const data = await exerciseTemplateApi.getTemplates(false);
+                setExerciseTemplates(data);
+
+                if (data.length > 0) {
+                    setSelectedTemplateId((current) => current || String(data[0].id));
+                }
+            } catch (error) {
+                setExerciseErrorMessage(
+                    resolveApiError(error, "Не удалось загрузить шаблоны упражнений")
+                );
+            } finally {
+                setIsLoadingExerciseTemplates(false);
+            }
+        }
+
+        void loadTemplates();
+    }, [isCreateExerciseOpen, isTrainer]);
+
+    const resetCreateExerciseState = () => {
+        setIsCreateExerciseOpen(false);
+        setCreateExerciseMode("manual");
+        setCreateExerciseForm(emptyExerciseForm);
+        setSelectedTemplateId("");
+    };
 
     const handleSaveTraining = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -363,10 +425,40 @@ export default function TrainingDetailsPage() {
 
             setExercises((prev) => [...prev, created]);
             setCreateExerciseForm(emptyExerciseForm);
-            setIsCreateExerciseOpen(false);
             setExpandedExerciseId(created.id);
+            resetCreateExerciseState();
         } catch (error) {
             setExerciseErrorMessage(resolveApiError(error, "Не удалось создать упражнение"));
+        } finally {
+            setIsCreatingExercise(false);
+        }
+    };
+
+    const handleCreateExerciseFromTemplate = async () => {
+        if (!trainingId) {
+            return;
+        }
+
+        if (!selectedTemplateId) {
+            setExerciseErrorMessage("Выбери шаблон упражнения");
+            return;
+        }
+
+        setExerciseErrorMessage("");
+        setIsCreatingExercise(true);
+
+        try {
+            const created = await exerciseTemplateApi.addTemplateToTraining(Number(trainingId), {
+                templateId: Number(selectedTemplateId),
+            });
+
+            setExercises((prev) => [...prev, created]);
+            setExpandedExerciseId(created.id);
+            resetCreateExerciseState();
+        } catch (error) {
+            setExerciseErrorMessage(
+                resolveApiError(error, "Не удалось добавить упражнение из шаблона")
+            );
         } finally {
             setIsCreatingExercise(false);
         }
@@ -867,7 +959,7 @@ export default function TrainingDetailsPage() {
             {isCreateExerciseOpen && isTrainer && (
                 <div
                     className="training-details-sheet-overlay"
-                    onClick={() => setIsCreateExerciseOpen(false)}
+                    onClick={resetCreateExerciseState}
                 />
             )}
 
@@ -881,144 +973,226 @@ export default function TrainingDetailsPage() {
                         <button
                             type="button"
                             className="card-action-btn card-action-btn-neutral"
-                            onClick={() => setIsCreateExerciseOpen(false)}
+                            onClick={resetCreateExerciseState}
                             title="Закрыть"
                         >
                             ×
                         </button>
                     </div>
 
-                    <form className="training-details-inline-form" onSubmit={handleCreateExercise}>
-                        <div className="training-details-inline-grid training-details-inline-grid--exercise">
-                            <div className="form-row">
-                                <label htmlFor="exercise-title">Название</label>
-                                <input
-                                    id="exercise-title"
-                                    value={createExerciseForm.title}
-                                    onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({
-                                            ...prev,
-                                            title: event.target.value,
-                                        }))
-                                    }
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <label htmlFor="exercise-sets">Подходы</label>
-                                <input
-                                    id="exercise-sets"
-                                    type="number"
-                                    min="0"
-                                    value={createExerciseForm.sets}
-                                    onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({
-                                            ...prev,
-                                            sets: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <label htmlFor="exercise-reps">Повторы</label>
-                                <input
-                                    id="exercise-reps"
-                                    type="number"
-                                    min="0"
-                                    value={createExerciseForm.reps}
-                                    onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({
-                                            ...prev,
-                                            reps: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <label htmlFor="exercise-duration">Длительность, сек</label>
-                                <input
-                                    id="exercise-duration"
-                                    type="number"
-                                    min="0"
-                                    value={createExerciseForm.durationSeconds}
-                                    onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({
-                                            ...prev,
-                                            durationSeconds: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-
-                            <div className="form-row">
-                                <label htmlFor="exercise-rest">Отдых, сек</label>
-                                <input
-                                    id="exercise-rest"
-                                    type="number"
-                                    min="0"
-                                    value={createExerciseForm.restSeconds}
-                                    onChange={(event) =>
-                                        setCreateExerciseForm((prev) => ({
-                                            ...prev,
-                                            restSeconds: event.target.value,
-                                        }))
-                                    }
-                                />
-                            </div>
-                        </div>
-
-                        <div className="form-row">
-                            <label htmlFor="exercise-description">Описание</label>
-                            <textarea
-                                id="exercise-description"
-                                rows={3}
-                                value={createExerciseForm.description}
-                                onChange={(event) =>
-                                    setCreateExerciseForm((prev) => ({
-                                        ...prev,
-                                        description: event.target.value,
-                                    }))
-                                }
-                            />
-                        </div>
-
-                        <div className="form-row">
-                            <label htmlFor="exercise-note">Заметка тренера</label>
-                            <textarea
-                                id="exercise-note"
-                                rows={3}
-                                value={createExerciseForm.trainerNote}
-                                onChange={(event) =>
-                                    setCreateExerciseForm((prev) => ({
-                                        ...prev,
-                                        trainerNote: event.target.value,
-                                    }))
-                                }
-                            />
-                        </div>
-
-                        <div className="training-details-inline-actions">
+                    <div className="training-details-inline-form">
+                        <div className="training-details-inline-actions" style={{ marginBottom: 8 }}>
                             <button
-                                type="submit"
-                                className="dashboard-btn dashboard-btn-primary"
-                                disabled={isCreatingExercise}
+                                type="button"
+                                className={
+                                    createExerciseMode === "manual"
+                                        ? "dashboard-btn dashboard-btn-primary"
+                                        : "dashboard-btn dashboard-btn-secondary"
+                                }
+                                onClick={() => setCreateExerciseMode("manual")}
                             >
-                                {isCreatingExercise ? "Добавляем..." : "Добавить"}
+                                Вручную
                             </button>
 
                             <button
                                 type="button"
-                                className="dashboard-btn dashboard-btn-secondary"
-                                onClick={() => setIsCreateExerciseOpen(false)}
-                                disabled={isCreatingExercise}
+                                className={
+                                    createExerciseMode === "template"
+                                        ? "dashboard-btn dashboard-btn-primary"
+                                        : "dashboard-btn dashboard-btn-secondary"
+                                }
+                                onClick={() => setCreateExerciseMode("template")}
                             >
-                                Отмена
+                                Из шаблона
                             </button>
                         </div>
-                    </form>
+
+                        {createExerciseMode === "manual" ? (
+                            <form className="training-details-inline-form" onSubmit={handleCreateExercise}>
+                                <div className="training-details-inline-grid training-details-inline-grid--exercise">
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-title">Название</label>
+                                        <input
+                                            id="exercise-title"
+                                            value={createExerciseForm.title}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    title: event.target.value,
+                                                }))
+                                            }
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-sets">Подходы</label>
+                                        <input
+                                            id="exercise-sets"
+                                            type="number"
+                                            min="0"
+                                            value={createExerciseForm.sets}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    sets: event.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-reps">Повторы</label>
+                                        <input
+                                            id="exercise-reps"
+                                            type="number"
+                                            min="0"
+                                            value={createExerciseForm.reps}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    reps: event.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-duration">Длительность, сек</label>
+                                        <input
+                                            id="exercise-duration"
+                                            type="number"
+                                            min="0"
+                                            value={createExerciseForm.durationSeconds}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    durationSeconds: event.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-rest">Отдых, сек</label>
+                                        <input
+                                            id="exercise-rest"
+                                            type="number"
+                                            min="0"
+                                            value={createExerciseForm.restSeconds}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    restSeconds: event.target.value,
+                                                }))
+                                            }
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <label htmlFor="exercise-description">Описание</label>
+                                    <textarea
+                                        id="exercise-description"
+                                        rows={3}
+                                        value={createExerciseForm.description}
+                                        onChange={(event) =>
+                                            setCreateExerciseForm((prev) => ({
+                                                ...prev,
+                                                description: event.target.value,
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                <div className="form-row">
+                                    <label htmlFor="exercise-note">Заметка тренера</label>
+                                    <textarea
+                                        id="exercise-note"
+                                        rows={3}
+                                        value={createExerciseForm.trainerNote}
+                                        onChange={(event) =>
+                                            setCreateExerciseForm((prev) => ({
+                                                ...prev,
+                                                trainerNote: event.target.value,
+                                            }))
+                                        }
+                                    />
+                                </div>
+
+                                <div className="training-details-inline-actions">
+                                    <button
+                                        type="submit"
+                                        className="dashboard-btn dashboard-btn-primary"
+                                        disabled={isCreatingExercise}
+                                    >
+                                        {isCreatingExercise ? "Добавляем..." : "Добавить"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="dashboard-btn dashboard-btn-secondary"
+                                        onClick={resetCreateExerciseState}
+                                        disabled={isCreatingExercise}
+                                    >
+                                        Отмена
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <div className="training-details-inline-form">
+                                <div className="form-row">
+                                    <label htmlFor="exercise-template-select">Шаблон упражнения</label>
+                                    <select
+                                        id="exercise-template-select"
+                                        value={selectedTemplateId}
+                                        onChange={(event) => setSelectedTemplateId(event.target.value)}
+                                        disabled={isLoadingExerciseTemplates || exerciseTemplates.length === 0}
+                                    >
+                                        {exerciseTemplates.length === 0 ? (
+                                            <option value="">Нет доступных шаблонов</option>
+                                        ) : (
+                                            exerciseTemplates.map((item) => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.name}
+                                                </option>
+                                            ))
+                                        )}
+                                    </select>
+                                </div>
+
+                                {isLoadingExerciseTemplates ? (
+                                    <div className="training-empty-block">Загрузка шаблонов...</div>
+                                ) : selectedTemplate ? (
+                                    <TrainingTemplatePreview template={selectedTemplate} />
+                                ) : (
+                                    <div className="training-empty-block">
+                                        Сначала создай шаблон упражнения в разделе «Шаблоны»
+                                    </div>
+                                )}
+
+                                <div className="training-details-inline-actions">
+                                    <button
+                                        type="button"
+                                        className="dashboard-btn dashboard-btn-primary"
+                                        onClick={() => void handleCreateExerciseFromTemplate()}
+                                        disabled={isCreatingExercise || !selectedTemplateId}
+                                    >
+                                        {isCreatingExercise ? "Добавляем..." : "Добавить из шаблона"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="dashboard-btn dashboard-btn-secondary"
+                                        onClick={resetCreateExerciseState}
+                                        disabled={isCreatingExercise}
+                                    >
+                                        Отмена
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </section>
             )}
 

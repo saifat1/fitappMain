@@ -13,4 +13,7 @@ public interface TrainingExerciseRepository extends JpaRepository<TrainingExerci
     Optional<TrainingExercise> findByIdAndTrainingId(Long id, Long trainingId);
 
     long countByTrainingId(Long trainingId);
+
+    Optional<TrainingExercise> findTopByTrainingIdOrderByOrderNumDesc(Long trainingId);
+
 }

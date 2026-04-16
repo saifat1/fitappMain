@@ -2,6 +2,7 @@ package ru.fitapp.backend.trainingexercise.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import ru.fitapp.backend.exercisetemplate.dto.ApplyExerciseTemplateRequest;
 import ru.fitapp.backend.trainingexercise.dto.CreateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseResponse;
 import ru.fitapp.backend.trainingexercise.dto.UpdateExerciseCompletionRequest;
@@ -49,5 +50,12 @@ public class TrainingExerciseController {
                                                      @PathVariable Long exerciseId,
                                                      @Valid @RequestBody UpdateExerciseCompletionRequest request) {
         return trainingExerciseService.updateCompletion(trainingId, exerciseId, request);
+    }
+    @PostMapping("/from-template")
+    public TrainingExerciseResponse createExerciseFromTemplate(
+            @PathVariable Long trainingId,
+            @Valid @RequestBody ApplyExerciseTemplateRequest request
+    ) {
+        return trainingExerciseService.createExerciseFromTemplate(trainingId, request);
     }
 }

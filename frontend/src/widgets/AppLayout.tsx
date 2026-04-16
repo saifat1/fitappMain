@@ -116,6 +116,16 @@ export default function AppLayout({ children }: Props) {
                     {isTrainer && (
                         <>
                             <NavLink
+                                to="/exercise-templates"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                <span className="nav-link-icon">◦</span>
+                                <span>Шаблоны</span>
+                            </NavLink>
+
+                            <NavLink
                                 to="/trainer/clients"
                                 className={({ isActive }) =>
                                     isActive ? "nav-link nav-link-active" : "nav-link"
@@ -156,20 +166,30 @@ export default function AppLayout({ children }: Props) {
                         <h1 className="app-topbar-title">FitApp</h1>
                     </div>
 
-                    {currentUser && (
-                        <div className="app-topbar-user-pill">
-                            <span>{currentUser.email}</span>
-                            <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
-                        </div>
-                    )}
+                    <div className="app-topbar-actions">
+                        {currentUser && (
+                            <div className="app-topbar-user-pill">
+                                <span>{currentUser.email}</span>
+                                <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            className="dashboard-btn dashboard-btn-secondary app-topbar-logout-btn"
+                            onClick={handleLogout}
+                        >
+                            Выйти
+                        </button>
+                    </div>
                 </header>
 
-                <main className="app-main app-main-with-mobile-nav">
+                <main className="app-main">
                     <div className="app-page-container">{children}</div>
                 </main>
-            </div>
 
-            <MobileBottomNav isTrainer={isTrainer} />
+                <MobileBottomNav isTrainer={isTrainer} />
+            </div>
         </div>
     );
 }

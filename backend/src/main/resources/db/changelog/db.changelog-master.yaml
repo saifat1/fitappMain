@@ -11,3 +11,5 @@ databaseChangeLog:
       file: db/changelog/005-create-training-exercise.yaml
   - include:
       file: db/changelog/006-create-reschedule-request.yaml
+  - include:
+      file: db/changelog/007-create-exercise-template.yaml

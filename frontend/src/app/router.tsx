@@ -13,7 +13,10 @@ import AppLayout from "../widgets/AppLayout";
 import RescheduleRequestsPage from "../pages/RescheduleRequestsPage";
 import RescheduleRequestDetailsPage from "../pages/RescheduleRequestDetailsPage";
 import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
+import ExerciseTemplatesPage from "../pages/ExerciseTemplatesPage";
+import ExerciseTemplateDetailsPage from "../pages/ExerciseTemplateDetailsPage";
 import MorePage from "../pages/MorePage";
+
 
 export const router = createBrowserRouter([
     {
@@ -76,6 +79,26 @@ export const router = createBrowserRouter([
                     <InvitesPage />
                 </AppLayout>
             </TrainerRoute>
+        ),
+    },
+    {
+        path: "/exercise-templates",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <ExerciseTemplatesPage />
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/exercise-templates/:templateId",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <ExerciseTemplateDetailsPage />
+                </TrainerRoute>
+            </ProtectedRoute>
         ),
     },
     {
