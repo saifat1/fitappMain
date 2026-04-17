@@ -86,7 +86,9 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <ExerciseTemplatesPage />
+                    <AppLayout>
+                        <ExerciseTemplatesPage />
+                    </AppLayout>
                 </TrainerRoute>
             </ProtectedRoute>
         ),
@@ -96,7 +98,9 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <ExerciseTemplateDetailsPage />
+                    <AppLayout>
+                        <ExerciseTemplateDetailsPage />
+                    </AppLayout>
                 </TrainerRoute>
             </ProtectedRoute>
         ),
