@@ -13,3 +13,7 @@ databaseChangeLog:
       file: db/changelog/006-create-reschedule-request.yaml
   - include:
       file: db/changelog/007-create-exercise-template.yaml
+  - include:
+      file: db/changelog/008-add-reps-range-columns.yaml
+  - include:
+      file: db/changelog/009-drop-legacy-reps-columns.yaml

@@ -3,7 +3,6 @@ import type { FormEvent } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
-import TrainingTemplatePreview from "../features/exercise-template/ui/TrainingTemplatePreview";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
@@ -15,17 +14,60 @@ import type {
     UpdateTrainingRequest,
 } from "../features/training/model/training.types";
 import type {
-    CreateTrainingExerciseRequest,
-    TrainingExerciseResponse,
-    UpdateTrainingExerciseRequest,
+    CreateTrainingExerciseRequest as ApiCreateTrainingExerciseRequest,
+    UpdateTrainingExerciseRequest as ApiUpdateTrainingExerciseRequest,
 } from "../features/training-exercise/model/trainingExercise.types";
-import type { ExerciseTemplateResponse } from "../features/exercise-template/model/exerciseTemplate.types";
+
+type RepsMode = "NONE" | "EXACT" | "RANGE";
+
+type TrainingExerciseView = {
+    id: number;
+    trainingId: number;
+    orderNum: number;
+    title: string;
+    description: string | null;
+    sets: number | null;
+    repsMode: RepsMode;
+    repsValue: number | null;
+    repsFrom: number | null;
+    repsTo: number | null;
+    repsDisplay: string;
+    durationSeconds: number | null;
+    restSeconds: number | null;
+    isCompleted: boolean;
+    trainerNote: string | null;
+    clientNote: string | null;
+    createdAt: string;
+    updatedAt: string;
+};
+
+type ExerciseTemplateView = {
+    id: number;
+    trainerId: number;
+    name: string;
+    description?: string | null;
+    sets?: number | null;
+    repsMode: RepsMode;
+    repsValue?: number | null;
+    repsFrom?: number | null;
+    repsTo?: number | null;
+    repsDisplay: string;
+    durationSeconds?: number | null;
+    restSeconds?: number | null;
+    trainerNote?: string | null;
+    isArchived: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
 
 type ExerciseFormState = {
     title: string;
     description: string;
     sets: string;
-    reps: string;
+    repsMode: "" | RepsMode;
+    repsValue: string;
+    repsFrom: string;
+    repsTo: string;
     durationSeconds: string;
     restSeconds: string;
     trainerNote: string;
@@ -37,7 +79,10 @@ const emptyExerciseForm: ExerciseFormState = {
     title: "",
     description: "",
     sets: "",
-    reps: "",
+    repsMode: "",
+    repsValue: "",
+    repsFrom: "",
+    repsTo: "",
     durationSeconds: "",
     restSeconds: "",
     trainerNote: "",
@@ -109,7 +154,7 @@ function getTrainingStatusClass(status: string): string {
     }
 }
 
-function getExerciseStatusLabel(exercise: TrainingExerciseResponse, isExpanded: boolean): string {
+function getExerciseStatusLabel(exercise: TrainingExerciseView, isExpanded: boolean): string {
     if (exercise.isCompleted) {
         return "Готово";
     }
@@ -121,7 +166,7 @@ function getExerciseStatusLabel(exercise: TrainingExerciseResponse, isExpanded: 
     return "План";
 }
 
-function getExerciseStatusClass(exercise: TrainingExerciseResponse, isExpanded: boolean): string {
+function getExerciseStatusClass(exercise: TrainingExerciseView, isExpanded: boolean): string {
     if (exercise.isCompleted) {
         return "exercise-compact-status exercise-compact-status--completed";
     }
@@ -133,15 +178,15 @@ function getExerciseStatusClass(exercise: TrainingExerciseResponse, isExpanded: 
     return "exercise-compact-status exercise-compact-status--planned";
 }
 
-function formatExerciseSummary(exercise: TrainingExerciseResponse): string {
+function formatExerciseSummary(exercise: TrainingExerciseView): string {
     const parts: string[] = [];
 
     if (exercise.sets != null) {
         parts.push(`${exercise.sets} подх.`);
     }
 
-    if (exercise.reps != null) {
-        parts.push(`${exercise.reps} повт.`);
+    if (exercise.repsMode !== "NONE" && exercise.repsDisplay) {
+        parts.push(`${exercise.repsDisplay} повт.`);
     }
 
     if (exercise.durationSeconds != null) {
@@ -155,15 +200,135 @@ function formatExerciseSummary(exercise: TrainingExerciseResponse): string {
     return parts.length > 0 ? parts.join(" • ") : "Параметры не заданы";
 }
 
-function buildExercisePayload(form: ExerciseFormState): CreateTrainingExerciseRequest {
+function normalizeExerciseFormByMode(
+    form: ExerciseFormState,
+    mode: "" | RepsMode
+): ExerciseFormState {
+    if (mode === "EXACT") {
+        return {
+            ...form,
+            repsMode: "EXACT",
+            repsFrom: "",
+            repsTo: "",
+        };
+    }
+
+    if (mode === "RANGE") {
+        return {
+            ...form,
+            repsMode: "RANGE",
+            repsValue: "",
+        };
+    }
+
+    if (mode === "NONE") {
+        return {
+            ...form,
+            repsMode: "NONE",
+            repsValue: "",
+            repsFrom: "",
+            repsTo: "",
+        };
+    }
+
     return {
+        ...form,
+        repsMode: "",
+        repsValue: "",
+        repsFrom: "",
+        repsTo: "",
+    };
+}
+
+function getRepsDisplay(item: {
+    repsMode?: RepsMode | null;
+    repsDisplay?: string | null;
+    repsValue?: number | null;
+    repsFrom?: number | null;
+    repsTo?: number | null;
+}): string {
+    if (item.repsMode === "EXACT") {
+        return item.repsDisplay || (item.repsValue != null ? String(item.repsValue) : "—");
+    }
+
+    if (item.repsMode === "RANGE") {
+        return item.repsDisplay ||
+            (item.repsFrom != null && item.repsTo != null ? `${item.repsFrom}–${item.repsTo}` : "—");
+    }
+
+    return "—";
+}
+
+function validateExerciseForm(form: ExerciseFormState): string | null {
+    if (!form.title.trim()) {
+        return "Укажи название упражнения";
+    }
+
+    if (form.repsMode === "EXACT" && !form.repsValue.trim()) {
+        return "Укажи точное количество повторений";
+    }
+
+    if (form.repsMode === "RANGE") {
+        if (!form.repsFrom.trim() || !form.repsTo.trim()) {
+            return "Укажи нижнюю и верхнюю границы повторений";
+        }
+
+        if (Number(form.repsFrom) > Number(form.repsTo)) {
+            return "Нижняя граница повторений не может быть больше верхней";
+        }
+    }
+
+    return null;
+}
+
+function buildExercisePayload(form: ExerciseFormState): ApiCreateTrainingExerciseRequest {
+    const payload = {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         sets: form.sets.trim() ? Number(form.sets) : undefined,
-        reps: form.reps.trim() ? Number(form.reps) : undefined,
         durationSeconds: form.durationSeconds.trim() ? Number(form.durationSeconds) : undefined,
         restSeconds: form.restSeconds.trim() ? Number(form.restSeconds) : undefined,
         trainerNote: form.trainerNote.trim() || undefined,
+        repsMode: form.repsMode || "NONE",
+        repsValue:
+            form.repsMode === "EXACT" && form.repsValue.trim()
+                ? Number(form.repsValue)
+                : undefined,
+        repsFrom:
+            form.repsMode === "RANGE" && form.repsFrom.trim()
+                ? Number(form.repsFrom)
+                : undefined,
+        repsTo:
+            form.repsMode === "RANGE" && form.repsTo.trim()
+                ? Number(form.repsTo)
+                : undefined,
+    };
+
+    return payload as unknown as ApiCreateTrainingExerciseRequest;
+}
+
+function toExerciseFormState(exercise: TrainingExerciseView): ExerciseFormState {
+    return {
+        title: exercise.title ?? "",
+        description: exercise.description ?? "",
+        sets: exercise.sets != null ? String(exercise.sets) : "",
+        repsMode: exercise.repsMode ?? "",
+        repsValue:
+            exercise.repsMode === "EXACT" && exercise.repsValue != null
+                ? String(exercise.repsValue)
+                : "",
+        repsFrom:
+            exercise.repsMode === "RANGE" && exercise.repsFrom != null
+                ? String(exercise.repsFrom)
+                : "",
+        repsTo:
+            exercise.repsMode === "RANGE" && exercise.repsTo != null
+                ? String(exercise.repsTo)
+                : "",
+        durationSeconds:
+            exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
+        restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : "",
+        trainerNote: exercise.trainerNote ?? "",
     };
 }
 
@@ -173,7 +338,7 @@ export default function TrainingDetailsPage() {
     const { currentUser } = useAuth();
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
-    const [exercises, setExercises] = useState<TrainingExerciseResponse[]>([]);
+    const [exercises, setExercises] = useState<TrainingExerciseView[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingExercises, setIsLoadingExercises] = useState(true);
@@ -199,7 +364,7 @@ export default function TrainingDetailsPage() {
 
     const [createExerciseMode, setCreateExerciseMode] =
         useState<CreateExerciseMode>("manual");
-    const [exerciseTemplates, setExerciseTemplates] = useState<ExerciseTemplateResponse[]>([]);
+    const [exerciseTemplates, setExerciseTemplates] = useState<ExerciseTemplateView[]>([]);
     const [isLoadingExerciseTemplates, setIsLoadingExerciseTemplates] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
@@ -279,7 +444,7 @@ export default function TrainingDetailsPage() {
             setIsLoadingExercises(true);
 
             try {
-                const data = await trainingExerciseApi.getExercises(Number(trainingId));
+                const data = (await trainingExerciseApi.getExercises(Number(trainingId))) as unknown as TrainingExerciseView[];
                 setExercises(data);
 
                 if (data.length > 0) {
@@ -304,7 +469,7 @@ export default function TrainingDetailsPage() {
             setIsLoadingExerciseTemplates(true);
 
             try {
-                const data = await exerciseTemplateApi.getTemplates(false);
+                const data = (await exerciseTemplateApi.getTemplates(false)) as unknown as ExerciseTemplateView[];
                 setExerciseTemplates(data);
 
                 if (data.length > 0) {
@@ -409,8 +574,9 @@ export default function TrainingDetailsPage() {
             return;
         }
 
-        if (!createExerciseForm.title.trim()) {
-            setExerciseErrorMessage("Укажи название упражнения");
+        const createValidationError = validateExerciseForm(createExerciseForm);
+        if (createValidationError) {
+            setExerciseErrorMessage(createValidationError);
             return;
         }
 
@@ -418,10 +584,10 @@ export default function TrainingDetailsPage() {
         setIsCreatingExercise(true);
 
         try {
-            const created = await trainingExerciseApi.createExercise(
+            const created = (await trainingExerciseApi.createExercise(
                 Number(trainingId),
                 buildExercisePayload(createExerciseForm)
-            );
+            )) as unknown as TrainingExerciseView;
 
             setExercises((prev) => [...prev, created]);
             setCreateExerciseForm(emptyExerciseForm);
@@ -448,9 +614,9 @@ export default function TrainingDetailsPage() {
         setIsCreatingExercise(true);
 
         try {
-            const created = await exerciseTemplateApi.addTemplateToTraining(Number(trainingId), {
+            const created = (await exerciseTemplateApi.addTemplateToTraining(Number(trainingId), {
                 templateId: Number(selectedTemplateId),
-            });
+            })) as unknown as TrainingExerciseView;
 
             setExercises((prev) => [...prev, created]);
             setExpandedExerciseId(created.id);
@@ -464,19 +630,10 @@ export default function TrainingDetailsPage() {
         }
     };
 
-    const startEditExercise = (exercise: TrainingExerciseResponse) => {
+    const startEditExercise = (exercise: TrainingExerciseView) => {
         setEditingExerciseId(exercise.id);
         setExpandedExerciseId(exercise.id);
-        setEditExerciseForm({
-            title: exercise.title ?? "",
-            description: exercise.description ?? "",
-            sets: exercise.sets != null ? String(exercise.sets) : "",
-            reps: exercise.reps != null ? String(exercise.reps) : "",
-            durationSeconds:
-                exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
-            restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : "",
-            trainerNote: exercise.trainerNote ?? "",
-        });
+        setEditExerciseForm(toExerciseFormState(exercise));
     };
 
     const cancelEditExercise = () => {
@@ -489,19 +646,19 @@ export default function TrainingDetailsPage() {
             return;
         }
 
-        if (!editExerciseForm.title.trim()) {
-            setExerciseErrorMessage("Укажи название упражнения");
+        const editValidationError = validateExerciseForm(editExerciseForm);
+        if (editValidationError) {
+            setExerciseErrorMessage(editValidationError);
             return;
         }
 
         setExerciseErrorMessage("");
         setSavingExerciseId(exerciseId);
 
-        const payload: UpdateTrainingExerciseRequest = {
+        const payload = {
             title: editExerciseForm.title.trim(),
             description: editExerciseForm.description.trim() || undefined,
             sets: editExerciseForm.sets.trim() ? Number(editExerciseForm.sets) : undefined,
-            reps: editExerciseForm.reps.trim() ? Number(editExerciseForm.reps) : undefined,
             durationSeconds: editExerciseForm.durationSeconds.trim()
                 ? Number(editExerciseForm.durationSeconds)
                 : undefined,
@@ -509,14 +666,27 @@ export default function TrainingDetailsPage() {
                 ? Number(editExerciseForm.restSeconds)
                 : undefined,
             trainerNote: editExerciseForm.trainerNote.trim() || undefined,
-        };
+            repsMode: editExerciseForm.repsMode || "NONE",
+            repsValue:
+                editExerciseForm.repsMode === "EXACT" && editExerciseForm.repsValue.trim()
+                    ? Number(editExerciseForm.repsValue)
+                    : undefined,
+            repsFrom:
+                editExerciseForm.repsMode === "RANGE" && editExerciseForm.repsFrom.trim()
+                    ? Number(editExerciseForm.repsFrom)
+                    : undefined,
+            repsTo:
+                editExerciseForm.repsMode === "RANGE" && editExerciseForm.repsTo.trim()
+                    ? Number(editExerciseForm.repsTo)
+                    : undefined,
+        } as unknown as ApiUpdateTrainingExerciseRequest;
 
         try {
-            const updated = await trainingExerciseApi.updateExercise(
+            const updated = (await trainingExerciseApi.updateExercise(
                 Number(trainingId),
                 exerciseId,
                 payload
-            );
+            )) as unknown as TrainingExerciseView;
 
             setExercises((prev) =>
                 prev.map((exercise) => (exercise.id === exerciseId ? updated : exercise))
@@ -561,7 +731,7 @@ export default function TrainingDetailsPage() {
     };
 
     const handleToggleCompletion = async (
-        exercise: TrainingExerciseResponse,
+        exercise: TrainingExerciseView,
         nextValue: boolean
     ) => {
         if (!trainingId) {
@@ -572,11 +742,11 @@ export default function TrainingDetailsPage() {
         setTogglingExerciseId(exercise.id);
 
         try {
-            const updated = await trainingExerciseApi.updateCompletion(
+            const updated = (await trainingExerciseApi.updateCompletion(
                 Number(trainingId),
                 exercise.id,
                 { isCompleted: nextValue }
-            );
+            )) as unknown as TrainingExerciseView;
 
             setExercises((prev) =>
                 prev.map((item) => (item.id === exercise.id ? updated : item))
@@ -622,14 +792,14 @@ export default function TrainingDetailsPage() {
         );
 
         try {
-            const [updatedCurrent, updatedTarget] = await Promise.all([
+            const [updatedCurrent, updatedTarget] = (await Promise.all([
                 trainingExerciseApi.updateExercise(Number(trainingId), currentExercise.id, {
                     orderNum: targetExercise.orderNum,
-                }),
+                } as unknown as ApiUpdateTrainingExerciseRequest),
                 trainingExerciseApi.updateExercise(Number(trainingId), targetExercise.id, {
                     orderNum: currentExercise.orderNum,
-                }),
-            ]);
+                } as unknown as ApiUpdateTrainingExerciseRequest),
+            ])) as unknown as [TrainingExerciseView, TrainingExerciseView];
 
             setExercises((prev) =>
                 prev.map((item) => {
@@ -1041,20 +1211,128 @@ export default function TrainingDetailsPage() {
                                         />
                                     </div>
 
-                                    <div className="form-row">
-                                        <label htmlFor="exercise-reps">Повторы</label>
-                                        <input
-                                            id="exercise-reps"
-                                            type="number"
-                                            min="0"
-                                            value={createExerciseForm.reps}
-                                            onChange={(event) =>
-                                                setCreateExerciseForm((prev) => ({
-                                                    ...prev,
-                                                    reps: event.target.value,
-                                                }))
-                                            }
-                                        />
+                                    <div className="form-row" style={{ gridColumn: "span 2" }}>
+                                        <label>Повторы</label>
+
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                flexWrap: "wrap",
+                                                gap: 8,
+                                                marginBottom: 8,
+                                            }}
+                                        >
+                                            <button
+                                                type="button"
+                                                className={
+                                                    createExerciseForm.repsMode === "EXACT"
+                                                        ? "dashboard-btn dashboard-btn-primary"
+                                                        : "dashboard-btn dashboard-btn-secondary"
+                                                }
+                                                onClick={() =>
+                                                    setCreateExerciseForm((prev) =>
+                                                        normalizeExerciseFormByMode(prev, "EXACT")
+                                                    )
+                                                }
+                                            >
+                                                Точно
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className={
+                                                    createExerciseForm.repsMode === "RANGE"
+                                                        ? "dashboard-btn dashboard-btn-primary"
+                                                        : "dashboard-btn dashboard-btn-secondary"
+                                                }
+                                                onClick={() =>
+                                                    setCreateExerciseForm((prev) =>
+                                                        normalizeExerciseFormByMode(prev, "RANGE")
+                                                    )
+                                                }
+                                            >
+                                                Диапазон
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                className={
+                                                    createExerciseForm.repsMode === "NONE"
+                                                        ? "dashboard-btn dashboard-btn-primary"
+                                                        : "dashboard-btn dashboard-btn-secondary"
+                                                }
+                                                onClick={() =>
+                                                    setCreateExerciseForm((prev) =>
+                                                        normalizeExerciseFormByMode(prev, "NONE")
+                                                    )
+                                                }
+                                            >
+                                                Не указывать
+                                            </button>
+                                        </div>
+
+                                        {createExerciseForm.repsMode === "EXACT" && (
+                                            <input
+                                                id="exercise-reps"
+                                                type="number"
+                                                min="1"
+                                                value={createExerciseForm.repsValue}
+                                                onChange={(event) =>
+                                                    setCreateExerciseForm((prev) => ({
+                                                        ...prev,
+                                                        repsValue: event.target.value,
+                                                    }))
+                                                }
+                                                placeholder="Например, 12"
+                                            />
+                                        )}
+
+                                        {createExerciseForm.repsMode === "RANGE" && (
+                                            <div
+                                                style={{
+                                                    display: "grid",
+                                                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                                    gap: 8,
+                                                }}
+                                            >
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={createExerciseForm.repsFrom}
+                                                    onChange={(event) =>
+                                                        setCreateExerciseForm((prev) => ({
+                                                            ...prev,
+                                                            repsFrom: event.target.value,
+                                                        }))
+                                                    }
+                                                    placeholder="От"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={createExerciseForm.repsTo}
+                                                    onChange={(event) =>
+                                                        setCreateExerciseForm((prev) => ({
+                                                            ...prev,
+                                                            repsTo: event.target.value,
+                                                        }))
+                                                    }
+                                                    placeholder="До"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {!createExerciseForm.repsMode && (
+                                            <div
+                                                style={{
+                                                    color: "#64748b",
+                                                    fontSize: 12,
+                                                    lineHeight: 1.4,
+                                                }}
+                                            >
+                                                Выбери точное значение, диапазон или режим без повторений
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="form-row">
@@ -1164,7 +1442,54 @@ export default function TrainingDetailsPage() {
                                 {isLoadingExerciseTemplates ? (
                                     <div className="training-empty-block">Загрузка шаблонов...</div>
                                 ) : selectedTemplate ? (
-                                    <TrainingTemplatePreview template={selectedTemplate} />
+                                    <div
+                                        style={{
+                                            padding: 16,
+                                            border: "1px solid #e2e8f0",
+                                            borderRadius: 16,
+                                            background: "#f8fafc",
+                                            display: "grid",
+                                            gap: 12,
+                                        }}
+                                    >
+                                        <div style={{ display: "grid", gap: 6 }}>
+                                            <h4 style={{ margin: 0 }}>{selectedTemplate.name}</h4>
+                                            {selectedTemplate.description && (
+                                                <div style={{ color: "#475569", fontSize: 14 }}>
+                                                    {selectedTemplate.description}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                            {selectedTemplate.sets != null && (
+                                                <span className="exercise-chip">
+                                                    {selectedTemplate.sets} подх.
+                                                </span>
+                                            )}
+                                            {selectedTemplate.repsMode !== "NONE" && (
+                                                <span className="exercise-chip">
+                                                    {getRepsDisplay(selectedTemplate)} повт.
+                                                </span>
+                                            )}
+                                            {selectedTemplate.durationSeconds != null && (
+                                                <span className="exercise-chip">
+                                                    {selectedTemplate.durationSeconds} сек.
+                                                </span>
+                                            )}
+                                            {selectedTemplate.restSeconds != null && (
+                                                <span className="exercise-chip">
+                                                    отдых {selectedTemplate.restSeconds} сек.
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {selectedTemplate.trainerNote && (
+                                            <div style={{ color: "#334155", fontSize: 14 }}>
+                                                <strong>Заметка тренера:</strong> {selectedTemplate.trainerNote}
+                                            </div>
+                                        )}
+                                    </div>
                                 ) : (
                                     <div className="training-empty-block">
                                         Сначала создай шаблон упражнения в разделе «Шаблоны»
@@ -1363,19 +1688,128 @@ export default function TrainingDetailsPage() {
                                                             />
                                                         </div>
 
-                                                        <div className="form-row">
+                                                        <div className="form-row" style={{ gridColumn: "span 2" }}>
                                                             <label>Повторы</label>
-                                                            <input
-                                                                type="number"
-                                                                min="0"
-                                                                value={editExerciseForm.reps}
-                                                                onChange={(event) =>
-                                                                    setEditExerciseForm((prev) => ({
-                                                                        ...prev,
-                                                                        reps: event.target.value,
-                                                                    }))
-                                                                }
-                                                            />
+
+                                                            <div
+                                                                style={{
+                                                                    display: "flex",
+                                                                    flexWrap: "wrap",
+                                                                    gap: 8,
+                                                                    marginBottom: 8,
+                                                                }}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    className={
+                                                                        editExerciseForm.repsMode === "EXACT"
+                                                                            ? "dashboard-btn dashboard-btn-primary"
+                                                                            : "dashboard-btn dashboard-btn-secondary"
+                                                                    }
+                                                                    onClick={() =>
+                                                                        setEditExerciseForm((prev) =>
+                                                                            normalizeExerciseFormByMode(prev, "EXACT")
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Точно
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className={
+                                                                        editExerciseForm.repsMode === "RANGE"
+                                                                            ? "dashboard-btn dashboard-btn-primary"
+                                                                            : "dashboard-btn dashboard-btn-secondary"
+                                                                    }
+                                                                    onClick={() =>
+                                                                        setEditExerciseForm((prev) =>
+                                                                            normalizeExerciseFormByMode(prev, "RANGE")
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Диапазон
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className={
+                                                                        editExerciseForm.repsMode === "NONE"
+                                                                            ? "dashboard-btn dashboard-btn-primary"
+                                                                            : "dashboard-btn dashboard-btn-secondary"
+                                                                    }
+                                                                    onClick={() =>
+                                                                        setEditExerciseForm((prev) =>
+                                                                            normalizeExerciseFormByMode(prev, "NONE")
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Не указывать
+                                                                </button>
+                                                            </div>
+
+                                                            {editExerciseForm.repsMode === "EXACT" && (
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    value={editExerciseForm.repsValue}
+                                                                    onChange={(event) =>
+                                                                        setEditExerciseForm((prev) => ({
+                                                                            ...prev,
+                                                                            repsValue: event.target.value,
+                                                                        }))
+                                                                    }
+                                                                    placeholder="Например, 12"
+                                                                />
+                                                            )}
+
+                                                            {editExerciseForm.repsMode === "RANGE" && (
+                                                                <div
+                                                                    style={{
+                                                                        display: "grid",
+                                                                        gridTemplateColumns:
+                                                                            "repeat(2, minmax(0, 1fr))",
+                                                                        gap: 8,
+                                                                    }}
+                                                                >
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={editExerciseForm.repsFrom}
+                                                                        onChange={(event) =>
+                                                                            setEditExerciseForm((prev) => ({
+                                                                                ...prev,
+                                                                                repsFrom: event.target.value,
+                                                                            }))
+                                                                        }
+                                                                        placeholder="От"
+                                                                    />
+                                                                    <input
+                                                                        type="number"
+                                                                        min="1"
+                                                                        value={editExerciseForm.repsTo}
+                                                                        onChange={(event) =>
+                                                                            setEditExerciseForm((prev) => ({
+                                                                                ...prev,
+                                                                                repsTo: event.target.value,
+                                                                            }))
+                                                                        }
+                                                                        placeholder="До"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            {!editExerciseForm.repsMode && (
+                                                                <div
+                                                                    style={{
+                                                                        color: "#64748b",
+                                                                        fontSize: 12,
+                                                                        lineHeight: 1.4,
+                                                                    }}
+                                                                >
+                                                                    Выбери точное значение, диапазон или режим без повторений
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className="form-row">
@@ -1474,7 +1908,7 @@ export default function TrainingDetailsPage() {
 
                                                         <div className="exercise-compact-detail">
                                                             <span>Повторы</span>
-                                                            <strong>{exercise.reps ?? "—"}</strong>
+                                                            <strong>{getRepsDisplay(exercise)}</strong>
                                                         </div>
 
                                                         <div className="exercise-compact-detail">

@@ -1,5 +1,7 @@
 package ru.fitapp.backend.trainingexercise.dto;
 
+import ru.fitapp.backend.common.model.RepsMode;
+
 import java.time.LocalDateTime;
 
 public class TrainingExerciseResponse {
@@ -10,7 +12,11 @@ public class TrainingExerciseResponse {
     private String title;
     private String description;
     private Integer sets;
-    private Integer reps;
+    private RepsMode repsMode;
+    private Integer repsValue;
+    private Integer repsFrom;
+    private Integer repsTo;
+    private String repsDisplay;
     private Integer durationSeconds;
     private Integer restSeconds;
     private Boolean isCompleted;
@@ -73,12 +79,48 @@ public class TrainingExerciseResponse {
         return this;
     }
 
-    public Integer getReps() {
-        return reps;
+    public RepsMode getRepsMode() {
+        return repsMode;
     }
 
-    public TrainingExerciseResponse setReps(Integer reps) {
-        this.reps = reps;
+    public TrainingExerciseResponse setRepsMode(RepsMode repsMode) {
+        this.repsMode = repsMode;
+        return this;
+    }
+
+    public Integer getRepsValue() {
+        return repsValue;
+    }
+
+    public TrainingExerciseResponse setRepsValue(Integer repsValue) {
+        this.repsValue = repsValue;
+        return this;
+    }
+
+    public Integer getRepsFrom() {
+        return repsFrom;
+    }
+
+    public TrainingExerciseResponse setRepsFrom(Integer repsFrom) {
+        this.repsFrom = repsFrom;
+        return this;
+    }
+
+    public Integer getRepsTo() {
+        return repsTo;
+    }
+
+    public TrainingExerciseResponse setRepsTo(Integer repsTo) {
+        this.repsTo = repsTo;
+        return this;
+    }
+
+    public String getRepsDisplay() {
+        return repsDisplay;
+    }
+
+    public TrainingExerciseResponse setRepsDisplay(String repsDisplay) {
+        this.repsDisplay = repsDisplay;
         return this;
     }
 

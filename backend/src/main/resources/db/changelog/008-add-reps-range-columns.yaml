@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-add-reps-range-columns
+      author: openai
+      changes:
+        - addColumn:
+            tableName: training_exercise
+            columns:
+              - column:
+                  name: reps_mode
+                  type: varchar(16)
+                  defaultValue: NONE
+              - column:
+                  name: reps_value
+                  type: int
+              - column:
+                  name: reps_from
+                  type: int
+              - column:
+                  name: reps_to
+                  type: int
+
+        - update:
+            tableName: training_exercise
+            columns:
+              - column:
+                  name: reps_mode
+                  value: EXACT
+              - column:
+                  name: reps_value
+                  valueComputed: reps
+            where: reps IS NOT NULL
+
+        - update:
+            tableName: training_exercise
+            columns:
+              - column:
+                  name: reps_mode
+                  value: NONE
+            where: reps IS NULL
+
+        - addNotNullConstraint:
+            tableName: training_exercise
+            columnName: reps_mode
+            columnDataType: varchar(16)
+
+        - addColumn:
+            tableName: exercise_template
+            columns:
+              - column:
+                  name: reps_mode
+                  type: varchar(16)
+                  defaultValue: NONE
+              - column:
+                  name: reps_value
+                  type: int
+              - column:
+                  name: reps_from
+                  type: int
+              - column:
+                  name: reps_to
+                  type: int
+
+        - update:
+            tableName: exercise_template
+            columns:
+              - column:
+                  name: reps_mode
+                  value: EXACT
+              - column:
+                  name: reps_value
+                  valueComputed: reps
+            where: reps IS NOT NULL
+
+        - update:
+            tableName: exercise_template
+            columns:
+              - column:
+                  name: reps_mode
+                  value: NONE
+            where: reps IS NULL
+
+        - addNotNullConstraint:
+            tableName: exercise_template
+            columnName: reps_mode
+            columnDataType: varchar(16)

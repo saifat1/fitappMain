@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-drop-legacy-reps-columns
+      author: openai
+      changes:
+        - dropColumn:
+            tableName: training_exercise
+            columnName: reps
+
+        - dropColumn:
+            tableName: exercise_template
+            columnName: reps

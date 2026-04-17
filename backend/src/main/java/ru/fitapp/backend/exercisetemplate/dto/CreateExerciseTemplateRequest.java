@@ -3,6 +3,7 @@ package ru.fitapp.backend.exercisetemplate.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import ru.fitapp.backend.common.model.RepsMode;
 
 public class CreateExerciseTemplateRequest {
 
@@ -16,8 +17,16 @@ public class CreateExerciseTemplateRequest {
     @Min(value = 1, message = "Количество подходов должно быть не меньше 1")
     private Integer sets;
 
-    @Min(value = 1, message = "Количество повторений должно быть не меньше 1")
-    private Integer reps;
+    private RepsMode repsMode;
+
+    @Min(value = 1, message = "Точное значение повторений должно быть не меньше 1")
+    private Integer repsValue;
+
+    @Min(value = 1, message = "Нижняя граница повторений должна быть не меньше 1")
+    private Integer repsFrom;
+
+    @Min(value = 1, message = "Верхняя граница повторений должна быть не меньше 1")
+    private Integer repsTo;
 
     @Min(value = 1, message = "Длительность должна быть не меньше 1 секунды")
     private Integer durationSeconds;
@@ -55,12 +64,39 @@ public class CreateExerciseTemplateRequest {
         return this;
     }
 
-    public Integer getReps() {
-        return reps;
+    public RepsMode getRepsMode() {
+        return repsMode;
     }
 
-    public CreateExerciseTemplateRequest setReps(Integer reps) {
-        this.reps = reps;
+    public CreateExerciseTemplateRequest setRepsMode(RepsMode repsMode) {
+        this.repsMode = repsMode;
+        return this;
+    }
+
+    public Integer getRepsValue() {
+        return repsValue;
+    }
+
+    public CreateExerciseTemplateRequest setRepsValue(Integer repsValue) {
+        this.repsValue = repsValue;
+        return this;
+    }
+
+    public Integer getRepsFrom() {
+        return repsFrom;
+    }
+
+    public CreateExerciseTemplateRequest setRepsFrom(Integer repsFrom) {
+        this.repsFrom = repsFrom;
+        return this;
+    }
+
+    public Integer getRepsTo() {
+        return repsTo;
+    }
+
+    public CreateExerciseTemplateRequest setRepsTo(Integer repsTo) {
+        this.repsTo = repsTo;
         return this;
     }
 

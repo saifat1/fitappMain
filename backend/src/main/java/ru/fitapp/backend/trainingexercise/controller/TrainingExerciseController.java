@@ -27,30 +27,39 @@ public class TrainingExerciseController {
     }
 
     @PostMapping
-    public TrainingExerciseResponse createExercise(@PathVariable Long trainingId,
-                                                   @Valid @RequestBody CreateTrainingExerciseRequest request) {
+    public TrainingExerciseResponse createExercise(
+            @PathVariable Long trainingId,
+            @Valid @RequestBody CreateTrainingExerciseRequest request
+    ) {
         return trainingExerciseService.createExercise(trainingId, request);
     }
 
     @PutMapping("/{exerciseId}")
-    public TrainingExerciseResponse updateExercise(@PathVariable Long trainingId,
-                                                   @PathVariable Long exerciseId,
-                                                   @Valid @RequestBody UpdateTrainingExerciseRequest request) {
+    public TrainingExerciseResponse updateExercise(
+            @PathVariable Long trainingId,
+            @PathVariable Long exerciseId,
+            @Valid @RequestBody UpdateTrainingExerciseRequest request
+    ) {
         return trainingExerciseService.updateExercise(trainingId, exerciseId, request);
     }
 
     @DeleteMapping("/{exerciseId}")
-    public void deleteExercise(@PathVariable Long trainingId,
-                               @PathVariable Long exerciseId) {
+    public void deleteExercise(
+            @PathVariable Long trainingId,
+            @PathVariable Long exerciseId
+    ) {
         trainingExerciseService.deleteExercise(trainingId, exerciseId);
     }
 
     @PatchMapping("/{exerciseId}/completion")
-    public TrainingExerciseResponse updateCompletion(@PathVariable Long trainingId,
-                                                     @PathVariable Long exerciseId,
-                                                     @Valid @RequestBody UpdateExerciseCompletionRequest request) {
+    public TrainingExerciseResponse updateCompletion(
+            @PathVariable Long trainingId,
+            @PathVariable Long exerciseId,
+            @Valid @RequestBody UpdateExerciseCompletionRequest request
+    ) {
         return trainingExerciseService.updateCompletion(trainingId, exerciseId, request);
     }
+
     @PostMapping("/from-template")
     public TrainingExerciseResponse createExerciseFromTemplate(
             @PathVariable Long trainingId,

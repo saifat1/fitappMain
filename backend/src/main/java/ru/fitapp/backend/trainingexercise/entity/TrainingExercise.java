@@ -1,6 +1,7 @@
 package ru.fitapp.backend.trainingexercise.entity;
 
 import jakarta.persistence.*;
+import ru.fitapp.backend.common.model.RepsMode;
 import ru.fitapp.backend.training.entity.Training;
 
 import java.time.LocalDateTime;
@@ -34,8 +35,18 @@ public class TrainingExercise {
     @Column(name = "sets")
     private Integer sets;
 
-    @Column(name = "reps")
-    private Integer reps;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reps_mode", nullable = false, length = 16)
+    private RepsMode repsMode;
+
+    @Column(name = "reps_value")
+    private Integer repsValue;
+
+    @Column(name = "reps_from")
+    private Integer repsFrom;
+
+    @Column(name = "reps_to")
+    private Integer repsTo;
 
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
@@ -115,12 +126,39 @@ public class TrainingExercise {
         return this;
     }
 
-    public Integer getReps() {
-        return reps;
+    public RepsMode getRepsMode() {
+        return repsMode;
     }
 
-    public TrainingExercise setReps(Integer reps) {
-        this.reps = reps;
+    public TrainingExercise setRepsMode(RepsMode repsMode) {
+        this.repsMode = repsMode;
+        return this;
+    }
+
+    public Integer getRepsValue() {
+        return repsValue;
+    }
+
+    public TrainingExercise setRepsValue(Integer repsValue) {
+        this.repsValue = repsValue;
+        return this;
+    }
+
+    public Integer getRepsFrom() {
+        return repsFrom;
+    }
+
+    public TrainingExercise setRepsFrom(Integer repsFrom) {
+        this.repsFrom = repsFrom;
+        return this;
+    }
+
+    public Integer getRepsTo() {
+        return repsTo;
+    }
+
+    public TrainingExercise setRepsTo(Integer repsTo) {
+        this.repsTo = repsTo;
         return this;
     }
 
@@ -195,6 +233,10 @@ public class TrainingExercise {
 
         if (this.isCompleted == null) {
             this.isCompleted = false;
+        }
+
+        if (this.repsMode == null) {
+            this.repsMode = RepsMode.NONE;
         }
     }
 

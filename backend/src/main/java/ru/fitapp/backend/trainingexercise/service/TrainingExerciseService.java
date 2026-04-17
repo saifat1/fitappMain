@@ -3,6 +3,7 @@ package ru.fitapp.backend.trainingexercise.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
+import ru.fitapp.backend.common.model.RepsMode;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.exercisetemplate.dto.ApplyExerciseTemplateRequest;
 import ru.fitapp.backend.exercisetemplate.entity.ExerciseTemplate;
@@ -60,11 +61,18 @@ public class TrainingExerciseService {
                 .setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
                 .setSets(request.getSets())
-                .setReps(request.getReps())
                 .setDurationSeconds(request.getDurationSeconds())
                 .setRestSeconds(request.getRestSeconds())
                 .setTrainerNote(normalizeOptional(request.getTrainerNote()))
                 .setIsCompleted(false);
+
+        applyReps(
+                exercise,
+                request.getRepsMode(),
+                request.getRepsValue(),
+                request.getRepsFrom(),
+                request.getRepsTo()
+        );
 
         TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
@@ -83,11 +91,18 @@ public class TrainingExerciseService {
                 .setTitle(normalizeRequired(template.getName(), "Название упражнения обязательно"))
                 .setDescription(normalizeOptional(template.getDescription()))
                 .setSets(template.getSets())
-                .setReps(template.getReps())
                 .setDurationSeconds(template.getDurationSeconds())
                 .setRestSeconds(template.getRestSeconds())
                 .setTrainerNote(normalizeOptional(template.getTrainerNote()))
                 .setIsCompleted(false);
+
+        applyReps(
+                exercise,
+                template.getRepsMode(),
+                template.getRepsValue(),
+                template.getRepsFrom(),
+                template.getRepsTo()
+        );
 
         TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
@@ -124,8 +139,14 @@ public class TrainingExerciseService {
             if (request.getSets() != null) {
                 exercise.setSets(request.getSets());
             }
-            if (request.getReps() != null) {
-                exercise.setReps(request.getReps());
+            if (hasRepsPayload(request)) {
+                applyReps(
+                        exercise,
+                        request.getRepsMode(),
+                        request.getRepsValue(),
+                        request.getRepsFrom(),
+                        request.getRepsTo()
+                );
             }
             if (request.getDurationSeconds() != null) {
                 exercise.setDurationSeconds(request.getDurationSeconds());
@@ -197,7 +218,16 @@ public class TrainingExerciseService {
                 .setTitle(exercise.getTitle())
                 .setDescription(exercise.getDescription())
                 .setSets(exercise.getSets())
-                .setReps(exercise.getReps())
+                .setRepsMode(exercise.getRepsMode())
+                .setRepsValue(exercise.getRepsValue())
+                .setRepsFrom(exercise.getRepsFrom())
+                .setRepsTo(exercise.getRepsTo())
+                .setRepsDisplay(buildRepsDisplay(
+                        exercise.getRepsMode(),
+                        exercise.getRepsValue(),
+                        exercise.getRepsFrom(),
+                        exercise.getRepsTo()
+                ))
                 .setDurationSeconds(exercise.getDurationSeconds())
                 .setRestSeconds(exercise.getRestSeconds())
                 .setIsCompleted(exercise.getIsCompleted())
@@ -205,6 +235,121 @@ public class TrainingExerciseService {
                 .setClientNote(exercise.getClientNote())
                 .setCreatedAt(exercise.getCreatedAt())
                 .setUpdatedAt(exercise.getUpdatedAt());
+    }
+
+    private boolean hasRepsPayload(UpdateTrainingExerciseRequest request) {
+        return request.getRepsMode() != null
+                || request.getRepsValue() != null
+                || request.getRepsFrom() != null
+                || request.getRepsTo() != null;
+    }
+
+    private void applyReps(
+            TrainingExercise exercise,
+            RepsMode mode,
+            Integer value,
+            Integer from,
+            Integer to
+    ) {
+        RepsMode resolvedMode = resolveRepsMode(mode, value, from, to);
+        validateReps(resolvedMode, value, from, to);
+
+        exercise
+                .setRepsMode(resolvedMode)
+                .setRepsValue(resolvedMode == RepsMode.EXACT ? value : null)
+                .setRepsFrom(resolvedMode == RepsMode.RANGE ? from : null)
+                .setRepsTo(resolvedMode == RepsMode.RANGE ? to : null);
+    }
+
+    private RepsMode resolveRepsMode(
+            RepsMode mode,
+            Integer value,
+            Integer from,
+            Integer to
+    ) {
+        boolean hasAnyValue = value != null || from != null || to != null;
+
+        if (mode == null) {
+            return hasAnyValue ? null : RepsMode.NONE;
+        }
+
+        return mode;
+    }
+
+    private void validateReps(
+            RepsMode mode,
+            Integer value,
+            Integer from,
+            Integer to
+    ) {
+        if (mode == null) {
+            throw new ApiException(
+                    "VALIDATION_ERROR",
+                    "Не указан режим повторений"
+            );
+        }
+
+        switch (mode) {
+            case NONE -> {
+                if (value != null || from != null || to != null) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Для режима без повторений нельзя заполнять значения повторений"
+                    );
+                }
+            }
+            case EXACT -> {
+                if (value == null || value < 1) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Для точного значения повторений нужно указать положительное число"
+                    );
+                }
+                if (from != null || to != null) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Для точного значения повторений нельзя заполнять диапазон"
+                    );
+                }
+            }
+            case RANGE -> {
+                if (from == null || to == null || from < 1 || to < 1) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Для диапазона повторений нужно указать две положительные границы"
+                    );
+                }
+                if (from > to) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Нижняя граница повторений не может быть больше верхней"
+                    );
+                }
+                if (value != null) {
+                    throw new ApiException(
+                            "VALIDATION_ERROR",
+                            "Для диапазона повторений нельзя заполнять точное значение"
+                    );
+                }
+            }
+        }
+    }
+
+    private String buildRepsDisplay(
+            RepsMode mode,
+            Integer value,
+            Integer from,
+            Integer to
+    ) {
+        if (mode == null || mode == RepsMode.NONE) {
+            return "—";
+        }
+
+        return switch (mode) {
+            case EXACT -> value != null ? String.valueOf(value) : "—";
+            case RANGE -> from != null && to != null ? from + "–" + to : "—";
+            case NONE -> "—";
+        };
     }
 
     private String normalizeRequired(String value, String message) {
@@ -218,7 +363,6 @@ public class TrainingExerciseService {
         if (value == null) {
             return null;
         }
-
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
     }

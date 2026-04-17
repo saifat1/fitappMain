@@ -1,5 +1,7 @@
 package ru.fitapp.backend.exercisetemplate.dto;
 
+import ru.fitapp.backend.common.model.RepsMode;
+
 import java.time.LocalDateTime;
 
 public class ExerciseTemplateResponse {
@@ -9,7 +11,11 @@ public class ExerciseTemplateResponse {
     private String name;
     private String description;
     private Integer sets;
-    private Integer reps;
+    private RepsMode repsMode;
+    private Integer repsValue;
+    private Integer repsFrom;
+    private Integer repsTo;
+    private String repsDisplay;
     private Integer durationSeconds;
     private Integer restSeconds;
     private String trainerNote;
@@ -62,12 +68,48 @@ public class ExerciseTemplateResponse {
         return this;
     }
 
-    public Integer getReps() {
-        return reps;
+    public RepsMode getRepsMode() {
+        return repsMode;
     }
 
-    public ExerciseTemplateResponse setReps(Integer reps) {
-        this.reps = reps;
+    public ExerciseTemplateResponse setRepsMode(RepsMode repsMode) {
+        this.repsMode = repsMode;
+        return this;
+    }
+
+    public Integer getRepsValue() {
+        return repsValue;
+    }
+
+    public ExerciseTemplateResponse setRepsValue(Integer repsValue) {
+        this.repsValue = repsValue;
+        return this;
+    }
+
+    public Integer getRepsFrom() {
+        return repsFrom;
+    }
+
+    public ExerciseTemplateResponse setRepsFrom(Integer repsFrom) {
+        this.repsFrom = repsFrom;
+        return this;
+    }
+
+    public Integer getRepsTo() {
+        return repsTo;
+    }
+
+    public ExerciseTemplateResponse setRepsTo(Integer repsTo) {
+        this.repsTo = repsTo;
+        return this;
+    }
+
+    public String getRepsDisplay() {
+        return repsDisplay;
+    }
+
+    public ExerciseTemplateResponse setRepsDisplay(String repsDisplay) {
+        this.repsDisplay = repsDisplay;
         return this;
     }
 

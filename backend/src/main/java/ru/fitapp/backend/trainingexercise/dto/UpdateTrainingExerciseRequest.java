@@ -2,6 +2,7 @@ package ru.fitapp.backend.trainingexercise.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
+import ru.fitapp.backend.common.model.RepsMode;
 
 public class UpdateTrainingExerciseRequest {
 
@@ -14,8 +15,16 @@ public class UpdateTrainingExerciseRequest {
     @Min(value = 1, message = "Количество подходов должно быть не меньше 1")
     private Integer sets;
 
-    @Min(value = 1, message = "Количество повторений должно быть не меньше 1")
-    private Integer reps;
+    private RepsMode repsMode;
+
+    @Min(value = 1, message = "Точное значение повторений должно быть не меньше 1")
+    private Integer repsValue;
+
+    @Min(value = 1, message = "Нижняя граница повторений должна быть не меньше 1")
+    private Integer repsFrom;
+
+    @Min(value = 1, message = "Верхняя граница повторений должна быть не меньше 1")
+    private Integer repsTo;
 
     @Min(value = 1, message = "Длительность должна быть не меньше 1 секунды")
     private Integer durationSeconds;
@@ -61,12 +70,39 @@ public class UpdateTrainingExerciseRequest {
         return this;
     }
 
-    public Integer getReps() {
-        return reps;
+    public RepsMode getRepsMode() {
+        return repsMode;
     }
 
-    public UpdateTrainingExerciseRequest setReps(Integer reps) {
-        this.reps = reps;
+    public UpdateTrainingExerciseRequest setRepsMode(RepsMode repsMode) {
+        this.repsMode = repsMode;
+        return this;
+    }
+
+    public Integer getRepsValue() {
+        return repsValue;
+    }
+
+    public UpdateTrainingExerciseRequest setRepsValue(Integer repsValue) {
+        this.repsValue = repsValue;
+        return this;
+    }
+
+    public Integer getRepsFrom() {
+        return repsFrom;
+    }
+
+    public UpdateTrainingExerciseRequest setRepsFrom(Integer repsFrom) {
+        this.repsFrom = repsFrom;
+        return this;
+    }
+
+    public Integer getRepsTo() {
+        return repsTo;
+    }
+
+    public UpdateTrainingExerciseRequest setRepsTo(Integer repsTo) {
+        this.repsTo = repsTo;
         return this;
     }
 

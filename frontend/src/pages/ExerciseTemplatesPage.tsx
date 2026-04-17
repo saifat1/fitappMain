@@ -5,12 +5,30 @@ import { useNavigate } from "react-router-dom";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
-import type {
-    CreateExerciseTemplateRequest,
-    ExerciseTemplateResponse,
-} from "../features/exercise-template/model/exerciseTemplate.types";
+import type { CreateExerciseTemplateRequest as ApiCreateExerciseTemplateRequest } from "../features/exercise-template/model/exerciseTemplate.types";
 
 import styles from "./ExerciseTemplatesPage.module.css";
+
+type RepsMode = "NONE" | "EXACT" | "RANGE";
+
+type ExerciseTemplateView = {
+    id: number;
+    trainerId: number;
+    name: string;
+    description?: string | null;
+    sets?: number | null;
+    repsMode: RepsMode;
+    repsValue?: number | null;
+    repsFrom?: number | null;
+    repsTo?: number | null;
+    repsDisplay: string;
+    durationSeconds?: number | null;
+    restSeconds?: number | null;
+    trainerNote?: string | null;
+    isArchived: boolean;
+    createdAt: string;
+    updatedAt: string;
+};
 
 function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -20,11 +38,24 @@ function resolveApiError(error: unknown, fallback: string): string {
     return fallback;
 }
 
-function formatTemplateSummary(item: ExerciseTemplateResponse): string {
+function getRepsDisplay(item: ExerciseTemplateView): string {
+    if (item.repsMode === "EXACT") {
+        return item.repsDisplay || (item.repsValue != null ? String(item.repsValue) : "—");
+    }
+
+    if (item.repsMode === "RANGE") {
+        return item.repsDisplay ||
+            (item.repsFrom != null && item.repsTo != null ? `${item.repsFrom}–${item.repsTo}` : "—");
+    }
+
+    return "—";
+}
+
+function formatTemplateSummary(item: ExerciseTemplateView): string {
     const parts: string[] = [];
 
     if (item.sets != null) parts.push(`${item.sets} подх.`);
-    if (item.reps != null) parts.push(`${item.reps} повт.`);
+    if (item.repsMode !== "NONE") parts.push(`${getRepsDisplay(item)} повт.`);
     if (item.durationSeconds != null) parts.push(`${item.durationSeconds} сек.`);
     if (item.restSeconds != null) parts.push(`отдых ${item.restSeconds} сек.`);
 
@@ -34,7 +65,7 @@ function formatTemplateSummary(item: ExerciseTemplateResponse): string {
 export default function ExerciseTemplatesPage() {
     const navigate = useNavigate();
 
-    const [templates, setTemplates] = useState<ExerciseTemplateResponse[]>([]);
+    const [templates, setTemplates] = useState<ExerciseTemplateView[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [includeArchived, setIncludeArchived] = useState(false);
@@ -44,7 +75,10 @@ export default function ExerciseTemplatesPage() {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [sets, setSets] = useState("");
-    const [reps, setReps] = useState("");
+    const [repsMode, setRepsMode] = useState<"" | RepsMode>("");
+    const [repsValue, setRepsValue] = useState("");
+    const [repsFrom, setRepsFrom] = useState("");
+    const [repsTo, setRepsTo] = useState("");
     const [durationSeconds, setDurationSeconds] = useState("");
     const [restSeconds, setRestSeconds] = useState("");
     const [trainerNote, setTrainerNote] = useState("");
@@ -54,7 +88,7 @@ export default function ExerciseTemplatesPage() {
         setIsLoading(true);
 
         try {
-            const data = await exerciseTemplateApi.getTemplates(includeArchived);
+            const data = (await exerciseTemplateApi.getTemplates(includeArchived)) as unknown as ExerciseTemplateView[];
             setTemplates(data);
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось загрузить шаблоны упражнений"));
@@ -83,33 +117,75 @@ export default function ExerciseTemplatesPage() {
         });
     }, [templates, search]);
 
+    const handleSelectRepsMode = (mode: RepsMode) => {
+        setRepsMode(mode);
+
+        if (mode === "EXACT") {
+            setRepsFrom("");
+            setRepsTo("");
+            return;
+        }
+
+        if (mode === "RANGE") {
+            setRepsValue("");
+            return;
+        }
+
+        setRepsValue("");
+        setRepsFrom("");
+        setRepsTo("");
+    };
+
     const handleCreate = async () => {
         if (!name.trim()) {
             setErrorMessage("Укажи название шаблона");
             return;
         }
 
+        if (repsMode === "EXACT" && !repsValue.trim()) {
+            setErrorMessage("Укажи точное количество повторений");
+            return;
+        }
+
+        if (repsMode === "RANGE") {
+            if (!repsFrom.trim() || !repsTo.trim()) {
+                setErrorMessage("Укажи нижнюю и верхнюю границы повторений");
+                return;
+            }
+
+            if (Number(repsFrom) > Number(repsTo)) {
+                setErrorMessage("Нижняя граница повторений не может быть больше верхней");
+                return;
+            }
+        }
+
         setErrorMessage("");
         setIsCreating(true);
 
-        const payload: CreateExerciseTemplateRequest = {
+        const payload = {
             name: name.trim(),
             description: description.trim() || undefined,
             sets: sets.trim() ? Number(sets) : undefined,
-            reps: reps.trim() ? Number(reps) : undefined,
+            repsMode: repsMode || "NONE",
+            repsValue: repsMode === "EXACT" && repsValue.trim() ? Number(repsValue) : undefined,
+            repsFrom: repsMode === "RANGE" && repsFrom.trim() ? Number(repsFrom) : undefined,
+            repsTo: repsMode === "RANGE" && repsTo.trim() ? Number(repsTo) : undefined,
             durationSeconds: durationSeconds.trim() ? Number(durationSeconds) : undefined,
             restSeconds: restSeconds.trim() ? Number(restSeconds) : undefined,
             trainerNote: trainerNote.trim() || undefined,
-        };
+        } as unknown as ApiCreateExerciseTemplateRequest;
 
         try {
-            const created = await exerciseTemplateApi.createTemplate(payload);
+            const created = (await exerciseTemplateApi.createTemplate(payload)) as unknown as ExerciseTemplateView;
             setTemplates((prev) => [created, ...prev]);
 
             setName("");
             setDescription("");
             setSets("");
-            setReps("");
+            setRepsMode("");
+            setRepsValue("");
+            setRepsFrom("");
+            setRepsTo("");
             setDurationSeconds("");
             setRestSeconds("");
             setTrainerNote("");
@@ -120,7 +196,7 @@ export default function ExerciseTemplatesPage() {
         }
     };
 
-    const handleArchiveToggle = async (item: ExerciseTemplateResponse) => {
+    const handleArchiveToggle = async (item: ExerciseTemplateView) => {
         setErrorMessage("");
 
         try {
@@ -196,15 +272,103 @@ export default function ExerciseTemplatesPage() {
                             />
                         </div>
 
-                        <div className={styles.row}>
-                            <label htmlFor="template-reps">Повторы</label>
-                            <input
-                                id="template-reps"
-                                type="number"
-                                min="0"
-                                value={reps}
-                                onChange={(event) => setReps(event.target.value)}
-                            />
+                        <div className={styles.row} style={{ gridColumn: "span 2" }}>
+                            <label>Повторы</label>
+
+                            <div
+                                style={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 8,
+                                    marginBottom: 8,
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className={
+                                        repsMode === "EXACT"
+                                            ? "dashboard-btn dashboard-btn-primary"
+                                            : "dashboard-btn dashboard-btn-secondary"
+                                    }
+                                    onClick={() => handleSelectRepsMode("EXACT")}
+                                >
+                                    Точно
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={
+                                        repsMode === "RANGE"
+                                            ? "dashboard-btn dashboard-btn-primary"
+                                            : "dashboard-btn dashboard-btn-secondary"
+                                    }
+                                    onClick={() => handleSelectRepsMode("RANGE")}
+                                >
+                                    Диапазон
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={
+                                        repsMode === "NONE"
+                                            ? "dashboard-btn dashboard-btn-primary"
+                                            : "dashboard-btn dashboard-btn-secondary"
+                                    }
+                                    onClick={() => handleSelectRepsMode("NONE")}
+                                >
+                                    Не указывать
+                                </button>
+                            </div>
+
+                            {repsMode === "EXACT" && (
+                                <input
+                                    id="template-reps-value"
+                                    type="number"
+                                    min="1"
+                                    value={repsValue}
+                                    onChange={(event) => setRepsValue(event.target.value)}
+                                    placeholder="Например, 12"
+                                />
+                            )}
+
+                            {repsMode === "RANGE" && (
+                                <div
+                                    style={{
+                                        display: "grid",
+                                        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                                        gap: 8,
+                                    }}
+                                >
+                                    <input
+                                        id="template-reps-from"
+                                        type="number"
+                                        min="1"
+                                        value={repsFrom}
+                                        onChange={(event) => setRepsFrom(event.target.value)}
+                                        placeholder="От"
+                                    />
+                                    <input
+                                        id="template-reps-to"
+                                        type="number"
+                                        min="1"
+                                        value={repsTo}
+                                        onChange={(event) => setRepsTo(event.target.value)}
+                                        placeholder="До"
+                                    />
+                                </div>
+                            )}
+
+                            {!repsMode && (
+                                <div
+                                    style={{
+                                        color: "#64748b",
+                                        fontSize: 12,
+                                        lineHeight: 1.4,
+                                    }}
+                                >
+                                    Выбери точное значение, диапазон или режим без повторений
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.row}>
@@ -316,13 +480,13 @@ export default function ExerciseTemplatesPage() {
                                     </div>
 
                                     <div className={styles.badges}>
-                    <span
-                        className={`${styles.badge} ${
-                            item.isArchived ? styles.badgeArchived : styles.badgeActive
-                        }`}
-                    >
-                      {item.isArchived ? "Архив" : "Активен"}
-                    </span>
+                                        <span
+                                            className={`${styles.badge} ${
+                                                item.isArchived ? styles.badgeArchived : styles.badgeActive
+                                            }`}
+                                        >
+                                            {item.isArchived ? "Архив" : "Активен"}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -333,7 +497,7 @@ export default function ExerciseTemplatesPage() {
                                     </div>
                                     <div className={styles.detail}>
                                         <span>Повторы</span>
-                                        <strong>{item.reps ?? "—"}</strong>
+                                        <strong>{getRepsDisplay(item)}</strong>
                                     </div>
                                     <div className={styles.detail}>
                                         <span>Длительность</span>
