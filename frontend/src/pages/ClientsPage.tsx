@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import { trainerApi } from "../shared/api/trainerApi";
+
 import type {
     TrainerClientResponse,
     UpdateTrainerClientRequest,
@@ -32,6 +34,7 @@ function getClientInitials(client: TrainerClientResponse): string {
     const initials = `${first}${last}`.trim().toUpperCase();
 
     if (initials) return initials;
+
     return client.email?.[0]?.toUpperCase() ?? "C";
 }
 
@@ -62,16 +65,16 @@ function formatCreatedAt(value: string): string {
 }
 
 export default function ClientsPage() {
+    const navigate = useNavigate();
+
     const [clients, setClients] = useState<TrainerClientResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
-
     const [editingClientId, setEditingClientId] = useState<number | null>(null);
     const [editState, setEditState] = useState<EditState>({
         firstName: "",
         lastName: "",
     });
-
     const [savingClientId, setSavingClientId] = useState<number | null>(null);
     const [deactivatingClientId, setDeactivatingClientId] = useState<number | null>(null);
 
@@ -165,6 +168,10 @@ export default function ClientsPage() {
         }
     };
 
+    const openInvites = () => {
+        navigate("/trainer/invites");
+    };
+
     return (
         <div className="clients-page clients-page-compact entity-page-compact">
             <section className="clients-header-bar entity-header-bar">
@@ -172,31 +179,41 @@ export default function ClientsPage() {
                     <h1 className="clients-header-title entity-header-title">Клиенты</h1>
 
                     <div className="clients-summary-row entity-summary-row">
-            <span className="clients-summary-chip entity-summary-chip">
-              <strong>{stats.total}</strong>
-              <span>Всего</span>
-            </span>
+                        <span className="clients-summary-chip entity-summary-chip">
+                            <strong>{stats.total}</strong>
+                            <span>Всего</span>
+                        </span>
 
                         <span className="clients-summary-chip active entity-summary-chip entity-summary-chip--positive">
-              <strong>{stats.active}</strong>
-              <span>Активные</span>
-            </span>
+                            <strong>{stats.active}</strong>
+                            <span>Активные</span>
+                        </span>
 
                         <span className="clients-summary-chip inactive entity-summary-chip entity-summary-chip--muted">
-              <strong>{stats.inactive}</strong>
-              <span>Неактивные</span>
-            </span>
+                            <strong>{stats.inactive}</strong>
+                            <span>Неактивные</span>
+                        </span>
                     </div>
                 </div>
 
-                <button
-                    type="button"
-                    className="dashboard-btn dashboard-btn-secondary clients-refresh-btn entity-header-action"
-                    onClick={() => void loadClients()}
-                    disabled={isLoading}
-                >
-                    {isLoading ? "Обновляем..." : "Обновить"}
-                </button>
+                <div className="entity-header-actions clients-header-actions">
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-primary entity-header-action"
+                        onClick={openInvites}
+                    >
+                        + Пригласить
+                    </button>
+
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-secondary clients-refresh-btn entity-header-action"
+                        onClick={() => void loadClients()}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Обновляем..." : "Обновить"}
+                    </button>
+                </div>
             </section>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
@@ -214,6 +231,16 @@ export default function ClientsPage() {
                         <div className="clients-empty-title">Клиентов пока нет</div>
                         <div className="clients-empty-text">
                             Здесь появятся пользователи, закреплённые за тренером.
+                        </div>
+
+                        <div className="clients-empty-actions">
+                            <button
+                                type="button"
+                                className="dashboard-btn dashboard-btn-primary"
+                                onClick={openInvites}
+                            >
+                                + Пригласить клиента
+                            </button>
                         </div>
                     </div>
                 ) : (
@@ -235,7 +262,10 @@ export default function ClientsPage() {
 
                                         <div className="client-card-content entity-card-main">
                                             <div className="client-card-name-row">
-                                                <div className="client-card-name">{getClientDisplayName(client)}</div>
+                                                <div className="client-card-name">
+                                                    {getClientDisplayName(client)}
+                                                </div>
+
                                                 <div className={getClientStatusClass(client.status)}>
                                                     {getClientStatusLabel(client.status)}
                                                 </div>
