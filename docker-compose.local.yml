@@ -19,7 +19,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-fitapp}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-fitapp_local_pass}
       SERVER_PORT: 8080
-      JWT_SECRET: ${JWT_SECRET:-local-dev-secret}
+      JWT_SECRET: ${JWT_SECRET:-fitapp-local-super-secret-key-2026-minimum-32-chars}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:3000}
 
   frontend:
     container_name: fitapp-frontend-local

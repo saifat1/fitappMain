@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:16
-    container_name: fitapp-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -18,7 +17,6 @@ services:
   backend:
     build:
       context: ./backend
-    container_name: fitapp-backend
     restart: unless-stopped
     depends_on:
       db:
@@ -36,28 +34,11 @@ services:
   frontend:
     build:
       context: ./frontend
-    container_name: fitapp-frontend
     restart: unless-stopped
     depends_on:
       - backend
     expose:
       - "80"
 
-  caddy:
-    image: caddy:2
-    container_name: fitapp-caddy
-    restart: unless-stopped
-    depends_on:
-      - frontend
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
 volumes:
   fitapp_postgres_data:
-  caddy_data:
-  caddy_config:

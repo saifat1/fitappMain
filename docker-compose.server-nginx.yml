@@ -1,0 +1,20 @@
+services:
+  db:
+    container_name: fitapp-postgres-dev
+    volumes:
+      - fitapp_postgres_data_dev:/var/lib/postgresql/data
+
+  backend:
+    container_name: fitapp-backend-dev
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-https://77-222-32-165.swtest.ru}
+
+  frontend:
+    container_name: fitapp-frontend-dev
+    ports:
+      - "127.0.0.1:8081:80"
+
+volumes:
+  fitapp_postgres_data_dev:
