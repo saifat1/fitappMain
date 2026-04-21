@@ -443,4 +443,102 @@
   .subtitle {
     font-size: 14px;
   }
+  .weekNav {
+    display: grid;
+    gap: 10px;
+  }
+
+  .weekNavButtons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .periodPill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .trainerChip {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .slotSection {
+    margin-top: 14px;
+    display: grid;
+    gap: 12px;
+  }
+
+  .requestMeta {
+    display: grid;
+    gap: 6px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .dayTabs {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dayTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .slotAction .buttonSecondary {
+    width: 100%;
+  }
+
+  @media (max-width: 700px) {
+    .weekNavButtons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .weekNavButtons .buttonSecondary {
+      width: 100%;
+    }
+
+    .periodPill {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .trainerChip {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .weekNavButtons {
+      grid-template-columns: 1fr;
+    }
+
+    .dayTab {
+      min-width: 118px;
+      padding: 10px;
+    }
+  }
 }

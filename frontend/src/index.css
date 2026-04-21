@@ -7294,4 +7294,21 @@ input:focus {
       padding: 0 14px;
     }
   }
+  .mobile-bottom-nav__scroller {
+    overscroll-behavior-x: contain;
+  }
+
+  .coach-rdp-day-has-availability .rdp-day_button {
+    box-shadow: inset 0 -3px 0 #93c5fd;
+  }
+
+  .coach-rdp-day-has-exceptions .rdp-day_button {
+    box-shadow:
+            inset 0 -3px 0 #f59e0b,
+            inset 0 -6px 0 #93c5fd;
+  }
+
+  .coach-rdp-day-has-trainings .rdp-day_button {
+    border-color: #14b8a6;
+  }
 }

@@ -3,18 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DayPicker } from "react-day-picker";
 import { ru } from "react-day-picker/locale";
-
 import { useAuth } from "../features/auth/model/AuthContext";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainerApi } from "../shared/api/trainerApi";
-
+import { availabilityApi } from "../shared/api/availabilityApi";
 import CalendarDayAgenda from "../features/calendar/ui/CalendarDayAgenda";
 import QuickCreateTrainingSheet from "../features/calendar/ui/QuickCreateTrainingSheet";
-
 import {
-    buildHourSlots,
+    buildDayAgendaRows,
     formatDateKey,
     formatMonthTitle,
+    getAvailabilityDatesForMonth,
     getDefaultSelectedDate,
     getMonthRange,
     getMonthStart,
@@ -22,8 +21,8 @@ import {
     parseDateKey,
     shiftMonth,
 } from "../features/calendar/lib/trainerCalendar";
-
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import type { TrainerAvailabilityException, TrainerAvailabilityRule } from "../features/availability/model/availability.types";
 import type { TrainingResponse } from "../features/training/model/training.types";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
 
@@ -47,21 +46,18 @@ function ClientHomeFallback() {
     const { currentUser } = useAuth();
 
     if (!currentUser) {
-        return (
-            <div className="dashboard-page">
-                <div className="error-box">Пользователь не загружен</div>
-            </div>
-        );
+        return <div>Пользователь не загружен</div>;
     }
 
     const fullName =
-        [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" ") || "Пользователь";
+        [currentUser.firstName, currentUser.lastName].filter(Boolean).join(" ") ||
+        "Пользователь";
 
     return (
         <div className="dashboard-page">
             <section className="dashboard-hero">
                 <div>
-                    <div className="dashboard-kicker">Профиль</div>
+                    <p className="dashboard-kicker">Профиль</p>
                     <h1 className="dashboard-title">{fullName}</h1>
                     <p className="dashboard-subtitle">
                         Клиентская версия главной пока остаётся без изменений.
@@ -89,23 +85,34 @@ export default function MePage() {
     const navigate = useNavigate();
 
     const [currentMonth, setCurrentMonth] = useState<Date>(getMonthStart(new Date()));
-    const [selectedDate, setSelectedDate] = useState<string>(getDefaultSelectedDate(new Date()));
+    const [selectedDate, setSelectedDate] = useState<string>(
+        getDefaultSelectedDate(new Date())
+    );
 
     const [trainings, setTrainings] = useState<TrainingResponse[]>([]);
     const [clients, setClients] = useState<TrainerClientResponse[]>([]);
+    const [availabilityRules, setAvailabilityRules] = useState<TrainerAvailabilityRule[]>(
+        []
+    );
+    const [availabilityExceptions, setAvailabilityExceptions] = useState<
+        TrainerAvailabilityException[]
+    >([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingClients, setIsLoadingClients] = useState(false);
+    const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [processingTrainingId, setProcessingTrainingId] = useState<number | null>(null);
-
     const [errorMessage, setErrorMessage] = useState("");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [selectedStartTime, setSelectedStartTime] = useState<string | undefined>(undefined);
+    const [selectedStartTime, setSelectedStartTime] = useState<string | undefined>(
+        undefined
+    );
 
     const isTrainer = currentUser?.role === "TRAINER";
 
     const monthRange = useMemo(() => getMonthRange(currentMonth), [currentMonth]);
+
     const trainingsByDate = useMemo(() => groupTrainingsByDate(trainings), [trainings]);
 
     const selectedDayTrainings = useMemo(
@@ -123,7 +130,16 @@ export default function MePage() {
         [trainingsByDate, selectedDate]
     );
 
-    const hourSlots = useMemo(() => buildHourSlots(6, 23), []);
+    const agendaRows = useMemo(
+        () =>
+            buildDayAgendaRows(
+                selectedDate,
+                selectedDayTrainings,
+                availabilityRules,
+                availabilityExceptions
+            ),
+        [selectedDate, selectedDayTrainings, availabilityRules, availabilityExceptions]
+    );
 
     const daysWithPlannedTrainings = useMemo(() => {
         const unique = new Set(
@@ -134,6 +150,11 @@ export default function MePage() {
 
         return Array.from(unique).map(parseDateKey);
     }, [trainings]);
+
+    const availabilityMarkers = useMemo(
+        () => getAvailabilityDatesForMonth(currentMonth, availabilityRules, availabilityExceptions),
+        [currentMonth, availabilityRules, availabilityExceptions]
+    );
 
     const loadTrainings = useCallback(async () => {
         setIsLoading(true);
@@ -166,6 +187,24 @@ export default function MePage() {
         }
     }, [isTrainer]);
 
+    const loadAvailability = useCallback(async () => {
+        if (!isTrainer) {
+            return;
+        }
+
+        setIsLoadingAvailability(true);
+
+        try {
+            const response = await availabilityApi.getMyAvailabilityRules();
+            setAvailabilityRules(response.rules ?? []);
+            setAvailabilityExceptions(response.exceptions ?? []);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось загрузить доступность"));
+        } finally {
+            setIsLoadingAvailability(false);
+        }
+    }, [isTrainer]);
+
     useEffect(() => {
         if (!isTrainer) {
             return;
@@ -182,12 +221,16 @@ export default function MePage() {
         void loadClients();
     }, [isTrainer, loadClients]);
 
+    useEffect(() => {
+        if (!isTrainer) {
+            return;
+        }
+
+        void loadAvailability();
+    }, [isTrainer, loadAvailability]);
+
     if (!currentUser) {
-        return (
-            <div className="dashboard-page">
-                <div className="error-box">Пользователь не загружен</div>
-            </div>
-        );
+        return <div>Пользователь не загружен</div>;
     }
 
     if (!isTrainer) {
@@ -195,6 +238,7 @@ export default function MePage() {
     }
 
     const selectedDay = parseDateKey(selectedDate);
+    const isCalendarLoading = isLoading || isLoadingAvailability;
 
     const handleOpenCreate = (startTime?: string) => {
         setSelectedStartTime(startTime);
@@ -213,7 +257,6 @@ export default function MePage() {
 
         try {
             const created = await trainingApi.createTraining(payload);
-
             setTrainings((prev) => [...prev, created]);
             setSelectedDate(payload.trainingDate);
             setIsCreateOpen(false);
@@ -295,9 +338,10 @@ export default function MePage() {
             <section className="coach-calendar-header coach-calendar-panel">
                 <div className="coach-calendar-header-top">
                     <div className="coach-calendar-header-main">
-                        <h1 className="coach-calendar-title">Календарь тренировок</h1>
+                        <h1 className="coach-calendar-title">Календарь тренировок и доступности</h1>
                         <p className="coach-calendar-subtitle">
-                            Выбирай день, смотри расписание и быстро создавай новую тренировку.
+                            День теперь строится по реальной доступности, исключениям и уже созданным
+                            тренировкам.
                         </p>
                     </div>
 
@@ -350,7 +394,7 @@ export default function MePage() {
 
             <div className="coach-calendar-layout">
                 <section className="coach-calendar-panel coach-calendar-panel--month">
-                    {isLoading ? (
+                    {isCalendarLoading ? (
                         <div className="coach-calendar-loading">Загрузка...</div>
                     ) : (
                         <DayPicker
@@ -379,9 +423,13 @@ export default function MePage() {
                             hideNavigation
                             modifiers={{
                                 hasTrainings: daysWithPlannedTrainings,
+                                hasAvailability: availabilityMarkers.daysWithAvailability,
+                                hasExceptions: availabilityMarkers.daysWithExceptions,
                             }}
                             modifiersClassNames={{
                                 hasTrainings: "coach-rdp-day-has-trainings",
+                                hasAvailability: "coach-rdp-day-has-availability",
+                                hasExceptions: "coach-rdp-day-has-exceptions",
                             }}
                         />
                     )}
@@ -390,8 +438,7 @@ export default function MePage() {
                 <div className="coach-calendar-right">
                     <CalendarDayAgenda
                         selectedDate={selectedDate}
-                        hourSlots={hourSlots}
-                        trainings={selectedDayTrainings}
+                        rows={agendaRows}
                         processingTrainingId={processingTrainingId}
                         onOpenTraining={(trainingId) => navigate(`/trainings/${trainingId}`)}
                         onQuickAdd={handleOpenCreate}

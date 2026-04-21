@@ -1,11 +1,9 @@
-import type { TrainingResponse } from "../../training/model/training.types";
-import { getClientDisplayName } from "../lib/trainerCalendar";
+import { getClientDisplayName, type TrainerAgendaRow } from "../lib/trainerCalendar";
 import styles from "./CalendarDayAgenda.module.css";
 
 type Props = {
     selectedDate: string;
-    hourSlots: string[];
-    trainings: TrainingResponse[];
+    rows: TrainerAgendaRow[];
     processingTrainingId: number | null;
     onOpenTraining: (trainingId: number) => void;
     onQuickAdd: (startTime?: string) => void;
@@ -23,11 +21,7 @@ function formatDateTitle(value: string): string {
 }
 
 function normalizeTime(value?: string | null): string {
-    if (!value) {
-        return "";
-    }
-
-    return value.slice(0, 5);
+    return value ? value.slice(0, 5) : "";
 }
 
 function getStatusLabel(status: string): string {
@@ -56,10 +50,25 @@ function getStatusClass(status: string): string {
     }
 }
 
+function getFreeMeta(row: TrainerAgendaRow): string {
+    if (row.source === "EXCEPTION") {
+        if (row.comment?.trim()) {
+            return `Исключение · ${row.comment.trim()}`;
+        }
+
+        return "Исключение";
+    }
+
+    if (row.endTime) {
+        return `${row.startTime}–${row.endTime}`;
+    }
+
+    return "Доступный слот";
+}
+
 export default function CalendarDayAgenda({
                                               selectedDate,
-                                              hourSlots,
-                                              trainings,
+                                              rows,
                                               processingTrainingId,
                                               onOpenTraining,
                                               onQuickAdd,
@@ -67,85 +76,116 @@ export default function CalendarDayAgenda({
                                               onCancelTraining,
                                               onRescheduleTraining,
                                           }: Props) {
-    const byHour = trainings.reduce<Record<string, TrainingResponse[]>>((acc, item) => {
-        const key = normalizeTime(item.startTime) || "Без времени";
-        if (!acc[key]) {
-            acc[key] = [];
-        }
-        acc[key].push(item);
-        return acc;
-    }, {});
+    const busyCount = rows.filter((row) => row.state === "BUSY").length;
+    const freeCount = rows.filter((row) => row.state === "FREE").length;
 
     return (
         <section className={styles.panel}>
             <div className={styles.header}>
-                <div>
-                    <h2 className={styles.title}>{formatDateTitle(selectedDate)}</h2>
-                    <div className={styles.subtitle}>
-                        {trainings.length > 0
-                            ? `Записей на день: ${trainings.length}`
-                            : "На выбранный день записей нет"}
-                    </div>
-                </div>
+                <h2 className={styles.title}>{formatDateTitle(selectedDate)}</h2>
+                <p className={styles.subtitle}>
+                    {rows.length === 0
+                        ? "На выбранный день нет доступности и тренировок"
+                        : `Свободных слотов: ${freeCount} · Тренировок: ${busyCount}`}
+                </p>
             </div>
 
-            <div className={styles.table}>
-                <div className={styles.head}>
-                    <div>Время</div>
-                    <div>Запись</div>
+            {rows.length === 0 ? (
+                <div className={styles.emptyState}>
+                    <div className={styles.emptyTitle}>День пока пустой</div>
+                    <div className={styles.emptyText}>
+                        Нет ни доступных слотов, ни тренировок. Можно задать доступность или создать
+                        тренировку вручную.
+                    </div>
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-primary"
+                        onClick={() => onQuickAdd()}
+                    >
+                        Добавить тренировку
+                    </button>
                 </div>
+            ) : (
+                <div className={styles.table}>
+                    <div className={styles.head}>
+                        <div>Время</div>
+                        <div>Запись</div>
+                    </div>
 
-                <div className={styles.body}>
-                    {hourSlots.map((slot) => {
-                        const slotTrainings = byHour[slot] ?? [];
+                    <div className={styles.body}>
+                        {rows.map((row) => {
+                            if (row.state === "FREE") {
+                                return (
+                                    <div key={row.key} className={`${styles.row} ${styles.rowFree}`}>
+                                        <div className={styles.time}>{row.startTime}</div>
 
-                        if (slotTrainings.length === 0) {
-                            return (
-                                <div key={slot} className={`${styles.row} ${styles.rowEmpty}`}>
-                                    <div className={styles.time}>{slot}</div>
+                                        <div className={styles.main}>
+                                            <div className={styles.mainLeft}>
+                                                <div className={styles.emptyTitle}>Свободно</div>
+                                                <div className={styles.metaRow}>
+                                                    {row.endTime && (
+                                                        <span className={styles.meta}>
+                              {row.startTime}–{row.endTime}
+                            </span>
+                                                    )}
+                                                    <span
+                                                        className={`${styles.sourceBadge} ${
+                                                            row.source === "EXCEPTION"
+                                                                ? styles.sourceBadgeException
+                                                                : styles.sourceBadgeRule
+                                                        }`}
+                                                    >
+                            {getFreeMeta(row)}
+                          </span>
+                                                </div>
+                                            </div>
 
-                                    <div className={styles.main}>
-                                        <div className={styles.mainLeft}>
-                                            <div className={styles.emptyTitle}>Свободно</div>
-                                            <div className={styles.meta}>Нет записи на этот час</div>
+                                            <div className={styles.actions}>
+                                                <button
+                                                    type="button"
+                                                    className={`dashboard-btn dashboard-btn-primary ${styles.openBtn}`}
+                                                    onClick={() => onQuickAdd(row.startTime)}
+                                                    title="Добавить тренировку"
+                                                >
+                                                    Добавить
+                                                </button>
+                                            </div>
                                         </div>
-
-                                        <button
-                                            type="button"
-                                            className={`dashboard-btn dashboard-btn-secondary ${styles.iconBtn} ${styles.addBtn}`}
-                                            onClick={() => onQuickAdd(slot)}
-                                            title="Добавить тренировку"
-                                        >
-                                            +
-                                        </button>
                                     </div>
-                                </div>
-                            );
-                        }
+                                );
+                            }
 
-                        return slotTrainings.map((training) => {
+                            const training = row.training;
+                            if (!training) {
+                                return null;
+                            }
+
                             const isBusy = processingTrainingId === training.id;
 
                             return (
-                                <div key={training.id} className={styles.row}>
-                                    <div className={styles.time}>{slot}</div>
+                                <div key={row.key} className={`${styles.row} ${styles.rowBusy}`}>
+                                    <div className={styles.time}>{row.startTime}</div>
 
                                     <div className={styles.main}>
                                         <div className={styles.mainLeft}>
-                                            <div className={styles.client}>
-                                                {getClientDisplayName(training)}
-                                            </div>
+                                            <div className={styles.client}>{getClientDisplayName(training)}</div>
 
                                             <div className={styles.metaRow}>
                         <span className={styles.meta}>
                           {training.endTime
-                              ? `${slot}–${normalizeTime(training.endTime)}`
-                              : slot}
+                              ? `${row.startTime}–${normalizeTime(training.endTime)}`
+                              : row.startTime}
                         </span>
-
                                                 <span className={getStatusClass(training.status)}>
                           {getStatusLabel(training.status)}
                         </span>
+                                                {row.source === "EXCEPTION" && (
+                                                    <span
+                                                        className={`${styles.sourceBadge} ${styles.sourceBadgeException}`}
+                                                    >
+                            Исключение
+                          </span>
+                                                )}
                                             </div>
                                         </div>
 
@@ -195,10 +235,10 @@ export default function CalendarDayAgenda({
                                     </div>
                                 </div>
                             );
-                        });
-                    })}
+                        })}
+                    </div>
                 </div>
-            </div>
+            )}
         </section>
     );
 }

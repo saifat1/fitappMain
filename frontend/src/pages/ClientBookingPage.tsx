@@ -107,28 +107,29 @@ function makeSlotKey(trainerId: number, start: string, end: string): string {
 export default function ClientBookingPage() {
   const [trainers, setTrainers] = useState<ClientTrainerResponse[]>([]);
   const [selectedTrainerId, setSelectedTrainerId] = useState<number | null>(null);
-  const [calendar, setCalendar] =
-      useState<TrainerAvailabilityCalendarResponse | null>(null);
+  const [calendar, setCalendar] = useState<TrainerAvailabilityCalendarResponse | null>(
+      null
+  );
   const [requests, setRequests] = useState<BookingRequestResponse[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [modalSlot, setModalSlot] = useState<AvailabilitySlot | null>(null);
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState<string>("");
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()));
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCalendarLoading, setIsCalendarLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isCalendarLoading, setIsCalendarLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
 
-  async function loadRequests() {
+  async function loadRequests(): Promise<void> {
     const data = await bookingRequestApi.getMyBookingRequests();
     setRequests(data);
   }
 
-  async function loadTrainers() {
+  async function loadTrainers(): Promise<void> {
     const data = await clientTrainerApi.getMyTrainers();
     setTrainers(data);
 
@@ -137,14 +138,20 @@ export default function ClientBookingPage() {
     }
   }
 
-  async function loadCalendar(trainerId: number, from: Date, to: Date) {
+  async function loadCalendar(
+      trainerId: number,
+      from: Date,
+      to: Date
+  ): Promise<void> {
     setIsCalendarLoading(true);
+
     try {
       const data = await availabilityApi.getTrainerAvailability(
           trainerId,
           formatDateOnly(from),
           formatDateOnly(to)
       );
+
       setCalendar(data);
     } finally {
       setIsCalendarLoading(false);
@@ -152,7 +159,7 @@ export default function ClientBookingPage() {
   }
 
   useEffect(() => {
-    async function bootstrap() {
+    async function bootstrap(): Promise<void> {
       setErrorMessage("");
       setIsLoading(true);
 
@@ -175,7 +182,7 @@ export default function ClientBookingPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedTrainerId) {
+    if (selectedTrainerId == null) {
       setCalendar(null);
       return;
     }
@@ -195,6 +202,21 @@ export default function ClientBookingPage() {
       }
     });
   }, [selectedTrainerId, weekStart, weekEnd]);
+
+  const selectedTrainer = useMemo(
+      () => trainers.find((trainer) => trainer.trainerId === selectedTrainerId) ?? null,
+      [trainers, selectedTrainerId]
+  );
+
+  const trainerNameById = useMemo(() => {
+    const map = new Map<number, string>();
+
+    for (const trainer of trainers) {
+      map.set(trainer.trainerId, getTrainerName(trainer));
+    }
+
+    return map;
+  }, [trainers]);
 
   const requestStatusBySlot = useMemo(() => {
     const map = new Map<string, BookingRequestResponse["status"]>();
@@ -252,10 +274,10 @@ export default function ClientBookingPage() {
       return;
     }
 
-    const firstWithFutureOrFreeSlots =
+    const firstWithSlots =
         visibleDays.find((day) => day.slots.length > 0)?.date ?? visibleDays[0].date;
 
-    setSelectedDate(firstWithFutureOrFreeSlots);
+    setSelectedDate(firstWithSlots);
   }, [visibleDays, selectedDate]);
 
   const selectedDay = useMemo(
@@ -263,8 +285,8 @@ export default function ClientBookingPage() {
       [visibleDays, selectedDate]
   );
 
-  const handleCreateRequest = async () => {
-    if (!selectedTrainerId || !modalSlot) {
+  const handleCreateRequest = async (): Promise<void> => {
+    if (selectedTrainerId == null || modalSlot == null) {
       return;
     }
 
@@ -311,8 +333,8 @@ export default function ClientBookingPage() {
     }
   };
 
-  const handleCancelRequest = async (requestId: number) => {
-    if (!selectedTrainerId) {
+  const handleCancelRequest = async (requestId: number): Promise<void> => {
+    if (selectedTrainerId == null) {
       return;
     }
 
@@ -341,18 +363,12 @@ export default function ClientBookingPage() {
     }
   };
 
-  const selectedTrainer = useMemo(
-      () =>
-          trainers.find((trainer) => trainer.trainerId === selectedTrainerId) ?? null,
-      [trainers, selectedTrainerId]
-  );
-
   return (
       <div className={styles.page}>
         <div className={styles.header}>
           <h1 className={styles.title}>Запись к тренеру</h1>
           <p className={styles.subtitle}>
-            Выбери тренера и удобный день, затем отправь запрос на свободный слот.
+            Выбери тренера, день и свободный слот.
           </p>
         </div>
 
@@ -363,20 +379,22 @@ export default function ClientBookingPage() {
           <h2 className={styles.sectionTitle}>Параметры просмотра</h2>
 
           <div className={styles.controls}>
-            <div className={styles.fieldWide}>
-              <label className={styles.label} htmlFor="trainer-select">
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="trainerId">
                 Тренер
               </label>
+
               <select
-                  id="trainer-select"
+                  id="trainerId"
                   className={styles.select}
                   value={selectedTrainerId ?? ""}
-                  onChange={(event) => setSelectedTrainerId(Number(event.target.value))}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSelectedTrainerId(value ? Number(value) : null);
+                  }}
                   disabled={isLoading || trainers.length === 0}
               >
-                {trainers.length === 0 && (
-                    <option value="">Нет доступных тренеров</option>
-                )}
+                {trainers.length === 0 && <option value="">Нет доступных тренеров</option>}
                 {trainers.map((trainer) => (
                     <option key={trainer.trainerId} value={trainer.trainerId}>
                       {getTrainerName(trainer)}
@@ -385,195 +403,219 @@ export default function ClientBookingPage() {
               </select>
             </div>
 
-            <button
-                type="button"
-                className={styles.buttonSecondary}
-                onClick={() => setWeekStart((current) => addDays(current, -7))}
-            >
-              ← Пред. неделя
-            </button>
+            <div className={styles.fieldWide}>
+              <div className={styles.label}>Неделя</div>
 
-            <button
-                type="button"
-                className={styles.buttonSecondary}
-                onClick={() => setWeekStart(startOfWeek(new Date()))}
-            >
-              Текущая неделя
-            </button>
+              <div className={styles.weekNav}>
+                <div className={styles.weekNavButtons}>
+                  <button
+                      type="button"
+                      className={styles.buttonSecondary}
+                      onClick={() => setWeekStart((current) => addDays(current, -7))}
+                  >
+                    ← Пред. неделя
+                  </button>
 
-            <button
-                type="button"
-                className={styles.buttonSecondary}
-                onClick={() => setWeekStart((current) => addDays(current, 7))}
-            >
-              След. неделя →
-            </button>
+                  <button
+                      type="button"
+                      className={styles.buttonSecondary}
+                      onClick={() => setWeekStart(startOfWeek(new Date()))}
+                  >
+                    Текущая неделя
+                  </button>
+
+                  <button
+                      type="button"
+                      className={styles.buttonSecondary}
+                      onClick={() => setWeekStart((current) => addDays(current, 7))}
+                  >
+                    След. неделя →
+                  </button>
+                </div>
+
+                <div className={styles.periodPill}>
+                  Период: {formatDateOnly(weekStart)} — {formatDateOnly(weekEnd)}
+                </div>
+              </div>
+            </div>
           </div>
 
-          <p className={styles.subtitle}>
-            Период: {formatDateOnly(weekStart)} — {formatDateOnly(weekEnd)}
-          </p>
+          {selectedTrainer && (
+              <div className={styles.trainerChip}>
+                Тренер: {getTrainerName(selectedTrainer)}
+              </div>
+          )}
         </section>
 
         <section className={styles.card}>
-          <div className={styles.header}>
-            <h2 className={styles.sectionTitle}>Выбери день</h2>
-            <p className={styles.subtitle}>
-              Показываются только текущий и будущие дни выбранной недели.
-            </p>
-          </div>
+          <h2 className={styles.sectionTitle}>Выбери день</h2>
+          <p className={styles.subtitle}>
+            Показываются только текущий и будущие дни выбранной недели.
+          </p>
 
           {isLoading || isCalendarLoading ? (
               <div className={styles.empty}>Загрузка расписания...</div>
           ) : visibleDays.length === 0 ? (
               <div className={styles.empty}>В этой неделе доступных дней нет.</div>
           ) : (
-              <div className={styles.dayTabs}>
-                {visibleDays.map((day) => {
-                  const freeCount = day.slots.filter((slot) => {
-                    const localRequestStatus =
-                        selectedTrainerId != null
-                            ? requestStatusBySlot.get(
-                                makeSlotKey(selectedTrainerId, slot.start, slot.end)
-                            )
-                            : undefined;
+              <>
+                <div className={styles.dayTabs}>
+                  {visibleDays.map((day) => {
+                    const freeCount = day.slots.filter((slot) => {
+                      const localRequestStatus =
+                          selectedTrainerId != null
+                              ? requestStatusBySlot.get(
+                                  makeSlotKey(selectedTrainerId, slot.start, slot.end)
+                              )
+                              : undefined;
+
+                      return (
+                          slot.status === "FREE" &&
+                          localRequestStatus !== "PENDING" &&
+                          localRequestStatus !== "APPROVED"
+                      );
+                    }).length;
+
+                    const isActive = day.date === selectedDate;
 
                     return (
-                        slot.status === "FREE" &&
-                        localRequestStatus !== "PENDING" &&
-                        localRequestStatus !== "APPROVED"
+                        <button
+                            key={day.date}
+                            type="button"
+                            className={`${styles.dayTab} ${isActive ? styles.dayTabActive : ""}`}
+                            onClick={() => setSelectedDate(day.date)}
+                        >
+                          <strong>{formatDayLabel(day.date)}</strong>
+                          <span className={styles.dayTabMeta}>
+                      {freeCount > 0 ? `Свободно: ${freeCount}` : "Нет свободных"}
+                    </span>
+                        </button>
                     );
-                  }).length;
+                  })}
+                </div>
 
-                  const isActive = day.date === selectedDate;
+                <div className={styles.slotSection}>
+                  <h3 className={styles.sectionTitle}>
+                    {selectedDate
+                        ? `Слоты на ${new Date(selectedDate).toLocaleDateString("ru-RU", {
+                          weekday: "long",
+                          day: "2-digit",
+                          month: "2-digit",
+                        })}`
+                        : "Слоты дня"}
+                  </h3>
 
-                  return (
-                      <button
-                          key={day.date}
-                          type="button"
-                          className={`${styles.dayTab} ${
-                              isActive ? styles.dayTabActive : ""
-                          }`}
-                          onClick={() => setSelectedDate(day.date)}
-                      >
-                        <span>{formatDayLabel(day.date)}</span>
-                        <span className={styles.dayTabMeta}>
-                    {freeCount > 0 ? `Свободно: ${freeCount}` : "Нет свободных"}
-                  </span>
-                      </button>
-                  );
-                })}
-              </div>
-          )}
-        </section>
+                  {!selectedDay && (
+                      <div className={styles.empty}>Выбери день для просмотра слотов.</div>
+                  )}
 
-        <section className={styles.card}>
-          <h2 className={styles.sectionTitle}>
-            {selectedDate
-                ? `Слоты на ${new Date(selectedDate).toLocaleDateString("ru-RU", {
-                  weekday: "long",
-                  day: "2-digit",
-                  month: "2-digit",
-                })}`
-                : "Слоты дня"}
-          </h2>
+                  {selectedDay && selectedDay.slots.length === 0 && (
+                      <div className={styles.empty}>На выбранный день слоты не заданы.</div>
+                  )}
 
-          {!selectedDay && (
-              <div className={styles.empty}>Выбери день для просмотра слотов.</div>
-          )}
+                  {selectedDay && selectedDay.slots.length > 0 && (
+                      <div className={styles.slotList}>
+                        {selectedDay.slots.map((slot) => {
+                          const localRequestStatus =
+                              selectedTrainerId != null
+                                  ? requestStatusBySlot.get(
+                                      makeSlotKey(selectedTrainerId, slot.start, slot.end)
+                                  )
+                                  : undefined;
 
-          {selectedDay && selectedDay.slots.length === 0 && (
-              <div className={styles.empty}>На выбранный день слоты не заданы.</div>
-          )}
+                          const canSelect =
+                              slot.status === "FREE" &&
+                              localRequestStatus !== "PENDING" &&
+                              localRequestStatus !== "APPROVED";
 
-          {selectedDay && selectedDay.slots.length > 0 && (
-              <div className={styles.slotList}>
-                {selectedDay.slots.map((slot) => {
-                  const isSelected =
-                      modalSlot?.start === slot.start && modalSlot?.end === slot.end;
+                          const slotClassNames = [
+                            styles.slot,
+                            slot.status === "BUSY" ? styles.slotBusy : "",
+                            slot.status === "PAST" ? styles.slotPast : "",
+                            localRequestStatus === "PENDING" ? styles.slotRequested : "",
+                            localRequestStatus === "APPROVED" ? styles.slotApprovedLocal : "",
+                            modalSlot?.start === slot.start && modalSlot?.end === slot.end
+                                ? styles.slotSelected
+                                : "",
+                          ]
+                              .filter(Boolean)
+                              .join(" ");
 
-                  const localRequestStatus =
-                      selectedTrainerId != null
-                          ? requestStatusBySlot.get(
-                              makeSlotKey(selectedTrainerId, slot.start, slot.end)
-                          )
-                          : undefined;
+                          return (
+                              <div key={`${slot.start}-${slot.end}`} className={slotClassNames}>
+                                <div className={styles.slotMeta}>
+                                  <div className={styles.slotTime}>
+                                    {formatTime(slot.start)} — {formatTime(slot.end)}
+                                  </div>
 
-                  const slotClass = [
-                    styles.slot,
-                    slot.status === "BUSY" ? styles.slotBusy : "",
-                    slot.status === "PAST" ? styles.slotPast : "",
-                    localRequestStatus === "PENDING" ? styles.slotRequested : "",
-                    localRequestStatus === "APPROVED"
-                        ? styles.slotApprovedLocal
-                        : "",
-                    isSelected ? styles.slotSelected : "",
-                  ]
-                      .filter(Boolean)
-                      .join(" ");
+                                  <div className={styles.slotStatus}>
+                                    {slot.status === "FREE" &&
+                                        !localRequestStatus &&
+                                        "Свободно"}
+                                    {slot.status === "BUSY" && "Занято"}
+                                    {slot.status === "PAST" && "Прошло"}
+                                    {localRequestStatus === "PENDING" &&
+                                        "Запрос уже отправлен"}
+                                    {localRequestStatus === "APPROVED" &&
+                                        "Запись уже подтверждена"}
+                                  </div>
+                                </div>
 
-                  const canSelect =
-                      slot.status === "FREE" &&
-                      localRequestStatus !== "PENDING" &&
-                      localRequestStatus !== "APPROVED";
-
-                  return (
-                      <div key={`${slot.start}-${slot.end}`} className={slotClass}>
-                        <div className={styles.slotMeta}>
-                          <div className={styles.slotTime}>
-                            {formatTime(slot.start)} — {formatTime(slot.end)}
-                          </div>
-                          <div className={styles.slotStatus}>
-                            {slot.status === "FREE" &&
-                                !localRequestStatus &&
-                                "Свободно"}
-                            {slot.status === "BUSY" && "Занято"}
-                            {slot.status === "PAST" && "Прошло"}
-                            {localRequestStatus === "PENDING" &&
-                                "Запрос уже отправлен"}
-                            {localRequestStatus === "APPROVED" &&
-                                "Запись уже подтверждена"}
-                          </div>
-                        </div>
-
-                        <div className={styles.slotAction}>
-                          {canSelect && (
-                              <button
-                                  type="button"
-                                  className={styles.button}
-                                  onClick={() => {
-                                    setModalSlot(slot);
-                                    setComment("");
-                                  }}
-                              >
-                                Записаться
-                              </button>
-                          )}
-                        </div>
+                                <div className={styles.slotAction}>
+                                  {canSelect ? (
+                                      <button
+                                          type="button"
+                                          className={styles.button}
+                                          onClick={() => {
+                                            setModalSlot(slot);
+                                            setComment("");
+                                          }}
+                                      >
+                                        Записаться
+                                      </button>
+                                  ) : (
+                                      <button
+                                          type="button"
+                                          className={styles.buttonSecondary}
+                                          disabled
+                                      >
+                                        Недоступно
+                                      </button>
+                                  )}
+                                </div>
+                              </div>
+                          );
+                        })}
                       </div>
-                  );
-                })}
-              </div>
+                  )}
+                </div>
+              </>
           )}
         </section>
 
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Мои запросы</h2>
 
-          {requests.length === 0 && (
+          {requests.length === 0 ? (
               <div className={styles.empty}>Запросов пока нет.</div>
-          )}
-
-          {requests.length > 0 && (
+          ) : (
               <div className={styles.requestsList}>
                 {requests.map((request) => (
-                    <div key={request.id} className={styles.requestCard}>
+                    <article key={request.id} className={styles.requestCard}>
                       <div className={styles.requestHeader}>
                         <div>
-                          <strong>Запрос #{request.id}</strong>
-                          <div className={styles.subtitle}>
-                            {formatDateTime(request.requestedStart)} —{" "}
-                            {formatTime(request.requestedEnd)}
+                          <div className={styles.label}>
+                            {trainerNameById.get(request.trainerId) ??
+                                `Тренер #${request.trainerId}`}
+                          </div>
+
+                          <div className={styles.requestMeta}>
+                            <div>
+                              {formatDateTime(request.requestedStart)} —{" "}
+                              {formatTime(request.requestedEnd)}
+                            </div>
+                            {request.clientComment && <div>{request.clientComment}</div>}
+                            {request.trainerComment && <div>{request.trainerComment}</div>}
                           </div>
                         </div>
 
@@ -582,10 +624,7 @@ export default function ClientBookingPage() {
                   </span>
                       </div>
 
-                      <div>Комментарий клиента: {request.clientComment || "—"}</div>
-                      <div>Комментарий тренера: {request.trainerComment || "—"}</div>
-
-                      {request.status === "PENDING" && (
+                      {(request.status === "PENDING" || request.status === "APPROVED") && (
                           <div className={styles.inlineActions}>
                             <button
                                 type="button"
@@ -597,7 +636,7 @@ export default function ClientBookingPage() {
                             </button>
                           </div>
                       )}
-                    </div>
+                    </article>
                 ))}
               </div>
           )}
@@ -613,10 +652,7 @@ export default function ClientBookingPage() {
                   }
                 }}
             >
-              <div
-                  className={styles.modalCard}
-                  onClick={(event) => event.stopPropagation()}
-              >
+              <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
                 <div className={styles.modalHeader}>
                   <div>
                     <h3 className={styles.modalTitle}>Запрос на запись</h3>
@@ -639,48 +675,48 @@ export default function ClientBookingPage() {
                   </button>
                 </div>
 
-                <div className={styles.page}>
-                  <div>
-                    <strong>{formatDateTime(modalSlot.start)}</strong> —{" "}
-                    <strong>{formatTime(modalSlot.end)}</strong>
+                <div className={styles.field}>
+                  <div className={styles.label}>
+                    {formatDateTime(modalSlot.start)} — {formatTime(modalSlot.end)}
                   </div>
+                </div>
 
-                  <div className={styles.fieldWide}>
-                    <label className={styles.label} htmlFor="booking-comment-modal">
-                      Комментарий
-                    </label>
-                    <textarea
-                        id="booking-comment-modal"
-                        className={styles.textarea}
-                        value={comment}
-                        onChange={(event) => setComment(event.target.value)}
-                        placeholder="Например: хочу силовую тренировку"
-                    />
-                  </div>
+                <div className={styles.fieldWide}>
+                  <label className={styles.label} htmlFor="clientComment">
+                    Комментарий
+                  </label>
 
-                  <div className={styles.modalActions}>
-                    <button
-                        type="button"
-                        className={styles.button}
-                        onClick={handleCreateRequest}
-                        disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Отправляем..." : "Отправить запрос"}
-                    </button>
+                  <textarea
+                      id="clientComment"
+                      className={styles.textarea}
+                      value={comment}
+                      onChange={(event) => setComment(event.target.value)}
+                      placeholder="Например: хочу силовую тренировку"
+                  />
+                </div>
 
-                    <button
-                        type="button"
-                        className={styles.buttonSecondary}
-                        onClick={() => {
-                          if (!isSubmitting) {
-                            setModalSlot(null);
-                            setComment("");
-                          }
-                        }}
-                    >
-                      Отмена
-                    </button>
-                  </div>
+                <div className={styles.modalActions}>
+                  <button
+                      type="button"
+                      className={styles.button}
+                      onClick={handleCreateRequest}
+                      disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Отправляем..." : "Отправить запрос"}
+                  </button>
+
+                  <button
+                      type="button"
+                      className={styles.buttonSecondary}
+                      onClick={() => {
+                        if (!isSubmitting) {
+                          setModalSlot(null);
+                          setComment("");
+                        }
+                      }}
+                  >
+                    Отмена
+                  </button>
                 </div>
               </div>
             </div>
