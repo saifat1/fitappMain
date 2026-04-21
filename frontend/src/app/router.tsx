@@ -16,7 +16,9 @@ import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
 import ExerciseTemplatesPage from "../pages/ExerciseTemplatesPage";
 import ExerciseTemplateDetailsPage from "../pages/ExerciseTemplateDetailsPage";
 import MorePage from "../pages/MorePage";
-
+import ClientBookingPage from "../pages/ClientBookingPage";
+import TrainerAvailabilityPage from "../pages/TrainerAvailabilityPage";
+import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
 
 export const router = createBrowserRouter([
     {
@@ -143,6 +145,36 @@ export const router = createBrowserRouter([
                     <MorePage />
                 </AppLayout>
             </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/booking",
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <ClientBookingPage />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/trainer/availability",
+        element: (
+            <TrainerRoute>
+                <AppLayout>
+                    <TrainerAvailabilityPage />
+                </AppLayout>
+            </TrainerRoute>
+        ),
+    },
+    {
+        path: "/trainer/booking-requests",
+        element: (
+            <TrainerRoute>
+                <AppLayout>
+                    <TrainerBookingRequestsPage />
+                </AppLayout>
+            </TrainerRoute>
         ),
     },
     {

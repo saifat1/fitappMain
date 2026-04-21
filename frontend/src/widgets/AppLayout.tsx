@@ -32,7 +32,6 @@ function getInitials(
 export default function AppLayout({ children }: Props) {
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
-
     const isTrainer = currentUser?.role === "TRAINER";
 
     const handleLogout = () => {
@@ -58,6 +57,7 @@ export default function AppLayout({ children }: Props) {
                 <div className="app-sidebar-top">
                     <div className="app-brand">
                         <div className="app-brand-mark">F</div>
+
                         <div>
                             <div className="app-brand-title">FitApp</div>
                             <div className="app-brand-subtitle">Тренировки и сопровождение</div>
@@ -68,6 +68,7 @@ export default function AppLayout({ children }: Props) {
                         <div className="app-sidebar-user-card">
                             <div className="app-sidebar-user-top">
                                 <div className="app-sidebar-avatar">{initials}</div>
+
                                 <div className="app-sidebar-user-meta">
                                     <div className="app-sidebar-user-name">{displayName}</div>
                                     <div className="app-sidebar-user-email">{currentUser.email}</div>
@@ -113,6 +114,18 @@ export default function AppLayout({ children }: Props) {
                         <span>Переносы</span>
                     </NavLink>
 
+                    {!isTrainer && (
+                        <NavLink
+                            to="/client/booking"
+                            className={({ isActive }) =>
+                                isActive ? "nav-link nav-link-active" : "nav-link"
+                            }
+                        >
+                            <span className="nav-link-icon">◦</span>
+                            <span>Запись</span>
+                        </NavLink>
+                    )}
+
                     {isTrainer && (
                         <>
                             <NavLink
@@ -143,6 +156,26 @@ export default function AppLayout({ children }: Props) {
                             >
                                 <span className="nav-link-icon">◦</span>
                                 <span>Приглашения</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/trainer/availability"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                <span className="nav-link-icon">◦</span>
+                                <span>Доступность</span>
+                            </NavLink>
+
+                            <NavLink
+                                to="/trainer/booking-requests"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                <span className="nav-link-icon">◦</span>
+                                <span>Запросы на запись</span>
                             </NavLink>
                         </>
                     )}

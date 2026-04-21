@@ -44,6 +44,7 @@ public class SecurityConfig {
                                 "/api/auth/invites/**"
                         ).permitAll()
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
+                        .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.GET, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
                         .requestMatchers(HttpMethod.POST, "/api/trainings/**").hasRole("TRAINER")
                         .requestMatchers(HttpMethod.PUT, "/api/trainings/**").hasRole("TRAINER")
@@ -66,14 +67,15 @@ public class SecurityConfig {
                 "http://89.111.137.65:8081",
                 "http://89-111-137-65.swtest.ru:8081",
                 "https://89-111-137-65.swtest.ru",
-                "https://89.111.137.65"));
+                "https://89.111.137.65"
+        ));
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-
         return source;
     }
 

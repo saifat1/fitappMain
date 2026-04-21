@@ -1,9 +1,13 @@
 package ru.fitapp.backend.training.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import ru.fitapp.backend.training.entity.Training;
+import ru.fitapp.backend.training.model.TrainingStatus;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public interface TrainingRepository extends JpaRepository<Training, Long> {
@@ -18,5 +22,27 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             Long clientId,
             LocalDate from,
             LocalDate to
+    );
+
+    default List<Training> findCalendarItemsForTrainer(Long trainerId, LocalDate from, LocalDate to) {
+        return findAllByTrainerIdAndTrainingDateBetweenOrderByTrainingDateAscStartTimeAsc(trainerId, from, to);
+    }
+
+    @Query("""
+            select count(t)
+            from Training t
+            where t.trainer.id = :trainerId
+              and t.trainingDate = :trainingDate
+              and t.status = :status
+              and (
+                    (:startTime < t.endTime and :endTime > t.startTime)
+                  )
+            """)
+    long countOverlappingTrainings(
+            @Param("trainerId") Long trainerId,
+            @Param("trainingDate") LocalDate trainingDate,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime,
+            @Param("status") TrainingStatus status
     );
 }

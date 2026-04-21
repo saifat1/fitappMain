@@ -1,0 +1,74 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-create-trainer-availability-rule
+      author: openai
+      changes:
+        - createTable:
+            tableName: trainer_availability_rule
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_trainer_availability_rule
+                    nullable: false
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: day_of_week
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: time
+                  constraints:
+                    nullable: false
+              - column:
+                  name: slot_duration_minutes
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: trainer_availability_rule
+            baseColumnNames: trainer_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_trainer_availability_rule_trainer
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: trainer_availability_rule
+            indexName: idx_trainer_availability_rule_trainer_day
+            columns:
+              - column:
+                  name: trainer_id
+              - column:
+                  name: day_of_week
