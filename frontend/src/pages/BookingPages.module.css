@@ -541,4 +541,324 @@
       padding: 10px;
     }
   }
+  .sectionLead {
+    margin: 6px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .weekNav {
+    display: grid;
+    gap: 10px;
+  }
+
+  .weekNavButtons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .periodPill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .mobileTrainerBar {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid #dbeafe;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  }
+
+  .mobileTrainerName {
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .mobileTrainerMeta {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .requestMeta {
+    display: grid;
+    gap: 6px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .slotSection {
+    display: grid;
+    gap: 12px;
+  }
+
+  .slotBadgeRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .slotBadge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .slotBadgeFree {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  .slotBadgeBusy {
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  .slotBadgePending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .slotBadgeApproved {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  .slotBadgePast {
+    background: #e5e7eb;
+    color: #6b7280;
+  }
+
+  .dayTabs {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dayTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dayTab {
+    scroll-snap-align: start;
+  }
+
+  @media (max-width: 700px) {
+    .page {
+      gap: 14px;
+    }
+
+    .header {
+      gap: 6px;
+    }
+
+    .title {
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    .subtitle,
+    .sectionLead {
+      font-size: 14px;
+    }
+
+    .card {
+      padding: 14px;
+      border-radius: 16px;
+    }
+
+    .controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .field,
+    .fieldWide {
+      min-width: 100%;
+    }
+
+    .weekNavButtons {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .weekNavButtons .buttonSecondary {
+      width: 100%;
+      min-height: 42px;
+      justify-content: center;
+    }
+
+    .periodPill {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .dayTabs {
+      gap: 8px;
+      margin-inline: -2px;
+      padding-inline: 2px;
+      padding-bottom: 2px;
+    }
+
+    .dayTab {
+      min-width: 124px;
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+
+    .dayTab strong {
+      font-size: 13px;
+    }
+
+    .dayTabMeta {
+      font-size: 11px;
+    }
+
+    .slotList {
+      gap: 10px;
+    }
+
+    .slot {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    .slotMeta {
+      gap: 8px;
+    }
+
+    .slotTime {
+      font-size: 16px;
+      line-height: 1.2;
+    }
+
+    .slotStatus {
+      display: none;
+    }
+
+    .slotAction {
+      width: 100%;
+    }
+
+    .slotAction .button,
+    .slotAction .buttonSecondary {
+      width: 100%;
+      min-height: 42px;
+      justify-content: center;
+    }
+
+    .requestHeader {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .badge {
+      align-self: flex-start;
+    }
+
+    .inlineActions .button,
+    .inlineActions .buttonSecondary,
+    .inlineActions .buttonDanger {
+      width: 100%;
+    }
+
+    .modalOverlay {
+      align-items: end;
+      padding: 0;
+    }
+
+    .modalCard {
+      width: 100%;
+      max-width: none;
+      border-radius: 20px 20px 0 0;
+      padding: 16px;
+    }
+
+    .modalHeader {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .modalActions {
+      flex-direction: column;
+    }
+
+    .modalActions .button,
+    .modalActions .buttonSecondary {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .page {
+      gap: 12px;
+    }
+
+    .sectionTitle {
+      font-size: 17px;
+    }
+
+    .subtitle,
+    .sectionLead {
+      font-size: 13px;
+    }
+
+    .card {
+      padding: 12px;
+    }
+
+    .mobileTrainerBar {
+      padding: 10px 12px;
+      border-radius: 14px;
+    }
+
+    .dayTab {
+      min-width: 116px;
+      padding: 10px;
+    }
+
+    .slot {
+      padding: 10px;
+    }
+
+    .slotTime {
+      font-size: 15px;
+    }
+
+    .requestCard {
+      padding: 12px;
+    }
+
+    .requestMeta {
+      font-size: 13px;
+    }
+  }
 }

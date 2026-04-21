@@ -61,6 +61,14 @@ function formatDayLabel(date: string): string {
   });
 }
 
+function formatSelectedDayTitle(date: string): string {
+  return new Date(date).toLocaleDateString("ru-RU", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+  });
+}
+
 function getTrainerName(trainer: ClientTrainerResponse): string {
   const fullName = [trainer.trainerFirstName, trainer.trainerLastName]
       .filter(Boolean)
@@ -102,6 +110,53 @@ function getBadgeClass(status: BookingRequestResponse["status"]): string {
 
 function makeSlotKey(trainerId: number, start: string, end: string): string {
   return `${trainerId}|${start}|${end}`;
+}
+
+function getSlotBadgeClass(
+    stylesMap: Record<string, string>,
+    slotStatus: AvailabilitySlot["status"],
+    localRequestStatus?: BookingRequestResponse["status"]
+): string {
+  if (localRequestStatus === "APPROVED") {
+    return `${stylesMap.slotBadge} ${stylesMap.slotBadgeApproved}`;
+  }
+
+  if (localRequestStatus === "PENDING") {
+    return `${stylesMap.slotBadge} ${stylesMap.slotBadgePending}`;
+  }
+
+  if (slotStatus === "BUSY") {
+    return `${stylesMap.slotBadge} ${stylesMap.slotBadgeBusy}`;
+  }
+
+  if (slotStatus === "PAST") {
+    return `${stylesMap.slotBadge} ${stylesMap.slotBadgePast}`;
+  }
+
+  return `${stylesMap.slotBadge} ${stylesMap.slotBadgeFree}`;
+}
+
+function getSlotStatusText(
+    slotStatus: AvailabilitySlot["status"],
+    localRequestStatus?: BookingRequestResponse["status"]
+): string {
+  if (localRequestStatus === "APPROVED") {
+    return "Запись подтверждена";
+  }
+
+  if (localRequestStatus === "PENDING") {
+    return "Запрос отправлен";
+  }
+
+  if (slotStatus === "BUSY") {
+    return "Занято";
+  }
+
+  if (slotStatus === "PAST") {
+    return "Прошло";
+  }
+
+  return "Свободно";
 }
 
 export default function ClientBookingPage() {
@@ -151,7 +206,6 @@ export default function ClientBookingPage() {
           formatDateOnly(from),
           formatDateOnly(to)
       );
-
       setCalendar(data);
     } finally {
       setIsCalendarLoading(false);
@@ -377,6 +431,10 @@ export default function ClientBookingPage() {
 
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Параметры просмотра</h2>
+          <p className={styles.sectionLead}>
+            На телефоне блоки собраны в вертикальный сценарий: тренер → неделя → день →
+            слот.
+          </p>
 
           <div className={styles.controls}>
             <div className={styles.field}>
@@ -434,15 +492,18 @@ export default function ClientBookingPage() {
                 </div>
 
                 <div className={styles.periodPill}>
-                  Период: {formatDateOnly(weekStart)} — {formatDateOnly(weekEnd)}
+                  {formatDateOnly(weekStart)} — {formatDateOnly(weekEnd)}
                 </div>
               </div>
             </div>
           </div>
 
           {selectedTrainer && (
-              <div className={styles.trainerChip}>
-                Тренер: {getTrainerName(selectedTrainer)}
+              <div className={styles.mobileTrainerBar}>
+                <div className={styles.mobileTrainerName}>
+                  {getTrainerName(selectedTrainer)}
+                </div>
+                <div className={styles.mobileTrainerMeta}>Выбранный тренер</div>
               </div>
           )}
         </section>
@@ -497,11 +558,7 @@ export default function ClientBookingPage() {
                 <div className={styles.slotSection}>
                   <h3 className={styles.sectionTitle}>
                     {selectedDate
-                        ? `Слоты на ${new Date(selectedDate).toLocaleDateString("ru-RU", {
-                          weekday: "long",
-                          day: "2-digit",
-                          month: "2-digit",
-                        })}`
+                        ? `Слоты на ${formatSelectedDayTitle(selectedDate)}`
                         : "Слоты дня"}
                   </h3>
 
@@ -548,16 +605,16 @@ export default function ClientBookingPage() {
                                     {formatTime(slot.start)} — {formatTime(slot.end)}
                                   </div>
 
-                                  <div className={styles.slotStatus}>
-                                    {slot.status === "FREE" &&
-                                        !localRequestStatus &&
-                                        "Свободно"}
-                                    {slot.status === "BUSY" && "Занято"}
-                                    {slot.status === "PAST" && "Прошло"}
-                                    {localRequestStatus === "PENDING" &&
-                                        "Запрос уже отправлен"}
-                                    {localRequestStatus === "APPROVED" &&
-                                        "Запись уже подтверждена"}
+                                  <div className={styles.slotBadgeRow}>
+                            <span
+                                className={getSlotBadgeClass(
+                                    styles,
+                                    slot.status,
+                                    localRequestStatus
+                                )}
+                            >
+                              {getSlotStatusText(slot.status, localRequestStatus)}
+                            </span>
                                   </div>
                                 </div>
 
