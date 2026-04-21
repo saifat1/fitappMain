@@ -7311,4 +7311,76 @@ input:focus {
   .coach-rdp-day-has-trainings .rdp-day_button {
     border-color: #14b8a6;
   }
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      overflow-x: hidden;
+    }
+
+    #root {
+      overflow-x: hidden;
+    }
+
+    .app-shell,
+    .app-main,
+    .app-page-container,
+    .app-topbar,
+    .dashboard-page,
+    .entity-page-compact {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .app-main {
+      padding: 16px 16px 110px;
+      overflow-x: hidden;
+    }
+
+    .app-page-container {
+      min-width: 0;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    .app-page-container > * {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .app-topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .app-topbar > * {
+      min-width: 0;
+    }
+
+    .app-topbar-user-pill {
+      display: none;
+    }
+
+    .app-topbar-logout-btn {
+      flex: 0 0 auto;
+    }
+
+    .dashboard-card,
+    .coach-calendar-panel {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+    }
+  }
 }

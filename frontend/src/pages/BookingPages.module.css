@@ -861,4 +861,77 @@
       font-size: 13px;
     }
   }
+  .page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .card,
+  .controls,
+  .field,
+  .fieldWide,
+  .slotSection,
+  .slotList,
+  .requestsList,
+  .requestCard,
+  .modalCard {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .dayTabs {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .dayTab {
+    flex: 0 0 auto;
+  }
+
+  @media (max-width: 768px) {
+    .page {
+      overflow-x: hidden;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .field,
+    .fieldWide {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .select,
+    .textarea,
+    .button,
+    .buttonSecondary,
+    .buttonDanger {
+      max-width: 100%;
+    }
+
+    .slot {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .requestHeader {
+      min-width: 0;
+    }
+
+    .requestHeader > div {
+      min-width: 0;
+    }
+  }
 }
