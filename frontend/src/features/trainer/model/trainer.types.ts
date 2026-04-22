@@ -5,11 +5,24 @@ export type TrainerClientResponse = {
     lastName: string | null;
     status: string;
     createdAt: string;
+    createdByTrainer: boolean;
+    claimedByClient: boolean;
+    claimedAt: string | null;
 };
 
 export type UpdateTrainerClientRequest = {
     firstName?: string;
     lastName?: string;
+};
+
+export type CreateManualTrainerClientRequest = {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+};
+
+export type CreateTrainerClientInviteRequest = {
+    expiresInDays?: number;
 };
 
 export type CreateInviteRequest = {
@@ -19,6 +32,7 @@ export type CreateInviteRequest = {
 
 export type InviteResponse = {
     id: number;
+    clientId: number | null;
     token: string;
     email: string | null;
     status: string;

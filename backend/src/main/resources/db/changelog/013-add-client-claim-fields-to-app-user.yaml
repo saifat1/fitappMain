@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-add-client-claim-fields-to-app-user
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: created_by_trainer
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: claimed_by_client
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: claimed_at
+                  type: timestamp

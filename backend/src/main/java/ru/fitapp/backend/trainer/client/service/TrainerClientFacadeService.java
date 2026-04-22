@@ -3,8 +3,12 @@ package ru.fitapp.backend.trainer.client.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.trainer.client.dto.CreateManualTrainerClientRequest;
+import ru.fitapp.backend.trainer.client.dto.CreateTrainerClientInviteRequest;
 import ru.fitapp.backend.trainer.client.dto.TrainerClientResponse;
 import ru.fitapp.backend.trainer.client.dto.UpdateTrainerClientRequest;
+import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
+import ru.fitapp.backend.trainer.invite.service.TrainerInviteService;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
 
@@ -16,11 +20,16 @@ public class TrainerClientFacadeService {
 
     private final CurrentUserService currentUserService;
     private final TrainerClientService trainerClientService;
+    private final TrainerInviteService trainerInviteService;
 
-    public TrainerClientFacadeService(CurrentUserService currentUserService,
-                                      TrainerClientService trainerClientService) {
+    public TrainerClientFacadeService(
+            CurrentUserService currentUserService,
+            TrainerClientService trainerClientService,
+            TrainerInviteService trainerInviteService
+    ) {
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
+        this.trainerInviteService = trainerInviteService;
     }
 
     @Transactional(readOnly = true)
@@ -37,12 +46,23 @@ public class TrainerClientFacadeService {
     public TrainerClientResponse getCurrentTrainerClient(Long clientId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
-
         return mapToResponse(client);
     }
 
-    public TrainerClientResponse updateCurrentTrainerClient(Long clientId,
-                                                            UpdateTrainerClientRequest request) {
+    public TrainerClientResponse createCurrentTrainerClient(CreateManualTrainerClientRequest request) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+
+        AppUser created = trainerClientService.createManualClientForTrainer(
+                trainer,
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName()
+        );
+
+        return mapToResponse(created);
+    }
+
+    public TrainerClientResponse updateCurrentTrainerClient(Long clientId, UpdateTrainerClientRequest request) {
         AppUser trainer = currentUserService.getCurrentTrainer();
 
         AppUser updated = trainerClientService.updateClientOfTrainer(
@@ -53,6 +73,15 @@ public class TrainerClientFacadeService {
         );
 
         return mapToResponse(updated);
+    }
+
+    public InviteResponse createInviteForCurrentTrainerClient(
+            Long clientId,
+            CreateTrainerClientInviteRequest request
+    ) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        Integer expiresInDays = request == null ? null : request.getExpiresInDays();
+        return trainerInviteService.createInviteForClient(trainer, clientId, expiresInDays);
     }
 
     public void deactivateCurrentTrainerClient(Long clientId) {
@@ -67,6 +96,9 @@ public class TrainerClientFacadeService {
                 .setFirstName(client.getFirstName())
                 .setLastName(client.getLastName())
                 .setStatus(client.getStatus().name())
+                .setCreatedByTrainer(client.isCreatedByTrainer())
+                .setClaimedByClient(client.isClaimedByClient())
+                .setClaimedAt(client.getClaimedAt())
                 .setCreatedAt(client.getCreatedAt());
     }
 }

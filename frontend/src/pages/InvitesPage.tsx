@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import axios from "axios";
-
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
     CreateInviteRequest,
@@ -19,7 +17,7 @@ function resolveApiError(error: unknown, fallback: string): string {
 
 function getInviteStatusLabel(status: string): string {
     switch (status) {
-        case "ACTIVE":
+        case "NEW":
             return "Активно";
         case "USED":
             return "Использовано";
@@ -34,7 +32,7 @@ function getInviteStatusLabel(status: string): string {
 
 function getInviteStatusClass(status: string): string {
     switch (status) {
-        case "ACTIVE":
+        case "NEW":
             return "invite-status-badge active";
         case "USED":
             return "invite-status-badge used";
@@ -52,20 +50,17 @@ function formatDateTime(value: string | null): string {
         return "—";
     }
 
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleString("ru-RU");
 }
 
 export default function InvitesPage() {
     const [invites, setInvites] = useState<InviteResponse[]>([]);
     const [email, setEmail] = useState("");
     const [expiresInDays, setExpiresInDays] = useState("7");
-
     const [showAll, setShowAll] = useState(false);
-
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-
     const [copiedInviteId, setCopiedInviteId] = useState<number | null>(null);
     const [deletingInviteId, setDeletingInviteId] = useState<number | null>(null);
 
@@ -88,7 +83,7 @@ export default function InvitesPage() {
     }, [loadInvites]);
 
     const stats = useMemo(() => {
-        const active = invites.filter((item) => item.status === "ACTIVE").length;
+        const active = invites.filter((item) => item.status === "NEW").length;
         const used = invites.filter((item) => item.status === "USED").length;
         const expired = invites.filter((item) => item.status === "EXPIRED").length;
         const cancelled = invites.filter((item) => item.status === "CANCELLED").length;
@@ -102,7 +97,7 @@ export default function InvitesPage() {
         };
     }, [invites]);
 
-    const handleCreateInvite = async (event: FormEvent<HTMLFormElement>) => {
+    const handleCreateInvite = async (event: FormEvent) => {
         event.preventDefault();
         setErrorMessage("");
 
@@ -135,11 +130,9 @@ export default function InvitesPage() {
 
         try {
             const created = await trainerApi.createInvite(payload);
-
-            if (!showAll || created.status === "ACTIVE") {
+            if (!showAll || created.status === "NEW") {
                 setInvites((prev) => [created, ...prev]);
             }
-
             setEmail("");
             setExpiresInDays("7");
         } catch (error) {
@@ -182,37 +175,20 @@ export default function InvitesPage() {
     };
 
     return (
-        <div className="invites-page invites-page-compact entity-page-compact">
-            <section className="invites-header-bar entity-header-bar">
-                <div className="invites-header-main entity-header-main">
-                    <h1 className="invites-header-title entity-header-title">Приглашения</h1>
-
-                    <div className="invites-summary-row entity-summary-row">
-            <span className="invites-summary-chip entity-summary-chip">
-              <strong>{stats.total}</strong>
-              <span>Всего</span>
-            </span>
-
-                        <span className="invites-summary-chip active entity-summary-chip entity-summary-chip--positive">
-              <strong>{stats.active}</strong>
-              <span>Активные</span>
-            </span>
-
-                        <span className="invites-summary-chip used entity-summary-chip entity-summary-chip--info">
-              <strong>{stats.used}</strong>
-              <span>Использованы</span>
-            </span>
-
-                        <span className="invites-summary-chip muted entity-summary-chip entity-summary-chip--muted">
-              <strong>{stats.expired + stats.cancelled}</strong>
-              <span>Архив</span>
-            </span>
-                    </div>
+        <div className="dashboard-page">
+            <section className="dashboard-hero">
+                <div>
+                    <p className="dashboard-kicker">Приглашения</p>
+                    <h1 className="dashboard-title">Ссылки регистрации</h1>
+                    <p className="dashboard-subtitle">
+                        Здесь остаётся старый общий сценарий приглашений и отображаются ссылки,
+                        созданные для уже существующих клиентов.
+                    </p>
                 </div>
 
                 <button
                     type="button"
-                    className="dashboard-btn dashboard-btn-secondary invites-refresh-btn entity-header-action"
+                    className="dashboard-btn dashboard-btn-secondary"
                     onClick={() => void loadInvites()}
                     disabled={isLoading}
                 >
@@ -220,81 +196,133 @@ export default function InvitesPage() {
                 </button>
             </section>
 
+            <section className="dashboard-grid">
+                <article className="dashboard-card">
+                    <h3>Всего</h3>
+                    <p>{stats.total}</p>
+                </article>
+
+                <article className="dashboard-card">
+                    <h3>Активные</h3>
+                    <p>{stats.active}</p>
+                </article>
+
+                <article className="dashboard-card">
+                    <h3>Использованы</h3>
+                    <p>{stats.used}</p>
+                </article>
+
+                <article className="dashboard-card">
+                    <h3>Архив</h3>
+                    <p>{stats.expired + stats.cancelled}</p>
+                </article>
+            </section>
+
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-            <section className="invites-panel invites-panel-compact entity-panel-compact">
-                <div className="invites-section-head entity-section-head">
-                    <h2 className="invites-section-title entity-section-title">Новое приглашение</h2>
-                </div>
+            <section className="dashboard-card">
+                <h2 style={{ marginTop: 0 }}>Новое приглашение</h2>
 
                 <form
-                    className="invites-create-inline entity-inline-form entity-inline-form--3"
                     onSubmit={handleCreateInvite}
+                    style={{
+                        display: "grid",
+                        gap: 12,
+                        gridTemplateColumns: "minmax(0, 1fr) 180px auto",
+                        alignItems: "end",
+                    }}
                 >
-                    <div className="form-row">
-                        <label htmlFor="invite-email">Email клиента</label>
+                    <div>
+                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+                            Email клиента
+                        </label>
                         <input
-                            id="invite-email"
-                            type="email"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             placeholder="client@test.local"
                             required
+                            style={{
+                                width: "100%",
+                                minHeight: 44,
+                                padding: "0 14px",
+                                borderRadius: 12,
+                                border: "1px solid #d7deea",
+                                boxSizing: "border-box",
+                            }}
                         />
                     </div>
 
-                    <div className="form-row invites-days-field">
-                        <label htmlFor="invite-expiry">Срок, дней</label>
+                    <div>
+                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+                            Срок, дней
+                        </label>
                         <input
-                            id="invite-expiry"
-                            type="number"
-                            min="1"
-                            step="1"
                             value={expiresInDays}
                             onChange={(event) => setExpiresInDays(event.target.value)}
                             required
+                            inputMode="numeric"
+                            style={{
+                                width: "100%",
+                                minHeight: 44,
+                                padding: "0 14px",
+                                borderRadius: 12,
+                                border: "1px solid #d7deea",
+                                boxSizing: "border-box",
+                            }}
                         />
                     </div>
 
-                    <div className="invites-create-actions">
-                        <button
-                            type="submit"
-                            className="dashboard-btn dashboard-btn-primary"
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "Создаём..." : "Создать"}
-                        </button>
-                    </div>
+                    <button
+                        type="submit"
+                        className="dashboard-btn dashboard-btn-primary"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? "Создаём..." : "Создать"}
+                    </button>
                 </form>
             </section>
 
-            <section className="invites-panel invites-panel-compact entity-panel-compact">
-                <div className="invites-section-head invites-section-head-with-controls entity-section-head entity-section-head--wrap">
-                    <div>
-                        <h2 className="invites-section-title entity-section-title">Список приглашений</h2>
-                    </div>
+            <section className="dashboard-card">
+                <div
+                    style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        marginBottom: 16,
+                    }}
+                >
+                    <h2 style={{ margin: 0 }}>Список приглашений</h2>
 
-                    <label className="invite-toggle invite-toggle-compact">
+                    <label
+                        style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            color: "#64748b",
+                        }}
+                    >
                         <input
                             type="checkbox"
                             checked={showAll}
                             onChange={(event) => setShowAll(event.target.checked)}
                         />
-                        <span>Показывать все</span>
+                        Показывать все
                     </label>
                 </div>
 
                 {isLoading ? (
-                    <div className="invites-empty-text">Загрузка...</div>
+                    <div>Загрузка...</div>
                 ) : invites.length === 0 ? (
-                    <div className="invites-empty">
-                        <div className="invites-empty-title">Приглашений нет</div>
-                        <div className="invites-empty-text">
+                    <div>
+                        <h3 style={{ marginTop: 0 }}>Приглашений нет</h3>
+                        <p style={{ color: "#64748b" }}>
                             Создай первое приглашение для нового клиента.
-                        </div>
+                        </p>
                     </div>
                 ) : (
-                    <section className="invites-list invites-list-compact entity-list-compact">
+                    <div style={{ display: "grid", gap: 12 }}>
                         {invites.map((invite) => {
                             const isDeleting = deletingInviteId === invite.id;
                             const isCopied = copiedInviteId === invite.id;
@@ -302,38 +330,59 @@ export default function InvitesPage() {
                             return (
                                 <article
                                     key={invite.id}
-                                    className="invite-card-ui invite-card-ui-compact entity-card-compact"
+                                    style={{
+                                        border: "1px solid #e2e8f0",
+                                        borderRadius: 18,
+                                        background: "#ffffff",
+                                        padding: 16,
+                                    }}
                                 >
-                                    <div className="invite-card-row entity-card-row">
-                                        <div className="invite-card-main-compact entity-card-main">
-                                            <div className="invite-card-title-row entity-title-row">
-                                                <div className="invite-card-title-compact entity-title">
-                                                    {invite.email ?? "Без привязки к email"}
-                                                </div>
-                                                <div className={getInviteStatusClass(invite.status)}>
-                                                    {getInviteStatusLabel(invite.status)}
-                                                </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            gap: 12,
+                                            alignItems: "flex-start",
+                                            flexWrap: "wrap",
+                                        }}
+                                    >
+                                        <div>
+                                            <div
+                                                style={{
+                                                    fontSize: 16,
+                                                    fontWeight: 800,
+                                                    color: "#0f172a",
+                                                    lineHeight: 1.25,
+                                                }}
+                                            >
+                                                {invite.email ?? "Без привязки к email"}
                                             </div>
 
-                                            <div className="invite-card-meta-row entity-meta-row">
-                                                <span>ID {invite.id}</span>
-                                                <span>Истекает {formatDateTime(invite.expiresAt)}</span>
-                                                <span>Использовано {formatDateTime(invite.usedAt)}</span>
+                                            <div style={{ marginTop: 6 }}>
+                        <span className={getInviteStatusClass(invite.status)}>
+                          {getInviteStatusLabel(invite.status)}
+                        </span>
                                             </div>
 
-                                            <div className="invite-link-inline">
-                                                <input
-                                                    className="invite-link-inline-input"
-                                                    value={invite.registrationLink}
-                                                    readOnly
-                                                />
+                                            <div
+                                                style={{
+                                                    marginTop: 8,
+                                                    color: "#64748b",
+                                                    fontSize: 13,
+                                                    lineHeight: 1.5,
+                                                }}
+                                            >
+                                                <div>ID {invite.id}</div>
+                                                {invite.clientId != null && <div>Клиент ID {invite.clientId}</div>}
+                                                <div>Истекает {formatDateTime(invite.expiresAt)}</div>
+                                                <div>Использовано {formatDateTime(invite.usedAt)}</div>
                                             </div>
                                         </div>
 
-                                        <div className="invite-card-actions invite-card-actions-compact entity-actions-compact">
+                                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                             <button
                                                 type="button"
-                                                className="dashboard-btn dashboard-btn-secondary invite-action-btn entity-secondary-btn"
+                                                className="dashboard-btn dashboard-btn-secondary"
                                                 onClick={() => void handleCopy(invite)}
                                             >
                                                 {isCopied ? "Скопировано" : "Копировать"}
@@ -341,19 +390,19 @@ export default function InvitesPage() {
 
                                             <button
                                                 type="button"
-                                                className="card-action-btn card-action-btn-danger invite-icon-action entity-icon-btn"
+                                                className="dashboard-btn dashboard-btn-secondary"
                                                 onClick={() => void handleDelete(invite.id)}
                                                 disabled={isDeleting}
                                                 title="Удалить"
                                             >
-                                                {isDeleting ? "..." : "×"}
+                                                {isDeleting ? "Удаляем..." : "Удалить"}
                                             </button>
                                         </div>
                                     </div>
                                 </article>
                             );
                         })}
-                    </section>
+                    </div>
                 )}
             </section>
         </div>

@@ -10,8 +10,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "app_user", uniqueConstraints = {
         @UniqueConstraint(name = "uk_app_user_email", columnNames = "email")
-        }
-)
+})
 public class AppUser {
 
     @Id
@@ -37,6 +36,15 @@ public class AppUser {
 
     @Column(name = "last_name", length = 100)
     private String lastName;
+
+    @Column(name = "created_by_trainer", nullable = false)
+    private boolean createdByTrainer = false;
+
+    @Column(name = "claimed_by_client", nullable = false)
+    private boolean claimedByClient = false;
+
+    @Column(name = "claimed_at")
+    private LocalDateTime claimedAt;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -107,6 +115,33 @@ public class AppUser {
 
     public AppUser setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
+    }
+
+    public boolean isCreatedByTrainer() {
+        return createdByTrainer;
+    }
+
+    public AppUser setCreatedByTrainer(boolean createdByTrainer) {
+        this.createdByTrainer = createdByTrainer;
+        return this;
+    }
+
+    public boolean isClaimedByClient() {
+        return claimedByClient;
+    }
+
+    public AppUser setClaimedByClient(boolean claimedByClient) {
+        this.claimedByClient = claimedByClient;
+        return this;
+    }
+
+    public LocalDateTime getClaimedAt() {
+        return claimedAt;
+    }
+
+    public AppUser setClaimedAt(LocalDateTime claimedAt) {
+        this.claimedAt = claimedAt;
         return this;
     }
 

@@ -23,3 +23,7 @@ databaseChangeLog:
       file: db/changelog/011-create-booking-request.yaml
   - include:
       file: db/changelog/012-create-trainer-availability-exception.yaml
+  - include:
+      file: db/changelog/013-add-client-claim-fields-to-app-user.yaml
+  - include:
+      file: db/changelog/014-add-client-id-to-invite.yaml

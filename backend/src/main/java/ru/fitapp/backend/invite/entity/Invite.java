@@ -27,6 +27,10 @@ public class Invite {
     @JoinColumn(name = "trainer_id", nullable = false, foreignKey = @ForeignKey(name = "fk_invite_trainer"))
     private AppUser trainer;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", foreignKey = @ForeignKey(name = "fk_invite_client"))
+    private AppUser client;
+
     @Column(name = "email", length = 255)
     private String email;
 
@@ -70,6 +74,15 @@ public class Invite {
 
     public Invite setTrainer(AppUser trainer) {
         this.trainer = trainer;
+        return this;
+    }
+
+    public AppUser getClient() {
+        return client;
+    }
+
+    public Invite setClient(AppUser client) {
+        this.client = client;
         return this;
     }
 

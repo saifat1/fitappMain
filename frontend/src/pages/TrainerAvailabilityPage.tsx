@@ -26,7 +26,7 @@ function buildDefaultRules(): TrainerAvailabilityRule[] {
     startTime: "09:00:00",
     endTime: "18:00:00",
     slotDurationMinutes: 60,
-    active: false,
+    active: true,
   }));
 }
 

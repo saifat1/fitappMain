@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-add-client-id-to-invite
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: invite
+            columns:
+              - column:
+                  name: client_id
+                  type: bigint
+
+        - addForeignKeyConstraint:
+            baseTableName: invite
+            baseColumnNames: client_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_invite_client

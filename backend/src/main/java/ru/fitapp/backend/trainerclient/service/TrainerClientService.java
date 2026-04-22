@@ -1,5 +1,6 @@
 package ru.fitapp.backend.trainerclient.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
@@ -9,8 +10,10 @@ import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.repository.UserRepository;
+import ru.fitapp.backend.user.service.UserService;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -18,11 +21,19 @@ public class TrainerClientService {
 
     private final TrainerClientRepository trainerClientRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
-    public TrainerClientService(TrainerClientRepository trainerClientRepository,
-                                UserRepository userRepository) {
+    public TrainerClientService(
+            TrainerClientRepository trainerClientRepository,
+            UserRepository userRepository,
+            UserService userService,
+            PasswordEncoder passwordEncoder
+    ) {
         this.trainerClientRepository = trainerClientRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public TrainerClient linkTrainerToClient(AppUser trainer, AppUser client) {
@@ -46,6 +57,27 @@ public class TrainerClientService {
         return trainerClientRepository.save(trainerClient);
     }
 
+    public AppUser createManualClientForTrainer(
+            AppUser trainer,
+            String email,
+            String firstName,
+            String lastName
+    ) {
+        validateTrainer(trainer);
+
+        String technicalPasswordHash = passwordEncoder.encode(UUID.randomUUID().toString());
+
+        AppUser client = userService.createClientCreatedByTrainer(
+                email,
+                technicalPasswordHash,
+                firstName,
+                lastName
+        );
+
+        linkTrainerToClient(trainer, client);
+        return client;
+    }
+
     @Transactional(readOnly = true)
     public List<AppUser> getClientsOfTrainer(Long trainerId) {
         return trainerClientRepository.findAllByTrainerId(trainerId)
@@ -60,7 +92,6 @@ public class TrainerClientService {
                 .orElseThrow(() -> new ApiException("CLIENT_NOT_FOUND", "Клиент не найден"));
 
         AppUser client = link.getClient();
-
         if (client.getRole() != UserRole.CLIENT) {
             throw new ApiException("CLIENT_NOT_FOUND", "Клиент не найден");
         }
@@ -68,10 +99,7 @@ public class TrainerClientService {
         return client;
     }
 
-    public AppUser updateClientOfTrainer(Long trainerId,
-                                         Long clientId,
-                                         String firstName,
-                                         String lastName) {
+    public AppUser updateClientOfTrainer(Long trainerId, Long clientId, String firstName, String lastName) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
 
         if (firstName != null) {

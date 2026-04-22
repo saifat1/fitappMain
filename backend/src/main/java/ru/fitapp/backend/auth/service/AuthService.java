@@ -16,6 +16,7 @@ import ru.fitapp.backend.invite.entity.Invite;
 import ru.fitapp.backend.invite.service.InviteService;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
+import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.service.UserService;
 
@@ -51,6 +52,15 @@ public class AuthService {
             throw new ApiException("USER_INACTIVE", "Пользователь неактивен");
         }
 
+        if (user.getRole() == UserRole.CLIENT
+                && user.isCreatedByTrainer()
+                && !user.isClaimedByClient()) {
+            throw new ApiException(
+                    "CLIENT_REGISTRATION_NOT_COMPLETED",
+                    "Аккаунт ещё не завершил регистрацию. Используйте ссылку-приглашение"
+            );
+        }
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ApiException("INVALID_CREDENTIALS", "Неверный email или пароль");
         }
@@ -63,21 +73,44 @@ public class AuthService {
     public InviteDetailsResponse getInviteDetails(String token) {
         Invite invite = inviteService.validateForRegistration(token);
 
-        return new InviteDetailsResponse()
-                .setEmail(invite.getEmail());
+        InviteDetailsResponse response = new InviteDetailsResponse()
+                .setExistingClient(invite.getClient() != null);
+
+        if (invite.getClient() != null) {
+            AppUser client = invite.getClient();
+            response.setEmail(client.getEmail());
+            response.setFirstName(client.getFirstName());
+            response.setLastName(client.getLastName());
+        } else {
+            response.setEmail(invite.getEmail());
+            response.setFirstName(null);
+            response.setLastName(null);
+        }
+
+        return response;
     }
 
     public AuthResponse registerByInvite(RegisterByInviteRequest request) {
         Invite invite = inviteService.validateForRegistration(request.getToken());
 
-        if (invite.getEmail() != null && !invite.getEmail().isBlank()) {
-            String inviteEmail = invite.getEmail().trim().toLowerCase();
-            String requestEmail = request.getEmail().trim().toLowerCase();
+        if (invite.getClient() != null) {
+            AppUser existingClient = invite.getClient();
+            validateInviteEmail(existingClient.getEmail(), request.getEmail());
 
-            if (!inviteEmail.equals(requestEmail)) {
-                throw new ApiException("INVITE_EMAIL_MISMATCH", "Email не соответствует приглашению");
-            }
+            AppUser claimedClient = userService.claimClientRegistration(
+                    existingClient,
+                    passwordEncoder.encode(request.getPassword()),
+                    request.getFirstName(),
+                    request.getLastName()
+            );
+
+            inviteService.markAsUsed(invite);
+
+            String token = jwtService.generateToken(claimedClient);
+            return buildAuthResponse(claimedClient, token);
         }
+
+        validateInviteEmail(invite.getEmail(), request.getEmail());
 
         AppUser client = userService.createClient(
                 request.getEmail(),
@@ -109,6 +142,24 @@ public class AuthService {
                 .setRole(user.getRole().name())
                 .setFirstName(user.getFirstName())
                 .setLastName(user.getLastName());
+    }
+
+    private void validateInviteEmail(String inviteEmailRaw, String requestEmailRaw) {
+        if (inviteEmailRaw == null || inviteEmailRaw.isBlank()) {
+            return;
+        }
+
+        String inviteEmail = inviteEmailRaw.trim().toLowerCase();
+
+        if (requestEmailRaw == null || requestEmailRaw.isBlank()) {
+            throw new ApiException("VALIDATION_ERROR", "Email не должен быть пустым");
+        }
+
+        String requestEmail = requestEmailRaw.trim().toLowerCase();
+
+        if (!inviteEmail.equals(requestEmail)) {
+            throw new ApiException("INVITE_EMAIL_MISMATCH", "Email не соответствует приглашению");
+        }
     }
 
     private AuthResponse buildAuthResponse(AppUser user, String token) {

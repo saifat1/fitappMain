@@ -1,10 +1,14 @@
 package ru.fitapp.backend.trainer.client.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.fitapp.backend.trainer.client.dto.CreateManualTrainerClientRequest;
+import ru.fitapp.backend.trainer.client.dto.CreateTrainerClientInviteRequest;
 import ru.fitapp.backend.trainer.client.dto.TrainerClientResponse;
 import ru.fitapp.backend.trainer.client.dto.UpdateTrainerClientRequest;
 import ru.fitapp.backend.trainer.client.service.TrainerClientFacadeService;
+import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
 
 import java.util.List;
 
@@ -28,9 +32,27 @@ public class TrainerClientController {
         return trainerClientFacadeService.getCurrentTrainerClient(clientId);
     }
 
+    @PostMapping("/manual")
+    @ResponseStatus(HttpStatus.CREATED)
+    public TrainerClientResponse createCurrentTrainerClient(
+            @Valid @RequestBody CreateManualTrainerClientRequest request
+    ) {
+        return trainerClientFacadeService.createCurrentTrainerClient(request);
+    }
+
+    @PostMapping("/{clientId}/invite")
+    public InviteResponse createInviteForCurrentTrainerClient(
+            @PathVariable Long clientId,
+            @Valid @RequestBody(required = false) CreateTrainerClientInviteRequest request
+    ) {
+        return trainerClientFacadeService.createInviteForCurrentTrainerClient(clientId, request);
+    }
+
     @PutMapping("/{clientId}")
-    public TrainerClientResponse updateCurrentTrainerClient(@PathVariable Long clientId,
-                                                            @Valid @RequestBody UpdateTrainerClientRequest request) {
+    public TrainerClientResponse updateCurrentTrainerClient(
+            @PathVariable Long clientId,
+            @Valid @RequestBody UpdateTrainerClientRequest request
+    ) {
         return trainerClientFacadeService.updateCurrentTrainerClient(clientId, request);
     }
 

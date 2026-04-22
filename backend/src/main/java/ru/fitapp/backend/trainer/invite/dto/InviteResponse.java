@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class InviteResponse {
 
     private Long id;
+    private Long clientId;
     private String token;
     private String email;
     private String status;
@@ -18,6 +19,15 @@ public class InviteResponse {
 
     public InviteResponse setId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public InviteResponse setClientId(Long clientId) {
+        this.clientId = clientId;
         return this;
     }
 

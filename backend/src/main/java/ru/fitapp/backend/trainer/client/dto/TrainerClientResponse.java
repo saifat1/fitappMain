@@ -9,6 +9,9 @@ public class TrainerClientResponse {
     private String firstName;
     private String lastName;
     private String status;
+    private boolean createdByTrainer;
+    private boolean claimedByClient;
+    private LocalDateTime claimedAt;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -53,6 +56,33 @@ public class TrainerClientResponse {
 
     public TrainerClientResponse setStatus(String status) {
         this.status = status;
+        return this;
+    }
+
+    public boolean isCreatedByTrainer() {
+        return createdByTrainer;
+    }
+
+    public TrainerClientResponse setCreatedByTrainer(boolean createdByTrainer) {
+        this.createdByTrainer = createdByTrainer;
+        return this;
+    }
+
+    public boolean isClaimedByClient() {
+        return claimedByClient;
+    }
+
+    public TrainerClientResponse setClaimedByClient(boolean claimedByClient) {
+        this.claimedByClient = claimedByClient;
+        return this;
+    }
+
+    public LocalDateTime getClaimedAt() {
+        return claimedAt;
+    }
+
+    public TrainerClientResponse setClaimedAt(LocalDateTime claimedAt) {
+        this.claimedAt = claimedAt;
         return this;
     }
 
