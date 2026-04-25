@@ -19,6 +19,7 @@ type ExerciseTemplateView = {
     sets?: number | null;
     repsMode: RepsMode;
     repsValue?: number | null;
+    weight?: number | null;
     repsFrom?: number | null;
     repsTo?: number | null;
     repsDisplay: string;
@@ -51,11 +52,20 @@ function getRepsDisplay(item: ExerciseTemplateView): string {
     return "—";
 }
 
+function formatWeightDisplay(weight?: number | null): string {
+    if (weight == null) {
+        return "—";
+    }
+
+    return `${weight} кг`;
+}
+
 function formatTemplateSummary(item: ExerciseTemplateView): string {
     const parts: string[] = [];
 
     if (item.sets != null) parts.push(`${item.sets} подх.`);
     if (item.repsMode !== "NONE") parts.push(`${getRepsDisplay(item)} повт.`);
+    if (item.weight != null) parts.push(`${item.weight} кг`);
     if (item.durationSeconds != null) parts.push(`${item.durationSeconds} сек.`);
     if (item.restSeconds != null) parts.push(`отдых ${item.restSeconds} сек.`);
 
@@ -71,6 +81,8 @@ export default function ExerciseTemplatesPage() {
     const [includeArchived, setIncludeArchived] = useState(false);
     const [search, setSearch] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
+
+    const [weight, setWeight] = useState("");
 
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -158,12 +170,20 @@ export default function ExerciseTemplatesPage() {
                 return;
             }
         }
+        if (weight.trim()) {
+            const parsedWeight = Number(weight.replace(",", "."));
 
+            if (Number.isNaN(parsedWeight) || parsedWeight <= 0) {
+                setErrorMessage("Вес должен быть положительным числом");
+                return;
+            }
+        }
         setErrorMessage("");
         setIsCreating(true);
 
         const payload = {
             name: name.trim(),
+            weight: weight.trim() ? Number(weight.replace(",", ".")) : undefined,
             description: description.trim() || undefined,
             sets: sets.trim() ? Number(sets) : undefined,
             repsMode: repsMode || "NONE",
@@ -182,6 +202,7 @@ export default function ExerciseTemplatesPage() {
             setName("");
             setDescription("");
             setSets("");
+            setWeight("");
             setRepsMode("");
             setRepsValue("");
             setRepsFrom("");
@@ -270,6 +291,16 @@ export default function ExerciseTemplatesPage() {
                                 value={sets}
                                 onChange={(event) => setSets(event.target.value)}
                             />
+                            <div className={styles.row}>
+                            <label htmlFor="template-weight">Вес, кг</label>
+                            <input
+                                id="template-weight"
+                                inputMode="decimal"
+                                value={weight}
+                                onChange={(event) => setWeight(event.target.value)}
+                                placeholder="Например, 12.5"
+                            />
+                        </div>
                         </div>
 
                         <div className={styles.row} style={{ gridColumn: "span 2" }}>
@@ -498,6 +529,10 @@ export default function ExerciseTemplatesPage() {
                                     <div className={styles.detail}>
                                         <span>Повторы</span>
                                         <strong>{getRepsDisplay(item)}</strong>
+                                    </div>
+                                    <div className={styles.detail}>
+                                        <span>Вес</span>
+                                        <strong>{formatWeightDisplay(item.weight)}</strong>
                                     </div>
                                     <div className={styles.detail}>
                                         <span>Длительность</span>

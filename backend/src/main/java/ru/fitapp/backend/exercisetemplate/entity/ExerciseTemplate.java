@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import ru.fitapp.backend.common.model.RepsMode;
 import ru.fitapp.backend.user.entity.AppUser;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -44,6 +45,9 @@ public class ExerciseTemplate {
 
     @Column(name = "reps_to")
     private Integer repsTo;
+
+    @Column(name = "weight", precision = 10, scale = 2)
+    private BigDecimal weight;
 
     @Column(name = "duration_seconds")
     private Integer durationSeconds;
@@ -144,6 +148,15 @@ public class ExerciseTemplate {
 
     public ExerciseTemplate setRepsTo(Integer repsTo) {
         this.repsTo = repsTo;
+        return this;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public ExerciseTemplate setWeight(BigDecimal weight) {
+        this.weight = weight;
         return this;
     }
 

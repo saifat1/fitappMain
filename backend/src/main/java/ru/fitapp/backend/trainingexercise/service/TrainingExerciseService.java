@@ -19,6 +19,8 @@ import ru.fitapp.backend.trainingexercise.repository.TrainingExerciseRepository;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserRole;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -61,6 +63,7 @@ public class TrainingExerciseService {
                 .setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
                 .setSets(request.getSets())
+                .setWeight(normalizeWeight(request.getWeight()))
                 .setDurationSeconds(request.getDurationSeconds())
                 .setRestSeconds(request.getRestSeconds())
                 .setTrainerNote(normalizeOptional(request.getTrainerNote()))
@@ -91,6 +94,7 @@ public class TrainingExerciseService {
                 .setTitle(normalizeRequired(template.getName(), "Название упражнения обязательно"))
                 .setDescription(normalizeOptional(template.getDescription()))
                 .setSets(template.getSets())
+                .setWeight(template.getWeight())
                 .setDurationSeconds(template.getDurationSeconds())
                 .setRestSeconds(template.getRestSeconds())
                 .setTrainerNote(normalizeOptional(template.getTrainerNote()))
@@ -133,12 +137,15 @@ public class TrainingExerciseService {
             if (request.getTitle() != null) {
                 exercise.setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"));
             }
+
             if (request.getDescription() != null) {
                 exercise.setDescription(normalizeOptional(request.getDescription()));
             }
+
             if (request.getSets() != null) {
                 exercise.setSets(request.getSets());
             }
+
             if (hasRepsPayload(request)) {
                 applyReps(
                         exercise,
@@ -148,15 +155,23 @@ public class TrainingExerciseService {
                         request.getRepsTo()
                 );
             }
+
+            if (request.getWeight() != null) {
+                exercise.setWeight(normalizeWeight(request.getWeight()));
+            }
+
             if (request.getDurationSeconds() != null) {
                 exercise.setDurationSeconds(request.getDurationSeconds());
             }
+
             if (request.getRestSeconds() != null) {
                 exercise.setRestSeconds(request.getRestSeconds());
             }
+
             if (request.getTrainerNote() != null) {
                 exercise.setTrainerNote(normalizeOptional(request.getTrainerNote()));
             }
+
             if (request.getOrderNum() != null) {
                 exercise.setOrderNum(request.getOrderNum());
             }
@@ -170,6 +185,7 @@ public class TrainingExerciseService {
             if (!isClientOwner && !isTrainerOwner) {
                 throw new ApiException("ACCESS_DENIED", "Нет доступа к заметке клиента");
             }
+
             exercise.setClientNote(normalizeOptional(request.getClientNote()));
         }
 
@@ -228,6 +244,7 @@ public class TrainingExerciseService {
                         exercise.getRepsFrom(),
                         exercise.getRepsTo()
                 ))
+                .setWeight(exercise.getWeight())
                 .setDurationSeconds(exercise.getDurationSeconds())
                 .setRestSeconds(exercise.getRestSeconds())
                 .setIsCompleted(exercise.getIsCompleted())
@@ -305,6 +322,7 @@ public class TrainingExerciseService {
                             "Для точного значения повторений нужно указать положительное число"
                     );
                 }
+
                 if (from != null || to != null) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
@@ -319,12 +337,14 @@ public class TrainingExerciseService {
                             "Для диапазона повторений нужно указать две положительные границы"
                     );
                 }
+
                 if (from > to) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
                             "Нижняя граница повторений не может быть больше верхней"
                     );
                 }
+
                 if (value != null) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
@@ -356,6 +376,7 @@ public class TrainingExerciseService {
         if (value == null || value.trim().isEmpty()) {
             throw new ApiException("VALIDATION_ERROR", message);
         }
+
         return value.trim();
     }
 
@@ -363,7 +384,20 @@ public class TrainingExerciseService {
         if (value == null) {
             return null;
         }
+
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private BigDecimal normalizeWeight(BigDecimal value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ApiException("VALIDATION_ERROR", "Вес должен быть больше 0");
+        }
+
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }

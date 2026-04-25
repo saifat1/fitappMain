@@ -27,3 +27,7 @@ databaseChangeLog:
       file: db/changelog/013-add-client-claim-fields-to-app-user.yaml
   - include:
       file: db/changelog/014-add-client-id-to-invite.yaml
+  - include:
+      file: db/changelog/015-add-weight-to-training-exercise.yaml
+  - include:
+      file: db/changelog/016-add-weight-to-exercise-template.yaml

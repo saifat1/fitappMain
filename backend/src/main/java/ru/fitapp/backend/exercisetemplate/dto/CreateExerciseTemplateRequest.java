@@ -1,9 +1,13 @@
 package ru.fitapp.backend.exercisetemplate.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import ru.fitapp.backend.common.model.RepsMode;
+
+import java.math.BigDecimal;
 
 public class CreateExerciseTemplateRequest {
 
@@ -27,6 +31,10 @@ public class CreateExerciseTemplateRequest {
 
     @Min(value = 1, message = "Верхняя граница повторений должна быть не меньше 1")
     private Integer repsTo;
+
+    @DecimalMin(value = "0.01", message = "Вес должен быть больше 0")
+    @Digits(integer = 8, fraction = 2, message = "Вес должен содержать не более 8 цифр до запятой и 2 после")
+    private BigDecimal weight;
 
     @Min(value = 1, message = "Длительность должна быть не меньше 1 секунды")
     private Integer durationSeconds;
@@ -97,6 +105,15 @@ public class CreateExerciseTemplateRequest {
 
     public CreateExerciseTemplateRequest setRepsTo(Integer repsTo) {
         this.repsTo = repsTo;
+        return this;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public CreateExerciseTemplateRequest setWeight(BigDecimal weight) {
+        this.weight = weight;
         return this;
     }
 

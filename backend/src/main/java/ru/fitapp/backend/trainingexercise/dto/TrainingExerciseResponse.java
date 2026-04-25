@@ -2,6 +2,7 @@ package ru.fitapp.backend.trainingexercise.dto;
 
 import ru.fitapp.backend.common.model.RepsMode;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class TrainingExerciseResponse {
@@ -17,6 +18,7 @@ public class TrainingExerciseResponse {
     private Integer repsFrom;
     private Integer repsTo;
     private String repsDisplay;
+    private BigDecimal weight;
     private Integer durationSeconds;
     private Integer restSeconds;
     private Boolean isCompleted;
@@ -121,6 +123,15 @@ public class TrainingExerciseResponse {
 
     public TrainingExerciseResponse setRepsDisplay(String repsDisplay) {
         this.repsDisplay = repsDisplay;
+        return this;
+    }
+
+    public BigDecimal getWeight() {
+        return weight;
+    }
+
+    public TrainingExerciseResponse setWeight(BigDecimal weight) {
+        this.weight = weight;
         return this;
     }
 

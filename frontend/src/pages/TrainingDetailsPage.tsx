@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import {useEffect, useMemo, useState} from "react";
+import type {FormEvent} from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 
-import { trainingApi } from "../shared/api/trainingApi";
-import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
-import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
-import { useAuth } from "../features/auth/model/AuthContext";
+import {trainingApi} from "../shared/api/trainingApi";
+import {trainingExerciseApi} from "../shared/api/trainingExerciseApi";
+import {exerciseTemplateApi} from "../shared/api/exerciseTemplateApi";
+import {useAuth} from "../features/auth/model/AuthContext";
 
-import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import type {ApiErrorResponse} from "../features/auth/model/auth.types";
 import type {
     TrainingResponse,
     UpdateTrainingRequest,
 } from "../features/training/model/training.types";
 import type {
-    CreateTrainingExerciseRequest as ApiCreateTrainingExerciseRequest,
     UpdateTrainingExerciseRequest as ApiUpdateTrainingExerciseRequest,
 } from "../features/training-exercise/model/trainingExercise.types";
 
@@ -32,6 +31,7 @@ type TrainingExerciseView = {
     repsFrom: number | null;
     repsTo: number | null;
     repsDisplay: string;
+    weight?: number | null;
     durationSeconds: number | null;
     restSeconds: number | null;
     isCompleted: boolean;
@@ -52,6 +52,7 @@ type ExerciseTemplateView = {
     repsFrom?: number | null;
     repsTo?: number | null;
     repsDisplay: string;
+    weight?: number | null;
     durationSeconds?: number | null;
     restSeconds?: number | null;
     trainerNote?: string | null;
@@ -68,6 +69,7 @@ type ExerciseFormState = {
     repsValue: string;
     repsFrom: string;
     repsTo: string;
+    weight: string;
     durationSeconds: string;
     restSeconds: string;
     trainerNote: string;
@@ -83,6 +85,7 @@ const emptyExerciseForm: ExerciseFormState = {
     repsValue: "",
     repsFrom: "",
     repsTo: "",
+    weight: "",
     durationSeconds: "",
     restSeconds: "",
     trainerNote: "",
@@ -189,6 +192,10 @@ function formatExerciseSummary(exercise: TrainingExerciseView): string {
         parts.push(`${exercise.repsDisplay} повт.`);
     }
 
+    if (exercise.weight != null) {
+        parts.push(`${exercise.weight} кг`);
+    }
+
     if (exercise.durationSeconds != null) {
         parts.push(`${exercise.durationSeconds} сек.`);
     }
@@ -258,6 +265,13 @@ function getRepsDisplay(item: {
 
     return "—";
 }
+function formatWeightDisplay(weight?: number | null): string {
+    if (weight == null) {
+        return "—";
+    }
+
+    return `${weight} кг`;
+}
 
 function validateExerciseForm(form: ExerciseFormState): string | null {
     if (!form.title.trim()) {
@@ -276,17 +290,27 @@ function validateExerciseForm(form: ExerciseFormState): string | null {
         if (Number(form.repsFrom) > Number(form.repsTo)) {
             return "Нижняя граница повторений не может быть больше верхней";
         }
+        if (form.weight.trim()) {
+            const parsedWeight = Number(form.weight.replace(",", "."));
+
+            if (Number.isNaN(parsedWeight) || parsedWeight <= 0) {
+                return "Вес должен быть положительным числом";
+            }
+        }
     }
 
     return null;
 }
 
-function buildExercisePayload(form: ExerciseFormState): ApiCreateTrainingExerciseRequest {
+function buildExercisePayload(form: ExerciseFormState) {
     const payload = {
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         sets: form.sets.trim() ? Number(form.sets) : undefined,
-        durationSeconds: form.durationSeconds.trim() ? Number(form.durationSeconds) : undefined,
+        weight: form.weight.trim() ? Number(form.weight.replace(",", ".")) : undefined,
+        durationSeconds: form.durationSeconds.trim()
+            ? Number(form.durationSeconds)
+            : undefined,
         restSeconds: form.restSeconds.trim() ? Number(form.restSeconds) : undefined,
         trainerNote: form.trainerNote.trim() || undefined,
         repsMode: form.repsMode || "NONE",
@@ -304,7 +328,7 @@ function buildExercisePayload(form: ExerciseFormState): ApiCreateTrainingExercis
                 : undefined,
     };
 
-    return payload as unknown as ApiCreateTrainingExerciseRequest;
+    return payload;
 }
 
 function toExerciseFormState(exercise: TrainingExerciseView): ExerciseFormState {
@@ -325,6 +349,7 @@ function toExerciseFormState(exercise: TrainingExerciseView): ExerciseFormState 
             exercise.repsMode === "RANGE" && exercise.repsTo != null
                 ? String(exercise.repsTo)
                 : "",
+        weight: exercise.weight != null ? String(exercise.weight) : "",
         durationSeconds:
             exercise.durationSeconds != null ? String(exercise.durationSeconds) : "",
         restSeconds: exercise.restSeconds != null ? String(exercise.restSeconds) : "",
@@ -333,9 +358,9 @@ function toExerciseFormState(exercise: TrainingExerciseView): ExerciseFormState 
 }
 
 export default function TrainingDetailsPage() {
-    const { trainingId } = useParams();
+    const {trainingId} = useParams();
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
+    const {currentUser} = useAuth();
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
     const [exercises, setExercises] = useState<TrainingExerciseView[]>([]);
@@ -492,6 +517,7 @@ export default function TrainingDetailsPage() {
         setCreateExerciseMode("manual");
         setCreateExerciseForm(emptyExerciseForm);
         setSelectedTemplateId("");
+
     };
 
     const handleSaveTraining = async (event: FormEvent<HTMLFormElement>) => {
@@ -659,6 +685,9 @@ export default function TrainingDetailsPage() {
             title: editExerciseForm.title.trim(),
             description: editExerciseForm.description.trim() || undefined,
             sets: editExerciseForm.sets.trim() ? Number(editExerciseForm.sets) : undefined,
+            weight: editExerciseForm.weight.trim()
+                ? Number(editExerciseForm.weight.replace(",", "."))
+                : undefined,
             durationSeconds: editExerciseForm.durationSeconds.trim()
                 ? Number(editExerciseForm.durationSeconds)
                 : undefined,
@@ -745,7 +774,7 @@ export default function TrainingDetailsPage() {
             const updated = (await trainingExerciseApi.updateCompletion(
                 Number(trainingId),
                 exercise.id,
-                { isCompleted: nextValue }
+                {isCompleted: nextValue}
             )) as unknown as TrainingExerciseView;
 
             setExercises((prev) =>
@@ -780,11 +809,11 @@ export default function TrainingDetailsPage() {
         setExercises((prev) =>
             prev.map((item) => {
                 if (item.id === currentExercise.id) {
-                    return { ...item, orderNum: targetExercise.orderNum };
+                    return {...item, orderNum: targetExercise.orderNum};
                 }
 
                 if (item.id === targetExercise.id) {
-                    return { ...item, orderNum: currentExercise.orderNum };
+                    return {...item, orderNum: currentExercise.orderNum};
                 }
 
                 return item;
@@ -978,7 +1007,7 @@ export default function TrainingDetailsPage() {
                     />
 
                     <section className="training-details-mobile-actions-sheet">
-                        <div className="training-details-mobile-actions-handle" />
+                        <div className="training-details-mobile-actions-handle"/>
 
                         <div className="training-details-mobile-actions-title">
                             Действия с тренировкой
@@ -1134,7 +1163,8 @@ export default function TrainingDetailsPage() {
             )}
 
             {isCreateExerciseOpen && isTrainer && (
-                <section className="training-details-panel training-details-panel-compact entity-panel-compact training-details-create-sheet">
+                <section
+                    className="training-details-panel training-details-panel-compact entity-panel-compact training-details-create-sheet">
                     <div className="training-details-section-head entity-section-head">
                         <h2 className="training-details-section-title entity-section-title">
                             Новое упражнение
@@ -1151,7 +1181,7 @@ export default function TrainingDetailsPage() {
                     </div>
 
                     <div className="training-details-inline-form">
-                        <div className="training-details-inline-actions" style={{ marginBottom: 8 }}>
+                        <div className="training-details-inline-actions" style={{marginBottom: 8}}>
                             <button
                                 type="button"
                                 className={
@@ -1210,8 +1240,23 @@ export default function TrainingDetailsPage() {
                                             }
                                         />
                                     </div>
+                                    <div className="form-row">
+                                        <label htmlFor="exercise-weight">Вес, кг</label>
+                                        <input
+                                            id="exercise-weight"
+                                            inputMode="decimal"
+                                            value={createExerciseForm.weight}
+                                            onChange={(event) =>
+                                                setCreateExerciseForm((prev) => ({
+                                                    ...prev,
+                                                    weight: event.target.value,
+                                                }))
+                                            }
+                                            placeholder="Например, 12.5"
+                                        />
+                                    </div>
 
-                                    <div className="form-row" style={{ gridColumn: "span 2" }}>
+                                    <div className="form-row" style={{gridColumn: "span 2"}}>
                                         <label>Повторы</label>
 
                                         <div
@@ -1452,16 +1497,16 @@ export default function TrainingDetailsPage() {
                                             gap: 12,
                                         }}
                                     >
-                                        <div style={{ display: "grid", gap: 6 }}>
-                                            <h4 style={{ margin: 0 }}>{selectedTemplate.name}</h4>
+                                        <div style={{display: "grid", gap: 6}}>
+                                            <h4 style={{margin: 0}}>{selectedTemplate.name}</h4>
                                             {selectedTemplate.description && (
-                                                <div style={{ color: "#475569", fontSize: 14 }}>
+                                                <div style={{color: "#475569", fontSize: 14}}>
                                                     {selectedTemplate.description}
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                        <div style={{display: "flex", flexWrap: "wrap", gap: 8}}>
                                             {selectedTemplate.sets != null && (
                                                 <span className="exercise-chip">
                                                     {selectedTemplate.sets} подх.
@@ -1471,6 +1516,11 @@ export default function TrainingDetailsPage() {
                                                 <span className="exercise-chip">
                                                     {getRepsDisplay(selectedTemplate)} повт.
                                                 </span>
+                                            )}
+                                            {selectedTemplate.weight != null && (
+                                                <span className="exercise-chip">
+    {selectedTemplate.weight} кг
+  </span>
                                             )}
                                             {selectedTemplate.durationSeconds != null && (
                                                 <span className="exercise-chip">
@@ -1485,7 +1535,7 @@ export default function TrainingDetailsPage() {
                                         </div>
 
                                         {selectedTemplate.trainerNote && (
-                                            <div style={{ color: "#334155", fontSize: 14 }}>
+                                            <div style={{color: "#334155", fontSize: 14}}>
                                                 <strong>Заметка тренера:</strong> {selectedTemplate.trainerNote}
                                             </div>
                                         )}
@@ -1659,7 +1709,8 @@ export default function TrainingDetailsPage() {
                                         <div className="exercise-compact-expanded">
                                             {isEditing ? (
                                                 <div className="exercise-compact-editor">
-                                                    <div className="training-details-inline-grid training-details-inline-grid--exercise">
+                                                    <div
+                                                        className="training-details-inline-grid training-details-inline-grid--exercise">
                                                         <div className="form-row">
                                                             <label>Название</label>
                                                             <input
@@ -1687,8 +1738,22 @@ export default function TrainingDetailsPage() {
                                                                 }
                                                             />
                                                         </div>
+                                                        <div className="form-row">
+                                                            <label>Вес, кг</label>
+                                                            <input
+                                                                inputMode="decimal"
+                                                                value={editExerciseForm.weight}
+                                                                onChange={(event) =>
+                                                                    setEditExerciseForm((prev) => ({
+                                                                        ...prev,
+                                                                        weight: event.target.value,
+                                                                    }))
+                                                                }
+                                                                placeholder="Например, 12.5"
+                                                            />
+                                                        </div>
 
-                                                        <div className="form-row" style={{ gridColumn: "span 2" }}>
+                                                        <div className="form-row" style={{gridColumn: "span 2"}}>
                                                             <label>Повторы</label>
 
                                                             <div
@@ -1807,7 +1872,8 @@ export default function TrainingDetailsPage() {
                                                                         lineHeight: 1.4,
                                                                     }}
                                                                 >
-                                                                    Выбери точное значение, диапазон или режим без повторений
+                                                                    Выбери точное значение, диапазон или режим без
+                                                                    повторений
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1939,6 +2005,10 @@ export default function TrainingDetailsPage() {
                                                         <div className="exercise-compact-detail">
                                                             <span>Заметка клиента</span>
                                                             <strong>{exercise.clientNote || "Нет заметки"}</strong>
+                                                        </div>
+                                                        <div className="exercise-compact-detail">
+                                                            <span>Вес</span>
+                                                            <strong>{formatWeightDisplay(exercise.weight)}</strong>
                                                         </div>
                                                     </div>
                                                 </div>

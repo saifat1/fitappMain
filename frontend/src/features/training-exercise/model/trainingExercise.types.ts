@@ -1,3 +1,5 @@
+export type RepsMode = "NONE" | "EXACT" | "RANGE";
+
 export type TrainingExerciseResponse = {
     id: number;
     trainingId: number;
@@ -5,7 +7,12 @@ export type TrainingExerciseResponse = {
     title: string;
     description: string | null;
     sets: number | null;
-    reps: number | null;
+    repsMode: RepsMode;
+    repsValue: number | null;
+    repsFrom: number | null;
+    repsTo: number | null;
+    repsDisplay: string;
+    weight: number | null;
     durationSeconds: number | null;
     restSeconds: number | null;
     isCompleted: boolean;
@@ -19,7 +26,11 @@ export type CreateTrainingExerciseRequest = {
     title: string;
     description?: string;
     sets?: number;
-    reps?: number;
+    repsMode?: RepsMode;
+    repsValue?: number;
+    repsFrom?: number;
+    repsTo?: number;
+    weight?: number;
     durationSeconds?: number;
     restSeconds?: number;
     trainerNote?: string;
@@ -29,7 +40,11 @@ export type UpdateTrainingExerciseRequest = {
     title?: string;
     description?: string;
     sets?: number;
-    reps?: number;
+    repsMode?: RepsMode;
+    repsValue?: number;
+    repsFrom?: number;
+    repsTo?: number;
+    weight?: number;
     durationSeconds?: number;
     restSeconds?: number;
     isCompleted?: boolean;

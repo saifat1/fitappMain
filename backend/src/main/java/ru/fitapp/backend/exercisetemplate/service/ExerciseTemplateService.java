@@ -12,6 +12,8 @@ import ru.fitapp.backend.exercisetemplate.entity.ExerciseTemplate;
 import ru.fitapp.backend.exercisetemplate.repository.ExerciseTemplateRepository;
 import ru.fitapp.backend.user.entity.AppUser;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 @Service
@@ -60,6 +62,7 @@ public class ExerciseTemplateService {
                 .setName(normalizeRequired(request.getName(), "Название шаблона обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
                 .setSets(request.getSets())
+                .setWeight(normalizeWeight(request.getWeight()))
                 .setDurationSeconds(request.getDurationSeconds())
                 .setRestSeconds(request.getRestSeconds())
                 .setTrainerNote(normalizeOptional(request.getTrainerNote()))
@@ -88,6 +91,7 @@ public class ExerciseTemplateService {
                 .setName(normalizeRequired(request.getName(), "Название шаблона обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
                 .setSets(request.getSets())
+                .setWeight(normalizeWeight(request.getWeight()))
                 .setDurationSeconds(request.getDurationSeconds())
                 .setRestSeconds(request.getRestSeconds())
                 .setTrainerNote(normalizeOptional(request.getTrainerNote()));
@@ -158,6 +162,7 @@ public class ExerciseTemplateService {
                         template.getRepsFrom(),
                         template.getRepsTo()
                 ))
+                .setWeight(template.getWeight())
                 .setDurationSeconds(template.getDurationSeconds())
                 .setRestSeconds(template.getRestSeconds())
                 .setTrainerNote(template.getTrainerNote())
@@ -227,6 +232,7 @@ public class ExerciseTemplateService {
                             "Для точного значения повторений нужно указать положительное число"
                     );
                 }
+
                 if (from != null || to != null) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
@@ -241,12 +247,14 @@ public class ExerciseTemplateService {
                             "Для диапазона повторений нужно указать две положительные границы"
                     );
                 }
+
                 if (from > to) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
                             "Нижняя граница повторений не может быть больше верхней"
                     );
                 }
+
                 if (value != null) {
                     throw new ApiException(
                             "VALIDATION_ERROR",
@@ -278,6 +286,7 @@ public class ExerciseTemplateService {
         if (value == null || value.trim().isEmpty()) {
             throw new ApiException("VALIDATION_ERROR", message);
         }
+
         return value.trim();
     }
 
@@ -285,7 +294,20 @@ public class ExerciseTemplateService {
         if (value == null) {
             return null;
         }
+
         String normalized = value.trim();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private BigDecimal normalizeWeight(BigDecimal value) {
+        if (value == null) {
+            return null;
+        }
+
+        if (value.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new ApiException("VALIDATION_ERROR", "Вес должен быть больше 0");
+        }
+
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }
