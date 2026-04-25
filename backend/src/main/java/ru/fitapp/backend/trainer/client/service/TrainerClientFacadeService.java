@@ -11,6 +11,7 @@ import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
 import ru.fitapp.backend.trainer.invite.service.TrainerInviteService;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
+import ru.fitapp.backend.trainer.client.dto.ClientHistoryResponse;
 
 import java.util.List;
 
@@ -21,15 +22,17 @@ public class TrainerClientFacadeService {
     private final CurrentUserService currentUserService;
     private final TrainerClientService trainerClientService;
     private final TrainerInviteService trainerInviteService;
+    private final TrainerClientHistoryService trainerClientHistoryService;
 
     public TrainerClientFacadeService(
             CurrentUserService currentUserService,
             TrainerClientService trainerClientService,
-            TrainerInviteService trainerInviteService
+            TrainerInviteService trainerInviteService, TrainerClientHistoryService trainerClientHistoryService
     ) {
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.trainerInviteService = trainerInviteService;
+        this.trainerClientHistoryService = trainerClientHistoryService;
     }
 
     @Transactional(readOnly = true)
@@ -40,6 +43,12 @@ public class TrainerClientFacadeService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ClientHistoryResponse getCurrentTrainerClientHistory(Long clientId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        return trainerClientHistoryService.getTrainerClientHistory(trainer, clientId);
     }
 
     @Transactional(readOnly = true)

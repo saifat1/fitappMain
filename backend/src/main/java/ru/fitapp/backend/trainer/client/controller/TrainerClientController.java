@@ -9,6 +9,7 @@ import ru.fitapp.backend.trainer.client.dto.TrainerClientResponse;
 import ru.fitapp.backend.trainer.client.dto.UpdateTrainerClientRequest;
 import ru.fitapp.backend.trainer.client.service.TrainerClientFacadeService;
 import ru.fitapp.backend.trainer.invite.dto.InviteResponse;
+import ru.fitapp.backend.trainer.client.dto.ClientHistoryResponse;
 
 import java.util.List;
 
@@ -60,4 +61,10 @@ public class TrainerClientController {
     public void deactivateCurrentTrainerClient(@PathVariable Long clientId) {
         trainerClientFacadeService.deactivateCurrentTrainerClient(clientId);
     }
+
+    @GetMapping("/{clientId}/history")
+    public ClientHistoryResponse getCurrentTrainerClientHistory(@PathVariable Long clientId) {
+        return trainerClientFacadeService.getCurrentTrainerClientHistory(clientId);
+    }
+
 }

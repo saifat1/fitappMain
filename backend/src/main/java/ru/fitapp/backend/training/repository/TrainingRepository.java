@@ -24,9 +24,10 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             LocalDate to
     );
 
-    default List<Training> findCalendarItemsForTrainer(Long trainerId, LocalDate from, LocalDate to) {
-        return findAllByTrainerIdAndTrainingDateBetweenOrderByTrainingDateAscStartTimeAsc(trainerId, from, to);
-    }
+    List<Training> findAllByTrainerIdAndClientIdOrderByTrainingDateDescStartTimeDesc(
+            Long trainerId,
+            Long clientId
+    );
 
     @Query("""
             select count(t)
@@ -34,9 +35,8 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             where t.trainer.id = :trainerId
               and t.trainingDate = :trainingDate
               and t.status = :status
-              and (
-                    (:startTime < t.endTime and :endTime > t.startTime)
-                  )
+              and t.startTime < :endTime
+              and t.endTime > :startTime
             """)
     long countOverlappingTrainings(
             @Param("trainerId") Long trainerId,

@@ -19,11 +19,24 @@ import MorePage from "../pages/MorePage";
 import ClientBookingPage from "../pages/ClientBookingPage";
 import TrainerAvailabilityPage from "../pages/TrainerAvailabilityPage";
 import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
+import ClientHistoryPage from "../pages/ClientHistoryPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/me" replace />,
+    },
+    {
+        path: "/trainer/clients/:clientId/history",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <AppLayout>
+                        <ClientHistoryPage />
+                    </AppLayout>
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/login",

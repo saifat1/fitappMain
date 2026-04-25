@@ -617,6 +617,13 @@ export default function ClientsPage() {
                                             >
                                                 Редактировать
                                             </button>
+                                            <button
+                                                type="button"
+                                                className="dashboard-btn dashboard-btn-secondary"
+                                                onClick={() => navigate(`/trainer/clients/${client.id}/history`)}
+                                            >
+                                                История
+                                            </button>
 
                                             {client.status === "ACTIVE" && (
                                                 <button
