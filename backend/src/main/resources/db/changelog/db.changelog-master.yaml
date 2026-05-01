@@ -31,3 +31,5 @@ databaseChangeLog:
       file: db/changelog/015-add-weight-to-training-exercise.yaml
   - include:
       file: db/changelog/016-add-weight-to-exercise-template.yaml
+  - include:
+      file: db/changelog/017-add-phone-and-avatar-to-app-user.yaml

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -45,4 +46,12 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             @Param("endTime") LocalTime endTime,
             @Param("status") TrainingStatus status
     );
+
+    @EntityGraph(attributePaths = {"client"})
+    List<Training> findAllByTrainerIdAndTrainingDateBetweenOrderByTrainingDateDescStartTimeDesc(
+            Long trainerId,
+            LocalDate from,
+            LocalDate to
+    );
+
 }

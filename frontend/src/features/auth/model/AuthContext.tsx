@@ -17,6 +17,7 @@ import type {
     CurrentUserResponse,
     LoginRequest,
     RegisterByInviteRequest,
+    RegisterTrainerRequest,
 } from "./auth.types";
 
 type AuthContextValue = {
@@ -26,6 +27,7 @@ type AuthContextValue = {
     isInitializing: boolean;
     login: (payload: LoginRequest) => Promise<void>;
     registerByInvite: (payload: RegisterByInviteRequest) => Promise<void>;
+    registerTrainer: (payload: RegisterTrainerRequest) => Promise<void>;
     loadMe: () => Promise<void>;
     logout: () => void;
 };
@@ -68,6 +70,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         [loadMe]
     );
 
+    const registerTrainer = useCallback(
+        async (payload: RegisterTrainerRequest) => {
+            const response = await authApi.registerTrainer(payload);
+            setAccessToken(response.accessToken);
+            setTokenState(response.accessToken);
+            await loadMe();
+        },
+        [loadMe]
+    );
+
     useEffect(() => {
         async function bootstrap() {
             const storedToken = getAccessToken();
@@ -87,10 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }
 
-        bootstrap();
+        void bootstrap();
     }, [loadMe, logout]);
 
-    const value = useMemo<AuthContextValue>(
+    const value = useMemo(
         () => ({
             token,
             currentUser,
@@ -98,10 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isInitializing,
             login,
             registerByInvite,
+            registerTrainer,
             loadMe,
             logout,
         }),
-        [token, currentUser, isInitializing, login, registerByInvite, loadMe, logout]
+        [
+            token,
+            currentUser,
+            isInitializing,
+            login,
+            registerByInvite,
+            registerTrainer,
+            loadMe,
+            logout,
+        ]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

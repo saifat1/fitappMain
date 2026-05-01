@@ -41,7 +41,9 @@ public class SecurityConfig {
                                 "/api/ping",
                                 "/api/auth/login",
                                 "/api/auth/register-by-invite",
-                                "/api/auth/invites/**"
+                                "/api/auth/register-trainer",
+                                "/api/auth/invites/**",
+                                "/uploads/**"
                         ).permitAll()
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")

@@ -6,6 +6,8 @@ app:
 spring:
   application:
     name: fitapp-backend
+storage:
+  uploads-dir: uploads
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fitapp}

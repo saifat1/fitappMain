@@ -37,6 +37,12 @@ public class AppUser {
     @Column(name = "last_name", length = 100)
     private String lastName;
 
+    @Column(name = "phone", length = 32)
+    private String phone;
+
+    @Column(name = "avatar_path", length = 512)
+    private String avatarPath;
+
     @Column(name = "created_by_trainer", nullable = false)
     private boolean createdByTrainer = false;
 
@@ -115,6 +121,24 @@ public class AppUser {
 
     public AppUser setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public AppUser setPhone(String phone) {
+        this.phone = phone;
+        return this;
+    }
+
+    public String getAvatarPath() {
+        return avatarPath;
+    }
+
+    public AppUser setAvatarPath(String avatarPath) {
+        this.avatarPath = avatarPath;
         return this;
     }
 

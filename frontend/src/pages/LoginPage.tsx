@@ -71,15 +71,19 @@ export default function LoginPage() {
                         <LoginForm />
 
                         <div className="login-help">
-                            <div className="login-help-title">Нет доступа?</div>
+                            <div className="login-help-title">Новый тренер?</div>
                             <div className="login-help-text">
-                                Новый клиент может зарегистрироваться только по приглашению
-                                тренера.
+                                Можно зарегистрировать новый аккаунт тренера без приглашения.
                             </div>
 
-                            <Link to="/trainer/invites" className="login-secondary-link">
-                                Где создаются инвайты
+                            <Link to="/trainer/register" className="login-secondary-link">
+                                Зарегистрироваться как тренер
                             </Link>
+
+                            <div className="login-help-text" style={{ marginTop: 12 }}>
+                                Для клиентов регистрация по-прежнему доступна только по ссылке
+                                от тренера.
+                            </div>
                         </div>
                     </div>
                 </section>

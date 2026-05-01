@@ -10,6 +10,7 @@ import ru.fitapp.backend.auth.dto.CurrentUserResponse;
 import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
 import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
+import ru.fitapp.backend.auth.dto.RegisterTrainerRequest;
 import ru.fitapp.backend.auth.security.JwtService;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.invite.entity.Invite;
@@ -52,9 +53,7 @@ public class AuthService {
             throw new ApiException("USER_INACTIVE", "Пользователь неактивен");
         }
 
-        if (user.getRole() == UserRole.CLIENT
-                && user.isCreatedByTrainer()
-                && !user.isClaimedByClient()) {
+        if (user.getRole() == UserRole.CLIENT && user.isCreatedByTrainer() && !user.isClaimedByClient()) {
             throw new ApiException(
                     "CLIENT_REGISTRATION_NOT_COMPLETED",
                     "Аккаунт ещё не завершил регистрацию. Используйте ссылку-приглашение"
@@ -73,21 +72,8 @@ public class AuthService {
     public InviteDetailsResponse getInviteDetails(String token) {
         Invite invite = inviteService.validateForRegistration(token);
 
-        InviteDetailsResponse response = new InviteDetailsResponse()
-                .setExistingClient(invite.getClient() != null);
-
-        if (invite.getClient() != null) {
-            AppUser client = invite.getClient();
-            response.setEmail(client.getEmail());
-            response.setFirstName(client.getFirstName());
-            response.setLastName(client.getLastName());
-        } else {
-            response.setEmail(invite.getEmail());
-            response.setFirstName(null);
-            response.setLastName(null);
-        }
-
-        return response;
+        return new InviteDetailsResponse()
+                .setEmail(invite.getEmail());
     }
 
     public AuthResponse registerByInvite(RegisterByInviteRequest request) {
@@ -95,6 +81,7 @@ public class AuthService {
 
         if (invite.getClient() != null) {
             AppUser existingClient = invite.getClient();
+
             validateInviteEmail(existingClient.getEmail(), request.getEmail());
 
             AppUser claimedClient = userService.claimClientRegistration(
@@ -124,6 +111,25 @@ public class AuthService {
 
         String token = jwtService.generateToken(client);
         return buildAuthResponse(client, token);
+    }
+
+    public AuthResponse registerTrainer(RegisterTrainerRequest request) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new ApiException(
+                    "PASSWORD_CONFIRMATION_MISMATCH",
+                    "Подтверждение пароля не совпадает"
+            );
+        }
+
+        AppUser trainer = userService.createTrainer(
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                request.getFirstName(),
+                request.getLastName()
+        );
+
+        String token = jwtService.generateToken(trainer);
+        return buildAuthResponse(trainer, token);
     }
 
     @Transactional(readOnly = true)

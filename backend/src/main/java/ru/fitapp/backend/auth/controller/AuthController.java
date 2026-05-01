@@ -7,6 +7,7 @@ import ru.fitapp.backend.auth.dto.CurrentUserResponse;
 import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
 import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
+import ru.fitapp.backend.auth.dto.RegisterTrainerRequest;
 import ru.fitapp.backend.auth.service.AuthService;
 
 @RestController
@@ -32,6 +33,11 @@ public class AuthController {
     @PostMapping("/register-by-invite")
     public AuthResponse registerByInvite(@Valid @RequestBody RegisterByInviteRequest request) {
         return authService.registerByInvite(request);
+    }
+
+    @PostMapping("/register-trainer")
+    public AuthResponse registerTrainer(@Valid @RequestBody RegisterTrainerRequest request) {
+        return authService.registerTrainer(request);
     }
 
     @GetMapping("/me")

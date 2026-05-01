@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/model/AuthContext";
 import MobileBottomNav from "../shared/ui/MobileBottomNav";
 
@@ -25,13 +25,42 @@ function getInitials(
     const last = lastName?.[0] ?? "";
     const initials = `${first}${last}`.trim().toUpperCase();
 
-    if (initials) return initials;
+    if (initials) {
+        return initials;
+    }
+
     return email?.[0]?.toUpperCase() ?? "U";
+}
+
+function getNavClassName(isActive: boolean) {
+    return isActive ? "nav-link nav-link-active" : "nav-link";
+}
+
+function getPageTitle(pathname: string, isTrainer: boolean): string {
+    if (pathname === "/me") {
+        return isTrainer ? "Календарь" : "Профиль";
+    }
+
+    if (pathname === "/trainer/profile") return "Профиль";
+    if (pathname.startsWith("/trainings/")) return "Тренировка";
+    if (pathname === "/trainings") return "Тренировки";
+    if (pathname === "/reschedule-requests") return "Переносы";
+    if (pathname === "/exercise-templates") return "Шаблоны";
+    if (pathname === "/trainer/clients") return "Клиенты";
+    if (pathname === "/trainer/invites") return "Приглашения";
+    if (pathname === "/trainer/availability") return "Доступность";
+    if (pathname === "/trainer/booking-requests") return "Запросы на запись";
+    if (pathname === "/client/booking") return "Запись";
+    if (pathname.startsWith("/client-history")) return "История тренировок";
+
+    return "FitApp";
 }
 
 export default function AppLayout({ children }: Props) {
     const { currentUser, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
     const isTrainer = currentUser?.role === "TRAINER";
 
     const handleLogout = () => {
@@ -51,78 +80,67 @@ export default function AppLayout({ children }: Props) {
         currentUser?.lastName
     );
 
+    const pageTitle = getPageTitle(location.pathname, isTrainer);
+
     return (
         <div className="app-shell">
-            <aside className="app-sidebar">
-                <div className="app-sidebar-top">
-                    <div className="app-brand">
-                        <div className="app-brand-mark">F</div>
-
-                        <div>
-                            <div className="app-brand-title">FitApp</div>
-                            <div className="app-brand-subtitle">Тренировки и сопровождение</div>
-                        </div>
+            <aside className="sidebar">
+                <div className="brand-card">
+                    <div className="brand-logo">F</div>
+                    <div>
+                        <div className="brand-title">FitApp</div>
+                        <div className="brand-subtitle">Тренировки и сопровождение</div>
                     </div>
-
-                    {currentUser && (
-                        <div className="app-sidebar-user-card">
-                            <div className="app-sidebar-user-top">
-                                <div className="app-sidebar-avatar">{initials}</div>
-
-                                <div className="app-sidebar-user-meta">
-                                    <div className="app-sidebar-user-name">{displayName}</div>
-                                    <div className="app-sidebar-user-email">{currentUser.email}</div>
-                                </div>
-                            </div>
-
-                            <div className="app-sidebar-role-row">
-                                <span>Роль</span>
-                                <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
-                <nav className="side-nav">
-                    <NavLink
-                        to="/me"
-                        className={({ isActive }) =>
-                            isActive ? "nav-link nav-link-active" : "nav-link"
-                        }
-                    >
-                        <span className="nav-link-icon">◦</span>
-                        <span>Профиль</span>
+                {currentUser && (
+                    <div className="user-card">
+                        <div className="user-avatar">{initials}</div>
+
+                        <div className="user-name">{displayName}</div>
+                        <div className="user-email">{currentUser.email}</div>
+
+                        <div className="user-meta">
+                            <span>Роль</span>
+                            <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
+                        </div>
+                    </div>
+                )}
+
+                <nav className="nav-list">
+                    <NavLink to="/me" className={({ isActive }) => getNavClassName(isActive)}>
+                        ◦ {isTrainer ? "Календарь" : "Профиль"}
                     </NavLink>
+
+                    {isTrainer && (
+                        <NavLink
+                            to="/trainer/profile"
+                            className={({ isActive }) => getNavClassName(isActive)}
+                        >
+                            ◦ Профиль
+                        </NavLink>
+                    )}
 
                     <NavLink
                         to="/trainings"
-                        className={({ isActive }) =>
-                            isActive ? "nav-link nav-link-active" : "nav-link"
-                        }
+                        className={({ isActive }) => getNavClassName(isActive)}
                     >
-                        <span className="nav-link-icon">◦</span>
-                        <span>Тренировки</span>
+                        ◦ Тренировки
                     </NavLink>
 
                     <NavLink
                         to="/reschedule-requests"
-                        className={({ isActive }) =>
-                            isActive ? "nav-link nav-link-active" : "nav-link"
-                        }
+                        className={({ isActive }) => getNavClassName(isActive)}
                     >
-                        <span className="nav-link-icon">◦</span>
-                        <span>Переносы</span>
+                        ◦ Переносы
                     </NavLink>
 
                     {!isTrainer && (
                         <NavLink
                             to="/client/booking"
-                            className={({ isActive }) =>
-                                isActive ? "nav-link nav-link-active" : "nav-link"
-                            }
+                            className={({ isActive }) => getNavClassName(isActive)}
                         >
-                            <span className="nav-link-icon">◦</span>
-                            <span>Запись</span>
+                            ◦ Запись
                         </NavLink>
                     )}
 
@@ -130,61 +148,46 @@ export default function AppLayout({ children }: Props) {
                         <>
                             <NavLink
                                 to="/exercise-templates"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
+                                className={({ isActive }) => getNavClassName(isActive)}
                             >
-                                <span className="nav-link-icon">◦</span>
-                                <span>Шаблоны</span>
+                                ◦ Шаблоны
                             </NavLink>
 
                             <NavLink
                                 to="/trainer/clients"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
+                                className={({ isActive }) => getNavClassName(isActive)}
                             >
-                                <span className="nav-link-icon">◦</span>
-                                <span>Клиенты</span>
+                                ◦ Клиенты
                             </NavLink>
 
                             <NavLink
                                 to="/trainer/invites"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
+                                className={({ isActive }) => getNavClassName(isActive)}
                             >
-                                <span className="nav-link-icon">◦</span>
-                                <span>Приглашения</span>
+                                ◦ Приглашения
                             </NavLink>
 
                             <NavLink
                                 to="/trainer/availability"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
+                                className={({ isActive }) => getNavClassName(isActive)}
                             >
-                                <span className="nav-link-icon">◦</span>
-                                <span>Доступность</span>
+                                ◦ Доступность
                             </NavLink>
 
                             <NavLink
                                 to="/trainer/booking-requests"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
+                                className={({ isActive }) => getNavClassName(isActive)}
                             >
-                                <span className="nav-link-icon">◦</span>
-                                <span>Запросы на запись</span>
+                                ◦ Запросы на запись
                             </NavLink>
                         </>
                     )}
                 </nav>
 
-                <div className="app-sidebar-bottom">
+                <div className="sidebar-footer">
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary app-logout-btn"
+                        className="dashboard-btn dashboard-btn-secondary"
                         onClick={handleLogout}
                     >
                         Выйти
@@ -192,24 +195,36 @@ export default function AppLayout({ children }: Props) {
                 </div>
             </aside>
 
-            <div className="app-content-shell">
-                <header className="app-topbar">
-                    <div>
-                        <div className="app-topbar-kicker">Рабочее пространство</div>
-                        <h1 className="app-topbar-title">FitApp</h1>
+            <div className="main-shell">
+                <header className="topbar">
+                    <div className="topbar-left">
+                        <div className="workspace-kicker">Рабочее пространство</div>
+                        <h1 className="workspace-title">{pageTitle}</h1>
                     </div>
 
-                    <div className="app-topbar-actions">
+                    <div className="topbar-actions">
                         {currentUser && (
-                            <div className="app-topbar-user-pill">
-                                <span>{currentUser.email}</span>
-                                <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
-                            </div>
+                            <button
+                                type="button"
+                                className="topbar-user-card"
+                                onClick={() => {
+                                    if (isTrainer) {
+                                        navigate("/trainer/profile");
+                                    }
+                                }}
+                            >
+                                <div className="topbar-user-avatar">{initials}</div>
+
+                                <div className="topbar-user-info">
+                                    <div className="topbar-user-name">{displayName}</div>
+                                    <div className="topbar-user-email">{currentUser.email}</div>
+                                </div>
+                            </button>
                         )}
 
                         <button
                             type="button"
-                            className="dashboard-btn dashboard-btn-secondary app-topbar-logout-btn"
+                            className="dashboard-btn dashboard-btn-secondary topbar-logout-btn"
                             onClick={handleLogout}
                         >
                             Выйти
@@ -217,12 +232,10 @@ export default function AppLayout({ children }: Props) {
                     </div>
                 </header>
 
-                <main className="app-main">
-                    <div className="app-page-container">{children}</div>
-                </main>
-
-                <MobileBottomNav isTrainer={isTrainer} />
+                <main className="main-content">{children}</main>
             </div>
+
+            <MobileBottomNav isTrainer={isTrainer} />
         </div>
     );
 }

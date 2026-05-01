@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import PasswordInput from "../../../shared/ui/PasswordInput";
 import { useAuth } from "../model/AuthContext";
 import type { ApiErrorResponse } from "../model/auth.types";
-import axios from "axios";
 
 export default function LoginForm() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("trainer@test.local");
-    const [password, setPassword] = useState("123456");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -49,20 +50,23 @@ export default function LoginForm() {
 
             <div className="form-row">
                 <label htmlFor="password">Пароль</label>
-                <input
+                <PasswordInput
                     id="password"
-                    type="password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={setPassword}
                     placeholder="Введите пароль"
                     autoComplete="current-password"
                     required
                 />
             </div>
 
-            {errorMessage && <div className="error-box">{errorMessage}</div>}
+            {errorMessage && <div className="form-error">{errorMessage}</div>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <button
+                type="submit"
+                className="dashboard-btn dashboard-btn-primary"
+                disabled={isSubmitting}
+            >
                 {isSubmitting ? "Входим..." : "Войти"}
             </button>
         </form>

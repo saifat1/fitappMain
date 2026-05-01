@@ -11,6 +11,14 @@ export type RegisterByInviteRequest = {
     lastName: string;
 };
 
+export type RegisterTrainerRequest = {
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    confirmPassword: string;
+};
+
 export type InviteDetailsResponse = {
     email: string;
 };
@@ -27,8 +35,8 @@ export type CurrentUserResponse = {
     id: number;
     email: string;
     role: string;
-    firstName: string;
-    lastName: string;
+    firstName: string | null;
+    lastName: string | null;
 };
 
 export type ApiErrorResponse = {

@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-add-phone-and-avatar-to-app-user
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: phone
+                  type: varchar(32)
+              - column:
+                  name: avatar_path
+                  type: varchar(512)

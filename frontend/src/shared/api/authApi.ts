@@ -5,6 +5,7 @@ import type {
     InviteDetailsResponse,
     LoginRequest,
     RegisterByInviteRequest,
+    RegisterTrainerRequest,
 } from "../../features/auth/model/auth.types";
 
 export const authApi = {
@@ -17,6 +18,13 @@ export const authApi = {
         payload: RegisterByInviteRequest
     ): Promise<AuthResponse> => {
         const response = await apiClient.post("/auth/register-by-invite", payload);
+        return response.data;
+    },
+
+    registerTrainer: async (
+        payload: RegisterTrainerRequest
+    ): Promise<AuthResponse> => {
+        const response = await apiClient.post("/auth/register-trainer", payload);
         return response.data;
     },
 

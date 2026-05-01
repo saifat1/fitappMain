@@ -11,6 +11,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import TrainerRoute from "../components/TrainerRoute";
 import AppLayout from "../widgets/AppLayout";
 import RescheduleRequestsPage from "../pages/RescheduleRequestsPage";
+import TrainerProfilePage from "../pages/TrainerProfilePage";
 import RescheduleRequestDetailsPage from "../pages/RescheduleRequestDetailsPage";
 import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
 import ExerciseTemplatesPage from "../pages/ExerciseTemplatesPage";
@@ -20,11 +21,16 @@ import ClientBookingPage from "../pages/ClientBookingPage";
 import TrainerAvailabilityPage from "../pages/TrainerAvailabilityPage";
 import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
 import ClientHistoryPage from "../pages/ClientHistoryPage";
+import TrainerRegisterPage from "../pages/TrainerRegisterPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/me" replace />,
+    },
+    {
+        path: "/trainer/register",
+        element: <TrainerRegisterPage />,
     },
     {
         path: "/trainer/clients/:clientId/history",
@@ -41,6 +47,18 @@ export const router = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage />,
+    },
+    {
+        path: "/trainer/profile",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <AppLayout>
+                        <TrainerProfilePage />
+                    </AppLayout>
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/invite/:token",

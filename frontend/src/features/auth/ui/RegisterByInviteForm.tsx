@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import PasswordInput from "../../../shared/ui/PasswordInput";
 import { useAuth } from "../model/AuthContext";
 import type { ApiErrorResponse } from "../model/auth.types";
 
@@ -67,11 +67,10 @@ export default function RegisterByInviteForm({
 
             <div className="form-row">
                 <label htmlFor="reg-password">Пароль</label>
-                <input
+                <PasswordInput
                     id="reg-password"
-                    type="password"
                     value={password}
-                    onChange={(event) => setPassword(event.target.value)}
+                    onChange={setPassword}
                     placeholder="Введите пароль"
                     autoComplete="new-password"
                     required
@@ -86,7 +85,7 @@ export default function RegisterByInviteForm({
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
                     placeholder="Введите имя"
-                    autoComplete="off"
+                    autoComplete="given-name"
                     required
                 />
             </div>
@@ -99,14 +98,18 @@ export default function RegisterByInviteForm({
                     value={lastName}
                     onChange={(event) => setLastName(event.target.value)}
                     placeholder="Введите фамилию"
-                    autoComplete="off"
+                    autoComplete="family-name"
                     required
                 />
             </div>
 
-            {errorMessage && <div className="error-box">{errorMessage}</div>}
+            {errorMessage && <div className="form-error">{errorMessage}</div>}
 
-            <button type="submit" disabled={isSubmitting}>
+            <button
+                type="submit"
+                className="dashboard-btn dashboard-btn-primary"
+                disabled={isSubmitting}
+            >
                 {isSubmitting ? "Регистрируем..." : "Зарегистрироваться"}
             </button>
         </form>
