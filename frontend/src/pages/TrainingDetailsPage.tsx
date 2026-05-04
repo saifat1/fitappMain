@@ -987,7 +987,7 @@ export default function TrainingDetailsPage() {
                         </>
                     )}
 
-                    {isClient && training.status !== "CANCELLED" && (
+                    {isClient && training.status === "PLANNED" && (
                         <button
                             type="button"
                             className="dashboard-btn dashboard-btn-secondary entity-header-action"

@@ -54,6 +54,10 @@ public class RescheduleRequestService {
             throw new ApiException("TRAINING_ALREADY_CANCELLED", "Нельзя перенести отменённую тренировку");
         }
 
+        if (training.getStatus() == TrainingStatus.COMPLETED) {
+            throw new ApiException("TRAINING_ALREADY_COMPLETED", "Нельзя запросить перенос завершённой тренировки");
+        }
+
         validateTimeRange(request.getRequestedStartTime(), request.getRequestedEndTime());
 
         boolean hasPending = rescheduleRequestRepository.existsByTrainingIdAndStatus(
