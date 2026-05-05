@@ -681,17 +681,15 @@ export default function ClientBookingPage() {
                   </span>
                       </div>
 
-                      {(request.status === "PENDING" || request.status === "APPROVED") && (
-                          <div className={styles.inlineActions}>
-                            <button
-                                type="button"
-                                className={styles.buttonDanger}
-                                onClick={() => void handleCancelRequest(request.id)}
-                                disabled={cancellingId === request.id}
-                            >
-                              {cancellingId === request.id ? "Отменяем..." : "Отменить"}
-                            </button>
-                          </div>
+                      {request.status === "PENDING" && (
+                          <button
+                              type="button"
+                              className={styles.actionButtonSecondary}
+                              onClick={() => void handleCancelRequest(request.id)}
+                              disabled={cancellingId === request.id}
+                          >
+                            {cancellingId === request.id ? "Отменяем..." : "Отменить"}
+                          </button>
                       )}
                     </article>
                 ))}

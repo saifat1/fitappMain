@@ -47,6 +47,7 @@ export default function QuickCreateTrainingSheet({
     const [startTime, setStartTime] = useState(selectedStartTime ?? "18:00");
     const [endTime, setEndTime] = useState(plusOneHour(selectedStartTime));
     const [trainerNote, setTrainerNote] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
 
     useEffect(() => {
         if (!isOpen) {
@@ -57,6 +58,7 @@ export default function QuickCreateTrainingSheet({
         setStartTime(selectedStartTime ?? "18:00");
         setEndTime(plusOneHour(selectedStartTime));
         setTrainerNote("");
+        setErrorMessage("");
 
         if (clients.length > 0) {
             setClientId(String(clients[0].id));
@@ -67,12 +69,25 @@ export default function QuickCreateTrainingSheet({
         return null;
     }
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
         if (!clientId) {
+            setErrorMessage("Выбери клиента");
             return;
         }
+
+        if (!startTime || !endTime) {
+            setErrorMessage("Укажи время начала и окончания");
+            return;
+        }
+
+        if (endTime <= startTime) {
+            setErrorMessage("Время окончания должно быть позже времени начала");
+            return;
+        }
+
+        setErrorMessage("");
 
         await onSubmit({
             clientId: Number(clientId),
@@ -160,6 +175,8 @@ export default function QuickCreateTrainingSheet({
                             onChange={(event) => setTrainerNote(event.target.value)}
                         />
                     </div>
+
+                    {errorMessage && <div className="error-box">{errorMessage}</div>}
 
                     <div className="coach-create-actions">
                         <button

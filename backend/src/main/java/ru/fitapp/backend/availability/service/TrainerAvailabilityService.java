@@ -24,6 +24,7 @@ import ru.fitapp.backend.trainerclient.repository.TrainerClientRepository;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.service.UserService;
+import java.util.stream.IntStream;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -65,9 +66,14 @@ public class TrainerAvailabilityService {
         this.userService = userService;
     }
 
-    @Transactional(readOnly = true)
+    public void initializeDefaultRulesForTrainer(AppUser trainer) {
+        initializeDefaultRulesIfEmpty(trainer);
+    }
+
     public TrainerAvailabilityRulesResponse getRulesForCurrentTrainer() {
         AppUser trainer = currentUserService.getCurrentTrainer();
+
+        initializeDefaultRulesIfEmpty(trainer);
 
         List<TrainerAvailabilityRuleResponse> rules = trainerAvailabilityRuleRepository
                 .findAllByTrainerIdOrderByDayOfWeekAscStartTimeAsc(trainer.getId())
@@ -354,6 +360,28 @@ public class TrainerAvailabilityService {
                 );
             }
         }
+    }
+
+    private void initializeDefaultRulesIfEmpty(AppUser trainer) {
+        if (trainer == null || trainer.getId() == null) {
+            throw new ApiException("TRAINER_NOT_FOUND", "Тренер не найден");
+        }
+
+        if (trainerAvailabilityRuleRepository.existsByTrainerId(trainer.getId())) {
+            return;
+        }
+
+        List<TrainerAvailabilityRule> defaultRules = IntStream.rangeClosed(1, 7)
+                .mapToObj(dayOfWeek -> new TrainerAvailabilityRule()
+                        .setTrainer(trainer)
+                        .setDayOfWeek(dayOfWeek)
+                        .setStartTime(LocalTime.of(9, 0))
+                        .setEndTime(LocalTime.of(23, 0))
+                        .setSlotDurationMinutes(60)
+                        .setActive(true))
+                .toList();
+
+        trainerAvailabilityRuleRepository.saveAll(defaultRules);
     }
 
     private void validateExceptions(List<TrainerAvailabilityExceptionRequest> exceptions) {

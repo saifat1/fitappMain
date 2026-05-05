@@ -935,3 +935,155 @@
     }
   }
 }
+.inviteStatsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.inviteStatCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  background: #f8fafc;
+  display: grid;
+  gap: 6px;
+}
+
+.inviteStatLabel {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.inviteStatValue {
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.inviteCreateForm {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(140px, 180px) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.inviteCreateAction {
+  display: flex;
+}
+
+.inviteCreateAction .button {
+  min-height: 44px;
+}
+
+.inviteCheckboxRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.inviteMeta {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.inviteLinkBlock {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+}
+
+.inviteLinkLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.inviteLinkValue {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #0f172a;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.inviteBadgeActive {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.inviteBadgeUsed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.inviteBadgeExpired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.inviteBadgeCancelled {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.emptyBlock {
+  border: 1px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.emptyTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+@media (max-width: 900px) {
+  .inviteStatsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .inviteCreateForm {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inviteCreateAction {
+    grid-column: 1 / -1;
+  }
+
+  .inviteCreateAction .button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .inviteCreateForm {
+    grid-template-columns: 1fr;
+  }
+
+  .inviteStatsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .inviteStatsGrid {
+    grid-template-columns: 1fr;
+  }
+}

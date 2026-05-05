@@ -135,11 +135,21 @@ export default function TrainingsPage() {
         setTo(draftTo);
     };
 
-    const handleCreateTraining = async (e: FormEvent<HTMLFormElement>) => {
+    const handleCreateTraining = async (e: FormEvent) => {
         e.preventDefault();
 
         if (!clientId) {
             setErrorMessage("Выбери клиента");
+            return;
+        }
+
+        if (!startTime || !endTime) {
+            setErrorMessage("Укажи время начала и окончания");
+            return;
+        }
+
+        if (endTime <= startTime) {
+            setErrorMessage("Время окончания должно быть позже времени начала");
             return;
         }
 

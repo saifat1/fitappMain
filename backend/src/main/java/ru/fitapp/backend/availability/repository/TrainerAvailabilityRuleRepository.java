@@ -12,4 +12,6 @@ public interface TrainerAvailabilityRuleRepository extends JpaRepository<Trainer
     List<TrainerAvailabilityRule> findAllByTrainerIdAndActiveTrueOrderByDayOfWeekAscStartTimeAsc(Long trainerId);
 
     void deleteAllByTrainerId(Long trainerId);
+
+    boolean existsByTrainerId(Long trainerId);
 }

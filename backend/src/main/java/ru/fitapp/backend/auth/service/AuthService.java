@@ -12,6 +12,7 @@ import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
 import ru.fitapp.backend.auth.dto.RegisterTrainerRequest;
 import ru.fitapp.backend.auth.security.JwtService;
+import ru.fitapp.backend.availability.service.TrainerAvailabilityService;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.invite.entity.Invite;
 import ru.fitapp.backend.invite.service.InviteService;
@@ -30,19 +31,21 @@ public class AuthService {
     private final TrainerClientService trainerClientService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final TrainerAvailabilityService trainerAvailabilityService;
 
     public AuthService(
             UserService userService,
             InviteService inviteService,
             TrainerClientService trainerClientService,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            JwtService jwtService, TrainerAvailabilityService trainerAvailabilityService
     ) {
         this.userService = userService;
         this.inviteService = inviteService;
         this.trainerClientService = trainerClientService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.trainerAvailabilityService = trainerAvailabilityService;
     }
 
     @Transactional(readOnly = true)
@@ -127,6 +130,7 @@ public class AuthService {
                 request.getFirstName(),
                 request.getLastName()
         );
+        trainerAvailabilityService.initializeDefaultRulesForTrainer(trainer);
 
         String token = jwtService.generateToken(trainer);
         return buildAuthResponse(trainer, token);

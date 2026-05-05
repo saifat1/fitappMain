@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import axios from "axios";
+import styles from "./BookingPages.module.css";
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
     CreateInviteRequest,
@@ -11,7 +12,6 @@ function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
         return error.response?.data?.message ?? fallback;
     }
-
     return fallback;
 }
 
@@ -33,15 +33,15 @@ function getInviteStatusLabel(status: string): string {
 function getInviteStatusClass(status: string): string {
     switch (status) {
         case "NEW":
-            return "invite-status-badge active";
+            return `${styles.badge} ${styles.inviteBadgeActive}`;
         case "USED":
-            return "invite-status-badge used";
+            return `${styles.badge} ${styles.inviteBadgeUsed}`;
         case "EXPIRED":
-            return "invite-status-badge expired";
+            return `${styles.badge} ${styles.inviteBadgeExpired}`;
         case "CANCELLED":
-            return "invite-status-badge cancelled";
+            return `${styles.badge} ${styles.inviteBadgeCancelled}`;
         default:
-            return "invite-status-badge";
+            return styles.badge;
     }
 }
 
@@ -61,6 +61,7 @@ export default function InvitesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [copiedInviteId, setCopiedInviteId] = useState<number | null>(null);
     const [deletingInviteId, setDeletingInviteId] = useState<number | null>(null);
 
@@ -100,6 +101,7 @@ export default function InvitesPage() {
     const handleCreateInvite = async (event: FormEvent) => {
         event.preventDefault();
         setErrorMessage("");
+        setSuccessMessage("");
 
         const trimmedEmail = email.trim();
         const trimmedExpiresInDays = expiresInDays.trim();
@@ -110,7 +112,7 @@ export default function InvitesPage() {
         }
 
         if (!trimmedExpiresInDays) {
-            setErrorMessage("Поле «Срок действия, дней» обязательно");
+            setErrorMessage("Поле «Срок, дней» обязательно");
             return;
         }
 
@@ -130,11 +132,14 @@ export default function InvitesPage() {
 
         try {
             const created = await trainerApi.createInvite(payload);
+
             if (!showAll || created.status === "NEW") {
                 setInvites((prev) => [created, ...prev]);
             }
+
             setEmail("");
             setExpiresInDays("7");
+            setSuccessMessage("Приглашение создано");
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось создать приглашение"));
         } finally {
@@ -146,6 +151,7 @@ export default function InvitesPage() {
         try {
             await navigator.clipboard.writeText(invite.registrationLink);
             setCopiedInviteId(invite.id);
+            setSuccessMessage("Ссылка скопирована");
 
             window.setTimeout(() => {
                 setCopiedInviteId((current) => (current === invite.id ? null : current));
@@ -163,10 +169,12 @@ export default function InvitesPage() {
 
         setDeletingInviteId(inviteId);
         setErrorMessage("");
+        setSuccessMessage("");
 
         try {
             await trainerApi.deleteInvite(inviteId);
             setInvites((prev) => prev.filter((item) => item.id !== inviteId));
+            setSuccessMessage("Приглашение удалено");
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось удалить приглашение"));
         } finally {
@@ -175,203 +183,149 @@ export default function InvitesPage() {
     };
 
     return (
-        <div className="dashboard-page">
-            <section className="dashboard-hero">
-                <div>
-                    <p className="dashboard-kicker">Приглашения</p>
-                    <h1 className="dashboard-title">Ссылки регистрации</h1>
-                    <p className="dashboard-subtitle">
-                        Здесь остаётся старый общий сценарий приглашений и отображаются ссылки,
-                        созданные для уже существующих клиентов.
-                    </p>
+        <div className={styles.page}>
+            <div className={styles.header}>
+                <h1 className={styles.title}>Приглашения</h1>
+                <p className={styles.subtitle}>
+                    Создавай ссылки регистрации для клиентов и управляй уже созданными приглашениями.
+                </p>
+            </div>
+
+            <section className={styles.card}>
+                <div className={styles.requestHeader}>
+                    <div>
+                        <h2 className={styles.sectionTitle}>Сводка</h2>
+                        <p className={styles.subtitle}>
+                            Быстрый обзор текущих приглашений.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        className={styles.buttonSecondary}
+                        onClick={() => void loadInvites()}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Обновляем..." : "Обновить"}
+                    </button>
                 </div>
 
-                <button
-                    type="button"
-                    className="dashboard-btn dashboard-btn-secondary"
-                    onClick={() => void loadInvites()}
-                    disabled={isLoading}
-                >
-                    {isLoading ? "Обновляем..." : "Обновить"}
-                </button>
+                <div className={styles.inviteStatsGrid}>
+                    <div className={styles.inviteStatCard}>
+                        <div className={styles.inviteStatLabel}>Всего</div>
+                        <div className={styles.inviteStatValue}>{stats.total}</div>
+                    </div>
+
+                    <div className={styles.inviteStatCard}>
+                        <div className={styles.inviteStatLabel}>Активные</div>
+                        <div className={styles.inviteStatValue}>{stats.active}</div>
+                    </div>
+
+                    <div className={styles.inviteStatCard}>
+                        <div className={styles.inviteStatLabel}>Использованы</div>
+                        <div className={styles.inviteStatValue}>{stats.used}</div>
+                    </div>
+
+                    <div className={styles.inviteStatCard}>
+                        <div className={styles.inviteStatLabel}>Архив</div>
+                        <div className={styles.inviteStatValue}>
+                            {stats.expired + stats.cancelled}
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            <section className="dashboard-grid">
-                <article className="dashboard-card">
-                    <h3>Всего</h3>
-                    <p>{stats.total}</p>
-                </article>
+            {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+            {successMessage && <div className={styles.success}>{successMessage}</div>}
 
-                <article className="dashboard-card">
-                    <h3>Активные</h3>
-                    <p>{stats.active}</p>
-                </article>
+            <section className={styles.card}>
+                <h2 className={styles.sectionTitle}>Новое приглашение</h2>
 
-                <article className="dashboard-card">
-                    <h3>Использованы</h3>
-                    <p>{stats.used}</p>
-                </article>
-
-                <article className="dashboard-card">
-                    <h3>Архив</h3>
-                    <p>{stats.expired + stats.cancelled}</p>
-                </article>
-            </section>
-
-            {errorMessage && <div className="error-box">{errorMessage}</div>}
-
-            <section className="dashboard-card">
-                <h2 style={{ marginTop: 0 }}>Новое приглашение</h2>
-
-                <form
-                    onSubmit={handleCreateInvite}
-                    style={{
-                        display: "grid",
-                        gap: 12,
-                        gridTemplateColumns: "minmax(0, 1fr) 180px auto",
-                        alignItems: "end",
-                    }}
-                >
-                    <div>
-                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+                <form className={styles.inviteCreateForm} onSubmit={handleCreateInvite}>
+                    <div className={styles.fieldWide}>
+                        <label className={styles.label} htmlFor="invite-email">
                             Email клиента
                         </label>
                         <input
+                            id="invite-email"
+                            className={styles.input}
+                            type="email"
                             value={email}
                             onChange={(event) => setEmail(event.target.value)}
                             placeholder="client@test.local"
                             required
-                            style={{
-                                width: "100%",
-                                minHeight: 44,
-                                padding: "0 14px",
-                                borderRadius: 12,
-                                border: "1px solid #d7deea",
-                                boxSizing: "border-box",
-                            }}
                         />
                     </div>
 
-                    <div>
-                        <label style={{ display: "block", marginBottom: 6, fontWeight: 600 }}>
+                    <div className={styles.field}>
+                        <label className={styles.label} htmlFor="invite-expire-days">
                             Срок, дней
                         </label>
                         <input
+                            id="invite-expire-days"
+                            className={styles.input}
+                            type="number"
+                            min={1}
+                            step={1}
+                            inputMode="numeric"
                             value={expiresInDays}
                             onChange={(event) => setExpiresInDays(event.target.value)}
                             required
-                            inputMode="numeric"
-                            style={{
-                                width: "100%",
-                                minHeight: 44,
-                                padding: "0 14px",
-                                borderRadius: 12,
-                                border: "1px solid #d7deea",
-                                boxSizing: "border-box",
-                            }}
                         />
                     </div>
 
-                    <button
-                        type="submit"
-                        className="dashboard-btn dashboard-btn-primary"
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "Создаём..." : "Создать"}
-                    </button>
+                    <div className={styles.inviteCreateAction}>
+                        <button
+                            type="submit"
+                            className={styles.button}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "Создаём..." : "Создать"}
+                        </button>
+                    </div>
                 </form>
             </section>
 
-            <section className="dashboard-card">
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        gap: 12,
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        marginBottom: 16,
-                    }}
-                >
-                    <h2 style={{ margin: 0 }}>Список приглашений</h2>
-
-                    <label
-                        style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 8,
-                            color: "#64748b",
-                        }}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={showAll}
-                            onChange={(event) => setShowAll(event.target.checked)}
-                        />
-                        Показывать все
-                    </label>
+            <section className={styles.card}>
+                <div className={styles.requestHeader}>
+                    <div>
+                        <h2 className={styles.sectionTitle}>Список приглашений</h2>
+                        <p className={styles.subtitle}>
+                            Можно копировать ссылку, смотреть статус и удалять неактуальные записи.
+                        </p>
+                    </div>
                 </div>
 
+                <label className={styles.inviteCheckboxRow}>
+                    <input
+                        type="checkbox"
+                        checked={showAll}
+                        onChange={(event) => setShowAll(event.target.checked)}
+                    />
+                    <span>Показывать все</span>
+                </label>
+
                 {isLoading ? (
-                    <div>Загрузка...</div>
+                    <div className={styles.empty}>Загрузка...</div>
                 ) : invites.length === 0 ? (
-                    <div>
-                        <h3 style={{ marginTop: 0 }}>Приглашений нет</h3>
-                        <p style={{ color: "#64748b" }}>
+                    <div className={styles.emptyBlock}>
+                        <h3 className={styles.emptyTitle}>Приглашений нет</h3>
+                        <p className={styles.subtitle}>
                             Создай первое приглашение для нового клиента.
                         </p>
                     </div>
                 ) : (
-                    <div style={{ display: "grid", gap: 12 }}>
+                    <div className={styles.requestsList}>
                         {invites.map((invite) => {
                             const isDeleting = deletingInviteId === invite.id;
                             const isCopied = copiedInviteId === invite.id;
 
                             return (
-                                <article
-                                    key={invite.id}
-                                    style={{
-                                        border: "1px solid #e2e8f0",
-                                        borderRadius: 18,
-                                        background: "#ffffff",
-                                        padding: 16,
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            gap: 12,
-                                            alignItems: "flex-start",
-                                            flexWrap: "wrap",
-                                        }}
-                                    >
+                                <article key={invite.id} className={styles.requestCard}>
+                                    <div className={styles.requestHeader}>
                                         <div>
-                                            <div
-                                                style={{
-                                                    fontSize: 16,
-                                                    fontWeight: 800,
-                                                    color: "#0f172a",
-                                                    lineHeight: 1.25,
-                                                }}
-                                            >
-                                                {invite.email ?? "Без привязки к email"}
-                                            </div>
-
-                                            <div style={{ marginTop: 6 }}>
-                        <span className={getInviteStatusClass(invite.status)}>
-                          {getInviteStatusLabel(invite.status)}
-                        </span>
-                                            </div>
-
-                                            <div
-                                                style={{
-                                                    marginTop: 8,
-                                                    color: "#64748b",
-                                                    fontSize: 13,
-                                                    lineHeight: 1.5,
-                                                }}
-                                            >
+                                            <strong>{invite.email ?? "Без привязки к email"}</strong>
+                                            <div className={styles.inviteMeta}>
                                                 <div>ID {invite.id}</div>
                                                 {invite.clientId != null && <div>Клиент ID {invite.clientId}</div>}
                                                 <div>Истекает {formatDateTime(invite.expiresAt)}</div>
@@ -379,25 +333,36 @@ export default function InvitesPage() {
                                             </div>
                                         </div>
 
-                                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                            <button
-                                                type="button"
-                                                className="dashboard-btn dashboard-btn-secondary"
-                                                onClick={() => void handleCopy(invite)}
-                                            >
-                                                {isCopied ? "Скопировано" : "Копировать"}
-                                            </button>
-
-                                            <button
-                                                type="button"
-                                                className="dashboard-btn dashboard-btn-secondary"
-                                                onClick={() => void handleDelete(invite.id)}
-                                                disabled={isDeleting}
-                                                title="Удалить"
-                                            >
-                                                {isDeleting ? "Удаляем..." : "Удалить"}
-                                            </button>
+                                        <div className={getInviteStatusClass(invite.status)}>
+                                            {getInviteStatusLabel(invite.status)}
                                         </div>
+                                    </div>
+
+                                    <div className={styles.inviteLinkBlock}>
+                                        <div className={styles.inviteLinkLabel}>Ссылка для регистрации</div>
+                                        <div className={styles.inviteLinkValue}>
+                                            {invite.registrationLink}
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.inlineActions}>
+                                        <button
+                                            type="button"
+                                            className={styles.buttonSecondary}
+                                            onClick={() => void handleCopy(invite)}
+                                        >
+                                            {isCopied ? "Скопировано" : "Копировать"}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className={styles.buttonDanger}
+                                            onClick={() => void handleDelete(invite.id)}
+                                            disabled={isDeleting}
+                                            title="Удалить"
+                                        >
+                                            {isDeleting ? "Удаляем..." : "Удалить"}
+                                        </button>
                                     </div>
                                 </article>
                             );

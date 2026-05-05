@@ -68,6 +68,7 @@ function buildEmptyException(): TrainerAvailabilityException {
   };
 }
 
+
 function toTimeInputValue(value: string): string {
   return value ? value.slice(0, 5) : "";
 }

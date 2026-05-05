@@ -236,6 +236,12 @@ public class TrainingService {
         if (startTime != null && endTime != null && endTime.isBefore(startTime)) {
             throw new ApiException("INVALID_TRAINING_TIME", "Время окончания не может быть раньше времени начала");
         }
+        if (!endTime.isAfter(startTime)) {
+            throw new ApiException(
+                    "INVALID_TIME_RANGE",
+                    "Время окончания должно быть позже времени начала"
+            );
+        }
     }
 
     private TrainingStatus parseStatus(String status) {
