@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-create-trainer-duty-slot
+      author: chatgpt
+      changes:
+        - createTable:
+            tableName: trainer_duty_slot
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_trainer_duty_slot
+                    nullable: false
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_trainer_duty_slot_trainer
+                    references: app_user(id)
+
+              - column:
+                  name: duty_date
+                  type: date
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: start_time
+                  type: time
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: end_time
+                  type: time
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: trainer_duty_slot
+            columnNames: trainer_id, duty_date, start_time
+            constraintName: uk_trainer_duty_slot_trainer_date_start
+
+        - createIndex:
+            tableName: trainer_duty_slot
+            indexName: idx_trainer_duty_slot_trainer_date
+            columns:
+              - column:
+                  name: trainer_id
+              - column:
+                  name: duty_date

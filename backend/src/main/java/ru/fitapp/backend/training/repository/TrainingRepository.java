@@ -54,4 +54,12 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             LocalDate to
     );
 
+    @EntityGraph(attributePaths = {"client"})
+    List<Training> findAllByTrainerIdAndTrainingDateBetweenAndStatusOrderByTrainingDateAscStartTimeAsc(
+            Long trainerId,
+            LocalDate from,
+            LocalDate to,
+            TrainingStatus status
+    );
+
 }

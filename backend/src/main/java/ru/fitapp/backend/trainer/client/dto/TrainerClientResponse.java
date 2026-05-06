@@ -1,5 +1,6 @@
 package ru.fitapp.backend.trainer.client.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class TrainerClientResponse {
@@ -9,10 +10,12 @@ public class TrainerClientResponse {
     private String firstName;
     private String lastName;
     private String status;
+    private LocalDateTime createdAt;
     private boolean createdByTrainer;
     private boolean claimedByClient;
     private LocalDateTime claimedAt;
-    private LocalDateTime createdAt;
+    private String contractNumber;
+    private LocalDate contractEndDate;
 
     public Long getId() {
         return id;
@@ -59,6 +62,15 @@ public class TrainerClientResponse {
         return this;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public TrainerClientResponse setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+        return this;
+    }
+
     public boolean isCreatedByTrainer() {
         return createdByTrainer;
     }
@@ -86,12 +98,21 @@ public class TrainerClientResponse {
         return this;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getContractNumber() {
+        return contractNumber;
     }
 
-    public TrainerClientResponse setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public TrainerClientResponse setContractNumber(String contractNumber) {
+        this.contractNumber = contractNumber;
+        return this;
+    }
+
+    public LocalDate getContractEndDate() {
+        return contractEndDate;
+    }
+
+    public TrainerClientResponse setContractEndDate(LocalDate contractEndDate) {
+        this.contractEndDate = contractEndDate;
         return this;
     }
 }

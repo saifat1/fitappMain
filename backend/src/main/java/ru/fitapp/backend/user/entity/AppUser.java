@@ -5,6 +5,7 @@ import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Objects;
 
 @Entity
@@ -16,6 +17,12 @@ public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "contract_number", length = 100)
+    private String contractNumber;
+
+    @Column(name = "contract_end_date")
+    private LocalDate contractEndDate;
 
     @Column(name = "email", nullable = false, length = 255)
     private String email;
@@ -103,6 +110,24 @@ public class AppUser {
 
     public AppUser setStatus(UserStatus status) {
         this.status = status;
+        return this;
+    }
+
+    public String getContractNumber() {
+        return contractNumber;
+    }
+
+    public AppUser setContractNumber(String contractNumber) {
+        this.contractNumber = contractNumber;
+        return this;
+    }
+
+    public LocalDate getContractEndDate() {
+        return contractEndDate;
+    }
+
+    public AppUser setContractEndDate(LocalDate contractEndDate) {
+        this.contractEndDate = contractEndDate;
         return this;
     }
 

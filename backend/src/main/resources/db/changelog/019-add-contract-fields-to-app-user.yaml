@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 019-add-contract-fields-to-app-user
+      author: chatgpt
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: contract_number
+                  type: varchar(100)
+              - column:
+                  name: contract_end_date
+                  type: date

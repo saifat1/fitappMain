@@ -271,4 +271,20 @@ public class TrainingService {
         return mapToResponse(saved);
     }
 
+    public TrainingResponse restoreTrainingToPlanned(Long trainingId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+
+        if (training.getStatus() != TrainingStatus.COMPLETED) {
+            throw new ApiException(
+                    "TRAINING_STATUS_INVALID_FOR_RESTORE",
+                    "Вернуть в запланированные можно только завершённую тренировку"
+            );
+        }
+
+        training.setStatus(TrainingStatus.PLANNED);
+        Training saved = trainingRepository.save(training);
+        return mapToResponse(saved);
+    }
+
 }

@@ -7,6 +7,7 @@ import { useAuth } from "../features/auth/model/AuthContext";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainerApi } from "../shared/api/trainerApi";
 import { availabilityApi } from "../shared/api/availabilityApi";
+import { dutySlotApi } from "../shared/api/dutySlotApi";
 import CalendarDayAgenda from "../features/calendar/ui/CalendarDayAgenda";
 import QuickCreateTrainingSheet from "../features/calendar/ui/QuickCreateTrainingSheet";
 import {
@@ -22,7 +23,11 @@ import {
     shiftMonth,
 } from "../features/calendar/lib/trainerCalendar";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
-import type { TrainerAvailabilityException, TrainerAvailabilityRule } from "../features/availability/model/availability.types";
+import type {
+    TrainerAvailabilityException,
+    TrainerAvailabilityRule,
+} from "../features/availability/model/availability.types";
+import type { TrainerDutySlotResponse } from "../features/duty-slot/model/dutySlot.types";
 import type { TrainingResponse } from "../features/training/model/training.types";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
 
@@ -40,6 +45,12 @@ function normalizeTime(value?: string | null): string {
     }
 
     return value.slice(0, 5);
+}
+
+function plusOneHour(value: string): string {
+    const [hours, minutes] = value.split(":").map(Number);
+    const nextHour = (hours + 1) % 24;
+    return `${String(nextHour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
 }
 
 function ClientHomeFallback() {
@@ -66,15 +77,15 @@ function ClientHomeFallback() {
             </section>
 
             <section className="dashboard-grid">
-                <Link to="/trainings" className="dashboard-card">
+                <article className="dashboard-card">
                     <h3>Тренировки</h3>
-                    <p>Посмотреть свои тренировки</p>
-                </Link>
+                    <Link to="/trainings">Посмотреть свои тренировки</Link>
+                </article>
 
-                <Link to="/reschedule-requests" className="dashboard-card">
+                <article className="dashboard-card">
                     <h3>Переносы</h3>
-                    <p>Отследить статусы запросов</p>
-                </Link>
+                    <Link to="/reschedule-requests">Отследить статусы запросов</Link>
+                </article>
             </section>
         </div>
     );
@@ -84,25 +95,26 @@ export default function MePage() {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
 
-    const [currentMonth, setCurrentMonth] = useState<Date>(getMonthStart(new Date()));
-    const [selectedDate, setSelectedDate] = useState<string>(
+    const [currentMonth, setCurrentMonth] = useState(getMonthStart(new Date()));
+    const [selectedDate, setSelectedDate] = useState(
         getDefaultSelectedDate(new Date())
     );
 
     const [trainings, setTrainings] = useState<TrainingResponse[]>([]);
     const [clients, setClients] = useState<TrainerClientResponse[]>([]);
-    const [availabilityRules, setAvailabilityRules] = useState<TrainerAvailabilityRule[]>(
-        []
-    );
+    const [availabilityRules, setAvailabilityRules] = useState<TrainerAvailabilityRule[]>([]);
     const [availabilityExceptions, setAvailabilityExceptions] = useState<
         TrainerAvailabilityException[]
     >([]);
+    const [dutySlots, setDutySlots] = useState<TrainerDutySlotResponse[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingClients, setIsLoadingClients] = useState(false);
     const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+    const [isLoadingDutySlots, setIsLoadingDutySlots] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [processingTrainingId, setProcessingTrainingId] = useState<number | null>(null);
+    const [processingDutyKey, setProcessingDutyKey] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState("");
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedStartTime, setSelectedStartTime] = useState<string | undefined>(
@@ -141,18 +153,40 @@ export default function MePage() {
         [selectedDate, selectedDayTrainings, availabilityRules, availabilityExceptions]
     );
 
+    const selectedDayDutySlots = useMemo(
+        () =>
+            dutySlots
+                .filter((item) => item.dutyDate === selectedDate)
+                .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+        [dutySlots, selectedDate]
+    );
+
+    const dutySlotsByStartTime = useMemo(
+        () =>
+            selectedDayDutySlots.reduce<Record<string, TrainerDutySlotResponse>>(
+                (acc, item) => {
+                    acc[item.startTime.slice(0, 5)] = item;
+                    return acc;
+                },
+                {}
+            ),
+        [selectedDayDutySlots]
+    );
+
     const daysWithPlannedTrainings = useMemo(() => {
         const unique = new Set(
-            trainings
-                .filter((item) => item.status === "PLANNED")
-                .map((item) => item.trainingDate)
+            trainings.filter((item) => item.status === "PLANNED").map((item) => item.trainingDate)
         );
-
         return Array.from(unique).map(parseDateKey);
     }, [trainings]);
 
     const availabilityMarkers = useMemo(
-        () => getAvailabilityDatesForMonth(currentMonth, availabilityRules, availabilityExceptions),
+        () =>
+            getAvailabilityDatesForMonth(
+                currentMonth,
+                availabilityRules,
+                availabilityExceptions
+            ),
         [currentMonth, availabilityRules, availabilityExceptions]
     );
 
@@ -205,6 +239,23 @@ export default function MePage() {
         }
     }, [isTrainer]);
 
+    const loadDutySlots = useCallback(async () => {
+        if (!isTrainer) {
+            return;
+        }
+
+        setIsLoadingDutySlots(true);
+
+        try {
+            const data = await dutySlotApi.getMyDutySlots(monthRange.from, monthRange.to);
+            setDutySlots(data);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось загрузить дежурные часы"));
+        } finally {
+            setIsLoadingDutySlots(false);
+        }
+    }, [isTrainer, monthRange.from, monthRange.to]);
+
     useEffect(() => {
         if (!isTrainer) {
             return;
@@ -229,6 +280,14 @@ export default function MePage() {
         void loadAvailability();
     }, [isTrainer, loadAvailability]);
 
+    useEffect(() => {
+        if (!isTrainer) {
+            return;
+        }
+
+        void loadDutySlots();
+    }, [isTrainer, loadDutySlots]);
+
     if (!currentUser) {
         return <div>Пользователь не загружен</div>;
     }
@@ -237,8 +296,7 @@ export default function MePage() {
         return <ClientHomeFallback />;
     }
 
-    const selectedDay = parseDateKey(selectedDate);
-    const isCalendarLoading = isLoading || isLoadingAvailability;
+    const isCalendarLoading = isLoading || isLoadingAvailability || isLoadingDutySlots;
 
     const handleOpenCreate = (startTime?: string) => {
         setSelectedStartTime(startTime);
@@ -275,7 +333,6 @@ export default function MePage() {
         try {
             await trainingApi.completeTraining(trainingId);
             const updated = await trainingApi.getTraining(trainingId);
-
             setTrainings((prev) =>
                 prev.map((item) => (item.id === trainingId ? updated : item))
             );
@@ -298,7 +355,6 @@ export default function MePage() {
         try {
             await trainingApi.cancelTraining(trainingId);
             const updated = await trainingApi.getTraining(trainingId);
-
             setTrainings((prev) =>
                 prev.map((item) => (item.id === trainingId ? updated : item))
             );
@@ -313,6 +369,57 @@ export default function MePage() {
         navigate("/reschedule-requests", {
             state: { trainingId, source: "calendar" },
         });
+    };
+
+    const handleCreateDutySlot = async (startTime: string) => {
+        const processingKey = `${selectedDate}-${startTime}`;
+        setProcessingDutyKey(processingKey);
+        setErrorMessage("");
+
+        try {
+            const created = await dutySlotApi.createMyDutySlot({
+                dutyDate: selectedDate,
+                startTime: `${startTime}:00`,
+                endTime: plusOneHour(startTime),
+            });
+
+            setDutySlots((prev) => {
+                const withoutDuplicate = prev.filter(
+                    (item) =>
+                        !(
+                            item.dutyDate === created.dutyDate &&
+                            item.startTime.slice(0, 5) === created.startTime.slice(0, 5)
+                        )
+                );
+
+                return [...withoutDuplicate, created].sort((a, b) => {
+                    const dateCompare = a.dutyDate.localeCompare(b.dutyDate);
+                    if (dateCompare !== 0) {
+                        return dateCompare;
+                    }
+                    return a.startTime.localeCompare(b.startTime);
+                });
+            });
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось отметить дежурство"));
+        } finally {
+            setProcessingDutyKey(null);
+        }
+    };
+
+    const handleDeleteDutySlot = async (slotId: number, startTime: string) => {
+        const processingKey = `${selectedDate}-${startTime}`;
+        setProcessingDutyKey(processingKey);
+        setErrorMessage("");
+
+        try {
+            await dutySlotApi.deleteMyDutySlot(slotId);
+            setDutySlots((prev) => prev.filter((item) => item.id !== slotId));
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось снять дежурство"));
+        } finally {
+            setProcessingDutyKey(null);
+        }
     };
 
     const handlePrevMonth = () => {
@@ -333,121 +440,125 @@ export default function MePage() {
         setSelectedDate(formatDateKey(today));
     };
 
-    return (
-        <div className="coach-calendar-page entity-page-compact">
-            <section className="coach-calendar-header coach-calendar-panel">
-                <div className="coach-calendar-header-top">
-                    <div className="coach-calendar-header-main">
-                        <h1 className="coach-calendar-title">Календарь тренировок и доступности</h1>
-                        <p className="coach-calendar-subtitle">
-                            День теперь строится по реальной доступности, исключениям и уже созданным
-                            тренировкам.
-                        </p>
-                    </div>
+    const selectedDay = parseDateKey(selectedDate);
 
+    return (
+        <div className="dashboard-page">
+            <section className="dashboard-hero">
+                <div>
+                    <p className="dashboard-kicker">Календарь</p>
+                    <h1 className="dashboard-title">Календарь тренировок и доступности</h1>
+                    <p className="dashboard-subtitle">
+                        День теперь строится по реальной доступности, исключениям, уже созданным
+                        тренировкам и дежурным часам.
+                    </p>
+                </div>
+
+                <div className="dashboard-actions">
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-primary coach-calendar-add-btn"
+                        className="dashboard-btn dashboard-btn-primary"
                         onClick={() => handleOpenCreate()}
                         disabled={isLoadingClients}
                     >
                         Добавить тренировку
                     </button>
                 </div>
+            </section>
 
-                <div className="coach-calendar-toolbar">
-                    <div className="coach-calendar-nav">
-                        <button
-                            type="button"
-                            className="coach-calendar-v2-nav-btn"
-                            onClick={handlePrevMonth}
-                            title="Предыдущий месяц"
-                        >
-                            ‹
-                        </button>
+            <section className="calendar-toolbar">
+                <div className="calendar-toolbar__nav">
+                    <button
+                        type="button"
+                        className="dashboard-btn dashboard-btn-secondary"
+                        onClick={handlePrevMonth}
+                    >
+                        ‹
+                    </button>
 
-                        <div className="coach-calendar-month-title">
-                            {formatMonthTitle(currentMonth)}
-                        </div>
-
-                        <button
-                            type="button"
-                            className="coach-calendar-v2-nav-btn"
-                            onClick={handleNextMonth}
-                            title="Следующий месяц"
-                        >
-                            ›
-                        </button>
+                    <div className="calendar-toolbar__title">
+                        {formatMonthTitle(currentMonth)}
                     </div>
 
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary coach-calendar-today-btn"
-                        onClick={handleToday}
+                        className="dashboard-btn dashboard-btn-secondary"
+                        onClick={handleNextMonth}
                     >
-                        Сегодня
+                        ›
                     </button>
                 </div>
+
+                <button
+                    type="button"
+                    className="dashboard-btn dashboard-btn-secondary"
+                    onClick={handleToday}
+                >
+                    Сегодня
+                </button>
             </section>
 
             {errorMessage && <div className="error-box">{errorMessage}</div>}
 
-            <div className="coach-calendar-layout">
-                <section className="coach-calendar-panel coach-calendar-panel--month">
+            <section className="calendar-layout">
+                <div className="calendar-layout__month">
                     {isCalendarLoading ? (
-                        <div className="coach-calendar-loading">Загрузка...</div>
+                        <div className="dashboard-card">Загрузка...</div>
                     ) : (
-                        <DayPicker
-                            className="coach-rdp"
-                            locale={ru}
-                            mode="single"
-                            month={currentMonth}
-                            onMonthChange={setCurrentMonth}
-                            selected={selectedDay}
-                            onSelect={(date) => {
-                                if (!date) {
-                                    return;
-                                }
+                        <div className="dashboard-card">
+                            <DayPicker
+                                locale={ru}
+                                mode="single"
+                                selected={selectedDay}
+                                onSelect={(date) => {
+                                    if (!date) {
+                                        return;
+                                    }
 
-                                setSelectedDate(formatDateKey(date));
+                                    setSelectedDate(formatDateKey(date));
 
-                                if (
-                                    date.getMonth() !== currentMonth.getMonth() ||
-                                    date.getFullYear() !== currentMonth.getFullYear()
-                                ) {
-                                    setCurrentMonth(getMonthStart(date));
-                                }
-                            }}
-                            showOutsideDays
-                            fixedWeeks
-                            hideNavigation
-                            modifiers={{
-                                hasTrainings: daysWithPlannedTrainings,
-                                hasAvailability: availabilityMarkers.daysWithAvailability,
-                                hasExceptions: availabilityMarkers.daysWithExceptions,
-                            }}
-                            modifiersClassNames={{
-                                hasTrainings: "coach-rdp-day-has-trainings",
-                                hasAvailability: "coach-rdp-day-has-availability",
-                                hasExceptions: "coach-rdp-day-has-exceptions",
-                            }}
-                        />
+                                    if (
+                                        date.getMonth() !== currentMonth.getMonth() ||
+                                        date.getFullYear() !== currentMonth.getFullYear()
+                                    ) {
+                                        setCurrentMonth(getMonthStart(date));
+                                    }
+                                }}
+                                showOutsideDays
+                                fixedWeeks
+                                hideNavigation
+                                modifiers={{
+                                    hasTrainings: daysWithPlannedTrainings,
+                                    hasAvailability: availabilityMarkers.daysWithAvailability,
+                                    hasExceptions: availabilityMarkers.daysWithExceptions,
+                                }}
+                                modifiersClassNames={{
+                                    hasTrainings: "coach-rdp-day-has-trainings",
+                                    hasAvailability: "coach-rdp-day-has-availability",
+                                    hasExceptions: "coach-rdp-day-has-exceptions",
+                                }}
+                            />
+                        </div>
                     )}
-                </section>
+                </div>
 
-                <div className="coach-calendar-right">
+                <div className="calendar-layout__agenda">
                     <CalendarDayAgenda
                         selectedDate={selectedDate}
                         rows={agendaRows}
                         processingTrainingId={processingTrainingId}
+                        processingDutyKey={processingDutyKey}
+                        dutySlotsByStartTime={dutySlotsByStartTime}
                         onOpenTraining={(trainingId) => navigate(`/trainings/${trainingId}`)}
                         onQuickAdd={handleOpenCreate}
                         onCompleteTraining={handleQuickCompleteTraining}
                         onCancelTraining={handleQuickCancelTraining}
                         onRescheduleTraining={handleQuickRescheduleTraining}
+                        onCreateDutySlot={handleCreateDutySlot}
+                        onDeleteDutySlot={handleDeleteDutySlot}
                     />
                 </div>
-            </div>
+            </section>
 
             <QuickCreateTrainingSheet
                 isOpen={isCreateOpen}

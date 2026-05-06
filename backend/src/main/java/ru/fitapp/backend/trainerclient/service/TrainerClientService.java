@@ -12,6 +12,7 @@ import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.repository.UserRepository;
 import ru.fitapp.backend.user.service.UserService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,7 +100,14 @@ public class TrainerClientService {
         return client;
     }
 
-    public AppUser updateClientOfTrainer(Long trainerId, Long clientId, String firstName, String lastName) {
+    public AppUser updateClientOfTrainer(
+            Long trainerId,
+            Long clientId,
+            String firstName,
+            String lastName,
+            String contractNumber,
+            LocalDate contractEndDate
+    ) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
 
         if (firstName != null) {
@@ -111,6 +119,13 @@ public class TrainerClientService {
             String normalizedLastName = lastName.trim();
             client.setLastName(normalizedLastName.isEmpty() ? null : normalizedLastName);
         }
+
+        if (contractNumber != null) {
+            String normalizedContractNumber = contractNumber.trim();
+            client.setContractNumber(normalizedContractNumber.isEmpty() ? null : normalizedContractNumber);
+        }
+
+        client.setContractEndDate(contractEndDate);
 
         return userRepository.save(client);
     }

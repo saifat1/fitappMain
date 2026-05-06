@@ -22,6 +22,7 @@ import TrainerAvailabilityPage from "../pages/TrainerAvailabilityPage";
 import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
 import ClientHistoryPage from "../pages/ClientHistoryPage";
 import TrainerRegisterPage from "../pages/TrainerRegisterPage";
+import TrainerSalaryReportPage from "../pages/TrainerSalaryReportPage";
 
 export const router = createBrowserRouter([
     {
@@ -31,6 +32,18 @@ export const router = createBrowserRouter([
     {
         path: "/trainer/register",
         element: <TrainerRegisterPage />,
+    },
+    {
+        path: "/trainer/salary-report",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <AppLayout>
+                        <TrainerSalaryReportPage />
+                    </AppLayout>
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/trainer/clients/:clientId/history",

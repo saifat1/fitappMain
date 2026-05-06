@@ -61,4 +61,10 @@ public class TrainingController {
     public TrainingResponse completeTraining(@PathVariable Long trainingId) {
         return trainingService.completeTraining(trainingId);
     }
+
+    @PatchMapping("/{trainingId}/restore-planned")
+    public TrainingResponse restoreTrainingToPlanned(@PathVariable Long trainingId) {
+        return trainingService.restoreTrainingToPlanned(trainingId);
+    }
+
 }

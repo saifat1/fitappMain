@@ -161,6 +161,13 @@ export default function AppLayout({ children }: Props) {
                             </NavLink>
 
                             <NavLink
+                                to="/trainer/salary-report"
+                                className={({ isActive }) => getNavClassName(isActive)}
+                            >
+                                ◦ Зарплатный отчёт
+                            </NavLink>
+
+                            <NavLink
                                 to="/trainer/invites"
                                 className={({ isActive }) => getNavClassName(isActive)}
                             >

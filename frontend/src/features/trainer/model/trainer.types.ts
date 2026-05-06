@@ -8,11 +8,15 @@ export type TrainerClientResponse = {
     createdByTrainer: boolean;
     claimedByClient: boolean;
     claimedAt: string | null;
+    contractNumber: string | null;
+    contractEndDate: string | null;
 };
 
 export type UpdateTrainerClientRequest = {
     firstName?: string;
     lastName?: string;
+    contractNumber?: string;
+    contractEndDate?: string | null;
 };
 
 export type CreateManualTrainerClientRequest = {

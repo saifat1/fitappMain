@@ -361,6 +361,7 @@ export default function TrainingDetailsPage() {
     const {trainingId} = useParams();
     const navigate = useNavigate();
     const {currentUser} = useAuth();
+    const [isRestoringToPlanned, setIsRestoringToPlanned] = useState(false);
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
     const [exercises, setExercises] = useState<TrainingExerciseView[]>([]);
@@ -411,6 +412,23 @@ export default function TrainingDetailsPage() {
         () => [...exercises].sort((a, b) => a.orderNum - b.orderNum),
         [exercises]
     );
+    const handleRestoreToPlanned = async () => {
+        if (!training) {
+            return;
+        }
+
+        setIsRestoringToPlanned(true);
+        setErrorMessage("");
+
+        try {
+            const updated = await trainingApi.restoreTrainingToPlanned(training.id);
+            setTraining(updated);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось вернуть тренировку в запланированные"));
+        } finally {
+            setIsRestoringToPlanned(false);
+        }
+    };
 
     const selectedTemplate = useMemo(
         () =>
@@ -985,6 +1003,16 @@ export default function TrainingDetailsPage() {
                                 ⋯
                             </button>
                         </>
+                    )}
+                    {isTrainer && training.status === "COMPLETED" && (
+                        <button
+                            type="button"
+                            className="dashboard-btn dashboard-btn-secondary"
+                            onClick={() => void handleRestoreToPlanned()}
+                            disabled={isRestoringToPlanned}
+                        >
+                            {isRestoringToPlanned ? "Возвращаем..." : "Вернуть в запланированные"}
+                        </button>
                     )}
 
                     {isClient && training.status === "PLANNED" && (

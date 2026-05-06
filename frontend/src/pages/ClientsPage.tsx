@@ -19,6 +19,8 @@ import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 type EditState = {
     firstName: string;
     lastName: string;
+    contractNumber: string;
+    contractEndDate: string;
 };
 
 type CreateClientState = {
@@ -242,6 +244,8 @@ export default function ClientsPage() {
     const [editState, setEditState] = useState<EditState>({
         firstName: "",
         lastName: "",
+        contractNumber: "",
+        contractEndDate: "",
     });
 
     const [savingClientId, setSavingClientId] = useState<number | null>(null);
@@ -315,12 +319,19 @@ export default function ClientsPage() {
         setEditState({
             firstName: client.firstName ?? "",
             lastName: client.lastName ?? "",
+            contractNumber: client.contractNumber ?? "",
+            contractEndDate: client.contractEndDate ?? "",
         });
     };
 
     const cancelEditing = () => {
         setEditingClientId(null);
-        setEditState({ firstName: "", lastName: "" });
+        setEditState({
+            firstName: "",
+            lastName: "",
+            contractNumber: "",
+            contractEndDate: "",
+        });
     };
 
     const handleSave = async (clientId: number) => {
@@ -330,6 +341,8 @@ export default function ClientsPage() {
         const payload: UpdateTrainerClientRequest = {
             firstName: editState.firstName,
             lastName: editState.lastName,
+            contractNumber: editState.contractNumber,
+            contractEndDate: editState.contractEndDate || null,
         };
 
         try {
@@ -585,6 +598,17 @@ export default function ClientsPage() {
                                                     <div>
                                                         ID {client.id} · Создан {formatCreatedAt(client.createdAt)}
                                                     </div>
+                                                    <div style={metaStyle}>
+                                                        ID {client.id} · Создан {formatCreatedAt(client.createdAt)}
+                                                    </div>
+
+                                                    <div style={metaStyle}>
+                                                        Договор: {client.contractNumber?.trim() ? client.contractNumber : "—"}
+                                                    </div>
+
+                                                    <div style={metaStyle}>
+                                                        Дата окончания договора: {client.contractEndDate ?? "—"}
+                                                    </div>
                                                     {client.claimedByClient && (
                                                         <div>
                                                             Подтверждён: {formatDateTime(client.claimedAt)}
@@ -666,6 +690,37 @@ export default function ClientsPage() {
                                                     style={inputStyle}
                                                     placeholder="Введите фамилию"
                                                 />
+                                            </div>
+                                            <div style={formGridStyle}>
+                                                <label>
+                                                    Номер договора
+                                                    <input
+                                                        value={editState.contractNumber}
+                                                        onChange={(event) =>
+                                                            setEditState((prev) => ({
+                                                                ...prev,
+                                                                contractNumber: event.target.value,
+                                                            }))
+                                                        }
+                                                        style={inputStyle}
+                                                        placeholder="Введите номер договора"
+                                                    />
+                                                </label>
+
+                                                <label>
+                                                    Дата окончания договора
+                                                    <input
+                                                        type="date"
+                                                        value={editState.contractEndDate}
+                                                        onChange={(event) =>
+                                                            setEditState((prev) => ({
+                                                                ...prev,
+                                                                contractEndDate: event.target.value,
+                                                            }))
+                                                        }
+                                                        style={inputStyle}
+                                                    />
+                                                </label>
                                             </div>
 
                                             <div style={actionRowStyle}>

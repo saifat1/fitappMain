@@ -78,7 +78,9 @@ public class TrainerClientFacadeService {
                 trainer.getId(),
                 clientId,
                 request.getFirstName(),
-                request.getLastName()
+                request.getLastName(),
+                request.getContractNumber(),
+                request.getContractEndDate()
         );
 
         return mapToResponse(updated);
@@ -108,6 +110,8 @@ public class TrainerClientFacadeService {
                 .setCreatedByTrainer(client.isCreatedByTrainer())
                 .setClaimedByClient(client.isClaimedByClient())
                 .setClaimedAt(client.getClaimedAt())
-                .setCreatedAt(client.getCreatedAt());
+                .setCreatedAt(client.getCreatedAt())
+                .setContractNumber(client.getContractNumber())
+                .setContractEndDate(client.getContractEndDate());
     }
 }
