@@ -238,13 +238,7 @@ export default function TrainerProfilePage() {
             </section>
 
             <section className={styles.card}>
-                <div
-                    style={{
-                        display: "flex",
-                        gap: 8,
-                        flexWrap: "wrap",
-                    }}
-                >
+                <div className={styles.tabRow}>
                     <button
                         type="button"
                         style={buildTabButtonStyle(activeTab === "info")}

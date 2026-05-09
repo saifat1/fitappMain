@@ -30,6 +30,7 @@
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
     display: grid;
     gap: 14px;
+    min-width: 0;
 }
 
 .sectionTitle {
@@ -41,7 +42,7 @@
 
 .controls {
     display: grid;
-    grid-template-columns: minmax(220px, 280px) auto;
+    grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
     gap: 12px;
     align-items: end;
 }
@@ -49,6 +50,7 @@
 .field {
     display: grid;
     gap: 6px;
+    min-width: 0;
 }
 
 .label {
@@ -59,12 +61,28 @@
 
 .input {
     width: 100%;
+    min-height: 44px;
     border: 1px solid #cbd5e1;
     border-radius: 12px;
     padding: 10px 12px;
     font: inherit;
     background: #fff;
     box-sizing: border-box;
+}
+
+.controlActions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    color: #64748b;
+    font-size: 14px;
 }
 
 .summaryGrid {
@@ -80,6 +98,7 @@
     background: #f8fafc;
     display: grid;
     gap: 6px;
+    min-width: 0;
 }
 
 .summaryLabel {
@@ -95,22 +114,15 @@
     color: #0f172a;
 }
 
-.meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    color: #64748b;
-    font-size: 14px;
-}
-
 .tableWrap {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 760px;
+    min-width: 720px;
 }
 
 .table th,
@@ -171,13 +183,10 @@
 }
 
 @media (max-width: 900px) {
-    .summaryGrid {
-        grid-template-columns: 1fr;
-    }
-
     .controls {
         grid-template-columns: 1fr;
     }
+
     .controlActions {
         width: 100%;
     }
@@ -185,9 +194,38 @@
     .controlActions :global(.dashboard-btn) {
         width: 100%;
     }
+
+    .summaryGrid {
+        grid-template-columns: 1fr;
+    }
 }
-.controlActions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+
+@media (max-width: 560px) {
+    .card {
+        padding: 14px;
+        border-radius: 16px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .sectionTitle {
+        font-size: 17px;
+    }
+
+    .summaryValue {
+        font-size: 24px;
+    }
+
+    .meta {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .table th,
+    .table td {
+        padding: 10px 8px;
+        font-size: 13px;
+    }
 }

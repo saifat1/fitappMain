@@ -309,3 +309,19 @@
         width: 100%;
     }
 }
+.tabRow {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .tabRow {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .tabRow button {
+        width: 100%;
+    }
+}
