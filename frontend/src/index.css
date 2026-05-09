@@ -7997,3 +7997,105 @@ input:focus {
     min-height: 44px;
   }
 }
+/* ===== FORCE mobile fixes: bottom nav + compact month toolbar ===== */
+
+@media (max-width: 1023px) {
+  .mobile-bottom-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+  }
+
+  .mobile-bottom-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav__item {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: 112px !important;
+    min-height: 52px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 14px !important;
+    border-radius: 16px !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-bottom-nav__label {
+    display: inline !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .calendar-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .calendar-toolbar__monthCard {
+    flex: 0 0 auto !important;
+    width: min(100%, 360px) !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+    margin: 0 auto !important;
+    padding: 8px 10px !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .calendar-toolbar__todayBtn {
+    width: min(100%, 360px) !important;
+    min-height: 44px !important;
+    margin: 0 auto !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendar-toolbar__monthCard {
+    width: min(100%, 320px) !important;
+    gap: 8px !important;
+    min-height: 54px !important;
+    padding: 8px 10px !important;
+  }
+
+  .calendar-toolbar__center {
+    min-width: 0 !important;
+  }
+
+  .calendar-toolbar__label {
+    font-size: 10px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .calendar-toolbar__title {
+    font-size: 16px !important;
+    line-height: 1.1 !important;
+  }
+
+  .calendar-toolbar__navBtn {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 10px !important;
+    font-size: 18px !important;
+  }
+
+  .calendar-toolbar__todayBtn {
+    width: min(100%, 320px) !important;
+    min-height: 42px !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+}
