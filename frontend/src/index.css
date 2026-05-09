@@ -7813,3 +7813,187 @@ input:focus {
     min-height: 44px;
   }
 }
+/* ===== Mobile bottom nav: one horizontal row ===== */
+
+.mobile-bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  background: rgba(248, 250, 252, 0.96);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #dbe3ee;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-bottom-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-bottom-nav__item {
+  flex: 0 0 auto;
+  min-width: 120px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 18px;
+  border: 1px solid #dbe3ee;
+  background: #ffffff;
+  color: #0f172a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  white-space: nowrap;
+}
+
+.mobile-bottom-nav__item.is-active {
+  border-color: #7dd3c7;
+  background: rgba(20, 184, 166, 0.08);
+  color: #0f766e;
+}
+
+.mobile-bottom-nav__icon {
+  font-size: 18px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.mobile-bottom-nav__label {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+@media (min-width: 1024px) {
+  .mobile-bottom-nav {
+    display: none;
+  }
+}
+
+/* ===== Calendar toolbar ===== */
+
+.calendar-toolbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar__monthCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 68px;
+  padding: 10px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.calendar-toolbar__center {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.calendar-toolbar__label {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 2px;
+}
+
+.calendar-toolbar__title {
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-toolbar__navBtn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #dbe3ee;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.calendar-toolbar__todayBtn {
+  min-height: 68px;
+  padding-left: 18px;
+  padding-right: 18px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-toolbar__monthCard {
+    width: 100%;
+  }
+
+  .calendar-toolbar__todayBtn {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendar-toolbar__monthCard {
+    min-height: 58px;
+    padding: 8px 10px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  .calendar-toolbar__label {
+    font-size: 10px;
+    margin-bottom: 0;
+  }
+
+  .calendar-toolbar__title {
+    font-size: 17px;
+  }
+
+  .calendar-toolbar__navBtn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 19px;
+  }
+
+  .calendar-toolbar__todayBtn {
+    min-height: 44px;
+  }
+}

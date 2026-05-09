@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
@@ -44,7 +45,7 @@ function getHeroInitials(profile: TrainerProfileResponse | null, fallbackEmail?:
     return profile?.email?.[0]?.toUpperCase() ?? fallbackEmail?.[0]?.toUpperCase() ?? "T";
 }
 
-function buildTabButtonStyle(isActive: boolean): React.CSSProperties {
+function buildTabButtonStyle(isActive: boolean): CSSProperties {
     return {
         minHeight: 42,
         padding: "0 14px",
