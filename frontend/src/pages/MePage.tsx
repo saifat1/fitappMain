@@ -467,23 +467,30 @@ export default function MePage() {
             </section>
 
             <section className="calendar-toolbar">
-                <div className="calendar-toolbar__nav">
+                <div className="calendar-toolbar__monthCard">
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
+                        className="calendar-toolbar__navBtn"
                         onClick={handlePrevMonth}
+                        aria-label="Предыдущий месяц"
+                        title="Предыдущий месяц"
                     >
                         ‹
                     </button>
 
-                    <div className="calendar-toolbar__title">
-                        {formatMonthTitle(currentMonth)}
+                    <div className="calendar-toolbar__center">
+                        <div className="calendar-toolbar__label">Месяц</div>
+                        <div className="calendar-toolbar__title">
+                            {formatMonthTitle(currentMonth)}
+                        </div>
                     </div>
 
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
+                        className="calendar-toolbar__navBtn"
                         onClick={handleNextMonth}
+                        aria-label="Следующий месяц"
+                        title="Следующий месяц"
                     >
                         ›
                     </button>
@@ -491,7 +498,7 @@ export default function MePage() {
 
                 <button
                     type="button"
-                    className="dashboard-btn dashboard-btn-secondary"
+                    className="dashboard-btn dashboard-btn-secondary calendar-toolbar__todayBtn"
                     onClick={handleToday}
                 >
                     Сегодня

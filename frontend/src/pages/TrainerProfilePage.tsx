@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import TrainerProfileHeader from "../features/trainer-profile/ui/TrainerProfileHeader";
+import { useAuth } from "../features/auth/model/AuthContext";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
 import TrainerProfileSecurityCard from "../features/trainer-profile/ui/TrainerProfileSecurityCard";
-import TrainerProfileReportsCard from "../features/trainer-profile/ui/TrainerProfileReportsCard";
-import type { ApiErrorResponse } from "../features/auth/model/auth.types";
-import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
-import type {
-    TrainerProfileResponse,
-    TrainerReportFilters,
-    TrainerReportsResponse,
-} from "../features/trainer-profile/model/trainerProfile.types";
-import { trainerProfileApi } from "../shared/api/trainerProfileApi";
-import { trainerApi } from "../shared/api/trainerApi";
+import TrainerSalaryReportSection from "../features/salary-report/ui/TrainerSalaryReportSection";
 import styles from "../features/trainer-profile/ui/TrainerProfile.module.css";
+import { trainerProfileApi } from "../shared/api/trainerProfileApi";
+import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import type {
+    ChangeTrainerPasswordRequest,
+    TrainerProfileResponse,
+    UpdateTrainerProfileRequest,
+} from "../features/trainer-profile/model/trainerProfile.types";
+
+type ProfileTab = "info" | "security" | "reports";
 
 function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -23,101 +23,95 @@ function resolveApiError(error: unknown, fallback: string): string {
     return fallback;
 }
 
-function getDefaultReportFilters(): TrainerReportFilters {
-    const today = new Date();
-    const from = new Date();
-    from.setDate(today.getDate() - 30);
+function getDisplayName(profile: TrainerProfileResponse | null, fallbackEmail?: string | null): string {
+    if (!profile) {
+        return fallbackEmail || "Тренер";
+    }
 
-    const toIso = today.toISOString().slice(0, 10);
-    const fromIso = from.toISOString().slice(0, 10);
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ").trim();
+    return fullName || profile.email || fallbackEmail || "Тренер";
+}
 
+function getHeroInitials(profile: TrainerProfileResponse | null, fallbackEmail?: string | null): string {
+    const first = profile?.firstName?.[0] ?? "";
+    const last = profile?.lastName?.[0] ?? "";
+    const initials = `${first}${last}`.trim().toUpperCase();
+
+    if (initials) {
+        return initials;
+    }
+
+    return profile?.email?.[0]?.toUpperCase() ?? fallbackEmail?.[0]?.toUpperCase() ?? "T";
+}
+
+function buildTabButtonStyle(isActive: boolean): React.CSSProperties {
     return {
-        from: fromIso,
-        to: toIso,
-        clientId: "",
-        status: "ALL",
+        minHeight: 42,
+        padding: "0 14px",
+        borderRadius: 12,
+        border: isActive ? "1px solid #14b8a6" : "1px solid #d7deea",
+        background: isActive ? "rgba(20, 184, 166, 0.08)" : "#ffffff",
+        color: isActive ? "#0f766e" : "#0f172a",
+        fontSize: 14,
+        fontWeight: 700,
+        cursor: "pointer",
     };
 }
 
 export default function TrainerProfilePage() {
+    const { currentUser } = useAuth();
+
+    const [activeTab, setActiveTab] = useState<ProfileTab>("info");
+
     const [profile, setProfile] = useState<TrainerProfileResponse | null>(null);
-    const [clients, setClients] = useState<TrainerClientResponse[]>([]);
-
     const [isLoading, setIsLoading] = useState(true);
-    const [isSavingProfile, setIsSavingProfile] = useState(false);
-    const [isChangingPassword, setIsChangingPassword] = useState(false);
-    const [isLoadingReports, setIsLoadingReports] = useState(false);
-
-    const [pageError, setPageError] = useState("");
 
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [phone, setPhone] = useState("");
 
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [profileSuccessMessage, setProfileSuccessMessage] = useState("");
     const [profileErrorMessage, setProfileErrorMessage] = useState("");
 
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [passwordSuccessMessage, setPasswordSuccessMessage] = useState("");
     const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
 
-    const [reportFilters, setReportFilters] = useState<TrainerReportFilters>(
-        getDefaultReportFilters()
+    const displayName = useMemo(
+        () => getDisplayName(profile, currentUser?.email),
+        [profile, currentUser?.email]
     );
-    const [reports, setReports] = useState<TrainerReportsResponse | null>(null);
-    const [reportsErrorMessage, setReportsErrorMessage] = useState("");
 
-    useEffect(() => {
-        async function bootstrap() {
-            setPageError("");
-            setIsLoading(true);
+    const heroInitials = useMemo(
+        () => getHeroInitials(profile, currentUser?.email),
+        [profile, currentUser?.email]
+    );
 
-            try {
-                const [profileData, clientsData] = await Promise.all([
-                    trainerProfileApi.getProfile(),
-                    trainerApi.getClients(),
-                ]);
-
-                setProfile(profileData);
-                setClients(clientsData);
-                setFirstName(profileData.firstName ?? "");
-                setLastName(profileData.lastName ?? "");
-                setPhone(profileData.phone ?? "");
-            } catch (error) {
-                setPageError(resolveApiError(error, "Не удалось загрузить профиль тренера"));
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        void bootstrap();
-    }, []);
-
-    useEffect(() => {
-        void loadReports(getDefaultReportFilters());
-    }, []);
-
-    async function loadReports(filters: TrainerReportFilters) {
-        setReportsErrorMessage("");
-        setIsLoadingReports(true);
+    const loadProfile = async () => {
+        setIsLoading(true);
+        setProfileErrorMessage("");
 
         try {
-            const data = await trainerProfileApi.getReports({
-                from: filters.from || undefined,
-                to: filters.to || undefined,
-                clientId: filters.clientId ? Number(filters.clientId) : undefined,
-                status: filters.status !== "ALL" ? filters.status : undefined,
-            });
-
-            setReports(data);
+            const data = await trainerProfileApi.getProfile();
+            setProfile(data);
+            setFirstName(data.firstName ?? "");
+            setLastName(data.lastName ?? "");
+            setPhone(data.phone ?? "");
         } catch (error) {
-            setReportsErrorMessage(resolveApiError(error, "Не удалось загрузить отчёты"));
+            setProfileErrorMessage(resolveApiError(error, "Не удалось загрузить профиль тренера"));
         } finally {
-            setIsLoadingReports(false);
+            setIsLoading(false);
         }
-    }
+    };
+
+    useEffect(() => {
+        void loadProfile();
+    }, []);
 
     const handleResetProfile = () => {
         if (!profile) {
@@ -132,21 +126,18 @@ export default function TrainerProfilePage() {
     };
 
     const handleSaveProfile = async () => {
-        if (!profile) {
-            return;
-        }
+        const payload: UpdateTrainerProfileRequest = {
+            firstName: firstName.trim() || undefined,
+            lastName: lastName.trim() || undefined,
+            phone: phone.trim() || undefined,
+        };
 
+        setIsSavingProfile(true);
         setProfileErrorMessage("");
         setProfileSuccessMessage("");
-        setIsSavingProfile(true);
 
         try {
-            const updated = await trainerProfileApi.updateProfile({
-                firstName: firstName.trim() || undefined,
-                lastName: lastName.trim() || undefined,
-                phone: phone.trim() || undefined,
-            });
-
+            const updated = await trainerProfileApi.updateProfile(payload);
             setProfile(updated);
             setFirstName(updated.firstName ?? "");
             setLastName(updated.lastName ?? "");
@@ -159,7 +150,7 @@ export default function TrainerProfilePage() {
         }
     };
 
-    const handleResetPassword = () => {
+    const handleResetPasswordForm = () => {
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -168,120 +159,152 @@ export default function TrainerProfilePage() {
     };
 
     const handleChangePassword = async () => {
-        if (!currentPassword.trim()) {
-            setPasswordErrorMessage("Укажи текущий пароль");
-            return;
-        }
-
-        if (!newPassword.trim()) {
-            setPasswordErrorMessage("Укажи новый пароль");
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            setPasswordErrorMessage("Новый пароль должен содержать минимум 6 символов");
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            setPasswordErrorMessage("Заполни все поля пароля");
+            setPasswordSuccessMessage("");
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setPasswordErrorMessage("Подтверждение пароля не совпадает");
+            setPasswordErrorMessage("Подтверждение нового пароля не совпадает");
+            setPasswordSuccessMessage("");
             return;
         }
 
+        const payload: ChangeTrainerPasswordRequest = {
+            currentPassword,
+            newPassword,
+            confirmPassword,
+        };
+
+        setIsChangingPassword(true);
         setPasswordErrorMessage("");
         setPasswordSuccessMessage("");
-        setIsChangingPassword(true);
 
         try {
-            await trainerProfileApi.changePassword({
-                currentPassword,
-                newPassword,
-                confirmPassword,
-            });
-
+            await trainerProfileApi.changePassword(payload);
             setPasswordSuccessMessage("Пароль успешно изменён");
-            handleResetPassword();
-            setPasswordSuccessMessage("Пароль успешно изменён");
+            setCurrentPassword("");
+            setNewPassword("");
+            setConfirmPassword("");
         } catch (error) {
-            setPasswordErrorMessage(resolveApiError(error, "Не удалось сменить пароль"));
+            setPasswordErrorMessage(resolveApiError(error, "Не удалось изменить пароль"));
         } finally {
             setIsChangingPassword(false);
         }
     };
 
-    const handleApplyReports = async () => {
-        await loadReports(reportFilters);
-    };
-
-    const handleResetReports = async () => {
-        const defaults = getDefaultReportFilters();
-        setReportFilters(defaults);
-        await loadReports(defaults);
-    };
-
-    if (isLoading) {
-        return <div className="dashboard-page">Загрузка...</div>;
+    if (isLoading && !profile) {
+        return (
+            <div className={styles.page}>
+                <section className={styles.card}>
+                    <div className={styles.empty}>Загрузка профиля...</div>
+                </section>
+            </div>
+        );
     }
 
     if (!profile) {
         return (
-            <div className="dashboard-page">
-                {pageError && <div className="error-box">{pageError}</div>}
-                <div className="dashboard-card">Профиль тренера не найден</div>
+            <div className={styles.page}>
+                <section className={styles.card}>
+                    <div className={styles.messageError}>
+                        {profileErrorMessage || "Профиль тренера не найден"}
+                    </div>
+                </section>
             </div>
         );
     }
 
     return (
         <div className={styles.page}>
-            {pageError && <div className="error-box">{pageError}</div>}
+            <section className={styles.hero}>
+                <div className={styles.heroMain}>
+                    <h1 className={styles.cardTitle}>Профиль тренера</h1>
+                    <div className={styles.heroMeta}>
+                        <div>{displayName}</div>
+                        <div>{profile.email}</div>
+                        {profile.phone && <div>{profile.phone}</div>}
+                    </div>
+                </div>
 
-            <TrainerProfileHeader profile={profile} />
+                <div className={styles.heroAvatar}>
+                    {profile.avatarUrl ? (
+                        <img src={profile.avatarUrl} alt="Аватар тренера" />
+                    ) : (
+                        heroInitials
+                    )}
+                </div>
+            </section>
 
-            <TrainerProfileInfoCard
-                profile={profile}
-                firstName={firstName}
-                lastName={lastName}
-                phone={phone}
-                isSaving={isSavingProfile}
-                successMessage={profileSuccessMessage}
-                errorMessage={profileErrorMessage}
-                onFirstNameChange={setFirstName}
-                onLastNameChange={setLastName}
-                onPhoneChange={setPhone}
-                onSave={handleSaveProfile}
-                onReset={handleResetProfile}
-            />
+            <section className={styles.card}>
+                <div
+                    style={{
+                        display: "flex",
+                        gap: 8,
+                        flexWrap: "wrap",
+                    }}
+                >
+                    <button
+                        type="button"
+                        style={buildTabButtonStyle(activeTab === "info")}
+                        onClick={() => setActiveTab("info")}
+                    >
+                        О себе
+                    </button>
 
-            <TrainerProfileSecurityCard
-                currentPassword={currentPassword}
-                newPassword={newPassword}
-                confirmPassword={confirmPassword}
-                isChanging={isChangingPassword}
-                successMessage={passwordSuccessMessage}
-                errorMessage={passwordErrorMessage}
-                onCurrentPasswordChange={setCurrentPassword}
-                onNewPasswordChange={setNewPassword}
-                onConfirmPasswordChange={setConfirmPassword}
-                onSubmit={handleChangePassword}
-                onReset={handleResetPassword}
-            />
+                    <button
+                        type="button"
+                        style={buildTabButtonStyle(activeTab === "security")}
+                        onClick={() => setActiveTab("security")}
+                    >
+                        Безопасность
+                    </button>
 
-            <TrainerProfileReportsCard
-                clients={clients}
-                filters={reportFilters}
-                reports={reports}
-                isLoading={isLoadingReports}
-                errorMessage={reportsErrorMessage}
-                onFilterChange={(key, value) =>
-                    setReportFilters((prev) => ({
-                        ...prev,
-                        [key]: value,
-                    }))
-                }
-                onApply={handleApplyReports}
-                onReset={handleResetReports}
-            />
+                    <button
+                        type="button"
+                        style={buildTabButtonStyle(activeTab === "reports")}
+                        onClick={() => setActiveTab("reports")}
+                    >
+                        Отчёты
+                    </button>
+                </div>
+            </section>
+
+            {activeTab === "info" && (
+                <TrainerProfileInfoCard
+                    profile={profile}
+                    firstName={firstName}
+                    lastName={lastName}
+                    phone={phone}
+                    isSaving={isSavingProfile}
+                    successMessage={profileSuccessMessage}
+                    errorMessage={profileErrorMessage}
+                    onFirstNameChange={setFirstName}
+                    onLastNameChange={setLastName}
+                    onPhoneChange={setPhone}
+                    onSave={handleSaveProfile}
+                    onReset={handleResetProfile}
+                />
+            )}
+
+            {activeTab === "security" && (
+                <TrainerProfileSecurityCard
+                    currentPassword={currentPassword}
+                    newPassword={newPassword}
+                    confirmPassword={confirmPassword}
+                    isChanging={isChangingPassword}
+                    successMessage={passwordSuccessMessage}
+                    errorMessage={passwordErrorMessage}
+                    onCurrentPasswordChange={setCurrentPassword}
+                    onNewPasswordChange={setNewPassword}
+                    onConfirmPasswordChange={setConfirmPassword}
+                    onSubmit={handleChangePassword}
+                    onReset={handleResetPasswordForm}
+                />
+            )}
+
+            {activeTab === "reports" && <TrainerSalaryReportSection />}
         </div>
     );
 }

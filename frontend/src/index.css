@@ -7688,3 +7688,117 @@ input:focus {
     flex: 0 0 auto;
   }
 }
+.calendar-toolbar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.calendar-toolbar__monthCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 72px;
+  padding: 10px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  flex: 1 1 320px;
+}
+
+.calendar-toolbar__center {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
+
+.calendar-toolbar__label {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.calendar-toolbar__title {
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calendar-toolbar__navBtn {
+  width: 44px;
+  height: 44px;
+  border: 1px solid #dbe3ee;
+  border-radius: 14px;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.calendar-toolbar__navBtn:hover {
+  background: #eef2f7;
+  border-color: #cbd5e1;
+}
+
+.calendar-toolbar__navBtn:active {
+  transform: translateY(1px);
+}
+
+.calendar-toolbar__todayBtn {
+  min-height: 72px;
+  padding-left: 20px;
+  padding-right: 20px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+  .calendar-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-toolbar__monthCard {
+    width: 100%;
+  }
+
+  .calendar-toolbar__todayBtn {
+    width: 100%;
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendar-toolbar__monthCard {
+    min-height: 64px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .calendar-toolbar__title {
+    font-size: 20px;
+  }
+
+  .calendar-toolbar__navBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 22px;
+  }
+}
