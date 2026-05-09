@@ -132,7 +132,7 @@ export default function TrainerSalaryReportSection() {
                 <div className={styles.controlActions}>
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-secondary"
+                        className={styles.secondaryButton}
                         onClick={() => void loadReport(selectedPeriod.year, selectedPeriod.month)}
                         disabled={isLoading}
                     >
@@ -141,7 +141,7 @@ export default function TrainerSalaryReportSection() {
 
                     <button
                         type="button"
-                        className="dashboard-btn dashboard-btn-primary"
+                        className={styles.primaryButton}
                         onClick={() => void handleExportPrintPdf()}
                         disabled={isExportingPrintPdf}
                     >
