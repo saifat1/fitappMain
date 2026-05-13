@@ -50,6 +50,7 @@ function getPageTitle(pathname: string, isTrainer: boolean): string {
     if (pathname === "/trainer/invites") return "Приглашения";
     if (pathname === "/trainer/availability") return "Доступность";
     if (pathname === "/trainer/booking-requests") return "Запросы на запись";
+    if (pathname === "/analytics") return "Аналитика";
     if (pathname === "/client/booking") return "Запись";
     if (pathname.startsWith("/client-history")) return "История тренировок";
 
@@ -62,6 +63,7 @@ export default function AppLayout({ children }: Props) {
     const location = useLocation();
 
     const isTrainer = currentUser?.role === "TRAINER";
+    const isAdmin = Boolean(currentUser?.admin);
 
     const handleLogout = () => {
         logout();
@@ -102,7 +104,10 @@ export default function AppLayout({ children }: Props) {
 
                         <div className="user-meta">
                             <span>Роль</span>
-                            <strong>{isTrainer ? "Тренер" : currentUser.role}</strong>
+                            <strong>
+                                {isTrainer ? "Тренер" : "Клиент"}
+                                {isAdmin ? " · Админ" : ""}
+                            </strong>
                         </div>
                     </div>
                 )}
@@ -180,15 +185,15 @@ export default function AppLayout({ children }: Props) {
                             >
                                 ◦ Запросы на запись
                             </NavLink>
-                            <NavLink
-                                to="/analytics"
-                                className={({ isActive }) =>
-                                    isActive ? "nav-link nav-link-active" : "nav-link"
-                                }
-                            >
-                                ◦ Аналитика
-                            </NavLink>
                         </>
+                    )}
+                    {isAdmin && (
+                        <NavLink
+                            to="/analytics"
+                            className={({ isActive }) => getNavClassName(isActive)}
+                        >
+                            ◦ Аналитика
+                        </NavLink>
                     )}
                 </nav>
 
@@ -243,7 +248,6 @@ export default function AppLayout({ children }: Props) {
                 <main className="main-content">{children}</main>
             </div>
 
-            <MobileBottomNav isTrainer={isTrainer} />
-        </div>
+            <MobileBottomNav isTrainer={isTrainer} isAdmin={isAdmin} />        </div>
     );
 }

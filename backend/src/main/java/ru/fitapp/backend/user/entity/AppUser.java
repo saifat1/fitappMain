@@ -74,6 +74,9 @@ public class AppUser {
     @Column(name = "login_count", nullable = false)
     private Long loginCount = 0L;
 
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin = false;
+
     public AppUser() {
     }
 
@@ -83,6 +86,15 @@ public class AppUser {
 
     public AppUser setId(Long id) {
         this.id = id;
+        return this;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public AppUser setAdmin(boolean admin) {
+        this.admin = admin;
         return this;
     }
 

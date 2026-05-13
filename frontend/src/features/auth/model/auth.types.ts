@@ -23,18 +23,22 @@ export type InviteDetailsResponse = {
     email: string;
 };
 
+export type UserRole = "TRAINER" | "CLIENT";
+
 export type AuthResponse = {
     accessToken: string;
     tokenType: string;
     userId: number;
     email: string;
-    role: string;
+    role: UserRole;
+    admin: boolean;
 };
 
 export type CurrentUserResponse = {
     id: number;
     email: string;
-    role: string;
+    role: UserRole;
+    admin: boolean;
     firstName: string | null;
     lastName: string | null;
 };

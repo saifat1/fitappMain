@@ -7,6 +7,7 @@ public class AuthResponse {
     private Long userId;
     private String email;
     private String role;
+    private boolean admin;
 
     public String getAccessToken() {
         return accessToken;
@@ -50,6 +51,15 @@ public class AuthResponse {
 
     public AuthResponse setRole(String role) {
         this.role = role;
+        return this;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public AuthResponse setAdmin(boolean admin) {
+        this.admin = admin;
         return this;
     }
 }

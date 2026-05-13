@@ -7,6 +7,7 @@ public class CurrentUserResponse {
     private String role;
     private String firstName;
     private String lastName;
+    private boolean admin;
 
     public Long getId() {
         return id;
@@ -50,6 +51,15 @@ public class CurrentUserResponse {
 
     public CurrentUserResponse setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public CurrentUserResponse setAdmin(boolean admin) {
+        this.admin = admin;
         return this;
     }
 }

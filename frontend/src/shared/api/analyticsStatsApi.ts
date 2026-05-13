@@ -17,12 +17,18 @@ export type InactiveUser = {
 };
 
 export type AnalyticsSummary = {
+    rangeFrom: string;
+    rangeTo: string;
+
     trainerLoginCount: number;
     clientLoginCount: number;
 
     totalTrainings: number;
     plannedTrainings: number;
     completedTrainings: number;
+
+    activeClientsRange: number;
+    activeTrainersRange: number;
 
     activeClientsToday: number;
     activeClientsWeek: number;
@@ -33,9 +39,17 @@ export type AnalyticsSummary = {
     inactiveUsers: InactiveUser[];
 };
 
+export type AnalyticsSummaryParams = {
+    from?: string;
+    to?: string;
+};
+
 export const analyticsStatsApi = {
-    async getSummary(): Promise<AnalyticsSummary> {
-        const response = await apiClient.get<AnalyticsSummary>("/analytics/summary");
+    async getSummary(params?: AnalyticsSummaryParams): Promise<AnalyticsSummary> {
+        const response = await apiClient.get<AnalyticsSummary>("/analytics/summary", {
+            params,
+        });
+
         return response.data;
     },
 };

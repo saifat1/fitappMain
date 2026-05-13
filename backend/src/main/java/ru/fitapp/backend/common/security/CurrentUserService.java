@@ -29,6 +29,16 @@ public class CurrentUserService {
         return userService.getByEmail(authentication.getName());
     }
 
+    public AppUser getCurrentAdmin() {
+        AppUser user = getCurrentUser();
+
+        if (!user.isAdmin()) {
+            throw new ApiException("ACCESS_DENIED", "Доступ разрешён только администратору");
+        }
+
+        return user;
+    }
+
     public AppUser getCurrentTrainer() {
         AppUser user = getCurrentUser();
 

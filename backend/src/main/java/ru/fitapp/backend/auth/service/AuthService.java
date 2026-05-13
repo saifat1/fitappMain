@@ -20,7 +20,6 @@ import ru.fitapp.backend.invite.entity.Invite;
 import ru.fitapp.backend.invite.service.InviteService;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
-import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.service.UserService;
 
@@ -41,7 +40,9 @@ public class AuthService {
             InviteService inviteService,
             TrainerClientService trainerClientService,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService, TrainerAvailabilityService trainerAvailabilityService, AnalyticsService analyticsService
+            JwtService jwtService,
+            TrainerAvailabilityService trainerAvailabilityService,
+            AnalyticsService analyticsService
     ) {
         this.userService = userService;
         this.inviteService = inviteService;
@@ -97,6 +98,7 @@ public class AuthService {
             inviteService.markAsUsed(invite);
 
             String token = jwtService.generateToken(claimedClient);
+
             return buildAuthResponse(claimedClient, token);
         }
 
@@ -113,6 +115,7 @@ public class AuthService {
         inviteService.markAsUsed(invite);
 
         String token = jwtService.generateToken(client);
+
         return buildAuthResponse(client, token);
     }
 
@@ -130,9 +133,11 @@ public class AuthService {
                 request.getFirstName(),
                 request.getLastName()
         );
+
         trainerAvailabilityService.initializeDefaultRulesForTrainer(trainer);
 
         String token = jwtService.generateToken(trainer);
+
         return buildAuthResponse(trainer, token);
     }
 
@@ -151,7 +156,8 @@ public class AuthService {
                 .setEmail(user.getEmail())
                 .setRole(user.getRole().name())
                 .setFirstName(user.getFirstName())
-                .setLastName(user.getLastName());
+                .setLastName(user.getLastName())
+                .setAdmin(user.isAdmin());
     }
 
     private void validateInviteEmail(String inviteEmailRaw, String requestEmailRaw) {
@@ -178,6 +184,7 @@ public class AuthService {
                 .setTokenType("Bearer")
                 .setUserId(user.getId())
                 .setEmail(user.getEmail())
-                .setRole(user.getRole().name());
+                .setRole(user.getRole().name())
+                .setAdmin(user.isAdmin());
     }
 }

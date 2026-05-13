@@ -11,6 +11,8 @@ import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.repository.UserRepository;
 import ru.fitapp.backend.user.service.UserService;
+import ru.fitapp.backend.analytics.model.AnalyticsEventType;
+import ru.fitapp.backend.analytics.service.AnalyticsService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,17 +26,19 @@ public class TrainerClientService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
+    private final AnalyticsService analyticsService;
 
     public TrainerClientService(
             TrainerClientRepository trainerClientRepository,
             UserRepository userRepository,
             UserService userService,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder, AnalyticsService analyticsService
     ) {
         this.trainerClientRepository = trainerClientRepository;
         this.userRepository = userRepository;
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
+        this.analyticsService = analyticsService;
     }
 
     public TrainerClient linkTrainerToClient(AppUser trainer, AppUser client) {
@@ -76,6 +80,15 @@ public class TrainerClientService {
         );
 
         linkTrainerToClient(trainer, client);
+
+        analyticsService.trackUserAction(
+                trainer,
+                AnalyticsEventType.CLIENT_CREATED,
+                "client",
+                String.valueOf(client.getId()),
+                null
+        );
+
         return client;
     }
 

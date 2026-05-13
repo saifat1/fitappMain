@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/019-add-contract-fields-to-app-user.yaml
   - include:
       file: db/changelog/020-add-analytics-events.yaml
+  - include:
+      file: db/changelog/021-add-is-admin-to-app-user.yaml

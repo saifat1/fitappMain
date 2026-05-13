@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 
 type Props = {
     isTrainer: boolean;
+    isAdmin: boolean;
 };
 
 type NavItem = {
@@ -11,33 +12,37 @@ type NavItem = {
     icon: string;
 };
 
-export default function MobileBottomNav({ isTrainer }: Props) {
+export default function MobileBottomNav({ isTrainer, isAdmin }: Props) {
     const location = useLocation();
     const scrollerRef = useRef<HTMLDivElement | null>(null);
 
-    const items: NavItem[] = useMemo(
-        () =>
-            isTrainer
-                ? [
-                    { to: "/me", label: "Календ.", icon: "⌂" },
-                    { to: "/trainer/profile", label: "Профиль", icon: "◦" },
-                    { to: "/trainings", label: "Трен.", icon: "◦" },
-                    { to: "/reschedule-requests", label: "Переносы", icon: "⇄" },
-                    { to: "/exercise-templates", label: "Шаблоны", icon: "◦" },
-                    { to: "/trainer/clients", label: "Клиенты", icon: "◦" },
-                    { to: "/trainer/invites", label: "Инвайты", icon: "+" },
-                    { to: "/trainer/availability", label: "Доступн.", icon: "◦" },
-                    { to: "/trainer/booking-requests", label: "Запросы", icon: "◦" },
-                ]
-                : [
-                    { to: "/me", label: "Главная", icon: "⌂" },
-                    { to: "/trainings", label: "Трен.", icon: "◦" },
-                    { to: "/reschedule-requests", label: "Переносы", icon: "⇄" },
-                    { to: "/client/booking", label: "Запись", icon: "+" },
-                    { to: "/more", label: "Ещё", icon: "⋯" },
-                ],
-        [isTrainer]
-    );
+    const items: NavItem[] = useMemo(() => {
+        const baseItems: NavItem[] = isTrainer
+            ? [
+                { to: "/me", label: "Календ.", icon: "⌂" },
+                { to: "/trainer/profile", label: "Профиль", icon: "◦" },
+                { to: "/trainings", label: "Трен.", icon: "◦" },
+                { to: "/reschedule-requests", label: "Переносы", icon: "⇄" },
+                { to: "/exercise-templates", label: "Шаблоны", icon: "◦" },
+                { to: "/trainer/clients", label: "Клиенты", icon: "◦" },
+                { to: "/trainer/invites", label: "Инвайты", icon: "+" },
+                { to: "/trainer/availability", label: "Доступн.", icon: "◦" },
+                { to: "/trainer/booking-requests", label: "Запросы", icon: "◦" },
+            ]
+            : [
+                { to: "/me", label: "Главная", icon: "⌂" },
+                { to: "/trainings", label: "Трен.", icon: "◦" },
+                { to: "/reschedule-requests", label: "Переносы", icon: "⇄" },
+                { to: "/client/booking", label: "Запись", icon: "+" },
+                { to: "/more", label: "Ещё", icon: "⋯" },
+            ];
+
+        if (isAdmin) {
+            return [...baseItems, { to: "/analytics", label: "Аналит.", icon: "◦" }];
+        }
+
+        return baseItems;
+    }, [isTrainer, isAdmin]);
 
     const storageKey = isTrainer
         ? "fitapp.mobile-nav.scroll.trainer"
@@ -45,13 +50,22 @@ export default function MobileBottomNav({ isTrainer }: Props) {
 
     useLayoutEffect(() => {
         const node = scrollerRef.current;
-        if (!node) return;
+
+        if (!node) {
+            return;
+        }
 
         const raw = sessionStorage.getItem(storageKey);
-        if (!raw) return;
+
+        if (!raw) {
+            return;
+        }
 
         const value = Number(raw);
-        if (!Number.isFinite(value)) return;
+
+        if (!Number.isFinite(value)) {
+            return;
+        }
 
         requestAnimationFrame(() => {
             node.scrollLeft = value;
@@ -60,13 +74,17 @@ export default function MobileBottomNav({ isTrainer }: Props) {
 
     useEffect(() => {
         const node = scrollerRef.current;
-        if (!node) return;
+
+        if (!node) {
+            return;
+        }
 
         const handleScroll = () => {
             sessionStorage.setItem(storageKey, String(node.scrollLeft));
         };
 
         handleScroll();
+
         node.addEventListener("scroll", handleScroll, { passive: true });
 
         return () => {

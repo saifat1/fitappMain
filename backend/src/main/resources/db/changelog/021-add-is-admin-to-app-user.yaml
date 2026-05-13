@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-add-is-admin-to-app-user
+      author: fitapp
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: is_admin
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

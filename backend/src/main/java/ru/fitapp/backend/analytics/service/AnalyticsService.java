@@ -68,6 +68,24 @@ public class AnalyticsService {
         );
     }
 
+    public void trackUserAction(
+            AppUser user,
+            AnalyticsEventType eventType,
+            String entityType,
+            String entityId,
+            String metadata
+    ) {
+        saveEvent(
+                user,
+                eventType,
+                null,
+                entityType,
+                entityId,
+                metadata,
+                null
+        );
+    }
+
     private void saveEvent(
             AppUser user,
             AnalyticsEventType eventType,
@@ -87,8 +105,11 @@ public class AnalyticsService {
         event.setEntityType(trimToNull(entityType, 100));
         event.setEntityId(trimToNull(entityId, 100));
         event.setMetadata(trimToNull(metadata, MAX_METADATA_LENGTH));
-        event.setUserAgent(trimToNull(httpRequest.getHeader("User-Agent"), MAX_USER_AGENT_LENGTH));
-        event.setIpHash(hashIp(getClientIp(httpRequest)));
+
+        if (httpRequest != null) {
+            event.setUserAgent(trimToNull(httpRequest.getHeader("User-Agent"), MAX_USER_AGENT_LENGTH));
+            event.setIpHash(hashIp(getClientIp(httpRequest)));
+        }
 
         eventRepository.save(event);
     }

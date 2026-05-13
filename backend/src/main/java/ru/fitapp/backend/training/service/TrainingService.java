@@ -13,6 +13,8 @@ import ru.fitapp.backend.training.repository.TrainingRepository;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserRole;
+import ru.fitapp.backend.analytics.model.AnalyticsEventType;
+import ru.fitapp.backend.analytics.service.AnalyticsService;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -25,13 +27,15 @@ public class TrainingService {
     private final TrainingRepository trainingRepository;
     private final CurrentUserService currentUserService;
     private final TrainerClientService trainerClientService;
+    private final AnalyticsService analyticsService;
 
     public TrainingService(TrainingRepository trainingRepository,
                            CurrentUserService currentUserService,
-                           TrainerClientService trainerClientService) {
+                           TrainerClientService trainerClientService, AnalyticsService analyticsService) {
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
+        this.analyticsService = analyticsService;
     }
 
     public TrainingResponse createTraining(CreateTrainingRequest request) {
@@ -50,6 +54,15 @@ public class TrainingService {
                 .setTrainerNote(normalizeNote(request.getTrainerNote()));
 
         Training saved = trainingRepository.save(training);
+
+        analyticsService.trackUserAction(
+                trainer,
+                AnalyticsEventType.TRAINING_CREATED,
+                "training",
+                String.valueOf(saved.getId()),
+                null
+        );
+
         return mapToResponse(saved);
     }
 
@@ -135,6 +148,14 @@ public class TrainingService {
 
         training.setStatus(TrainingStatus.CANCELLED);
         trainingRepository.save(training);
+
+        analyticsService.trackUserAction(
+                trainer,
+                AnalyticsEventType.TRAINING_CANCELLED,
+                "training",
+                String.valueOf(training.getId()),
+                null
+        );
     }
 
     @Transactional(readOnly = true)
@@ -266,8 +287,16 @@ public class TrainingService {
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
 
         training.setStatus(TrainingStatus.COMPLETED);
-
         Training saved = trainingRepository.save(training);
+
+        analyticsService.trackUserAction(
+                trainer,
+                AnalyticsEventType.TRAINING_COMPLETED,
+                "training",
+                String.valueOf(saved.getId()),
+                null
+        );
+
         return mapToResponse(saved);
     }
 

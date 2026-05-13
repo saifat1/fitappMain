@@ -17,6 +17,12 @@ public class AnalyticsSummaryResponse {
     private long activeTrainersToday;
     private long activeTrainersWeek;
 
+    private String rangeFrom;
+    private String rangeTo;
+
+    private long activeClientsRange;
+    private long activeTrainersRange;
+
     private List<EventCountResponse> topEvents;
     private List<InactiveUserResponse> inactiveUsers;
 
@@ -71,6 +77,42 @@ public class AnalyticsSummaryResponse {
 
     public AnalyticsSummaryResponse setActiveClientsToday(long activeClientsToday) {
         this.activeClientsToday = activeClientsToday;
+        return this;
+    }
+
+    public String getRangeFrom() {
+        return rangeFrom;
+    }
+
+    public AnalyticsSummaryResponse setRangeFrom(String rangeFrom) {
+        this.rangeFrom = rangeFrom;
+        return this;
+    }
+
+    public String getRangeTo() {
+        return rangeTo;
+    }
+
+    public AnalyticsSummaryResponse setRangeTo(String rangeTo) {
+        this.rangeTo = rangeTo;
+        return this;
+    }
+
+    public long getActiveClientsRange() {
+        return activeClientsRange;
+    }
+
+    public AnalyticsSummaryResponse setActiveClientsRange(long activeClientsRange) {
+        this.activeClientsRange = activeClientsRange;
+        return this;
+    }
+
+    public long getActiveTrainersRange() {
+        return activeTrainersRange;
+    }
+
+    public AnalyticsSummaryResponse setActiveTrainersRange(long activeTrainersRange) {
+        this.activeTrainersRange = activeTrainersRange;
         return this;
     }
 

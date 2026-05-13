@@ -65,4 +65,12 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
 
     long countByStatus(TrainingStatus status);
 
+    long countByTrainingDateBetween(LocalDate from, LocalDate to);
+
+    long countByStatusAndTrainingDateBetween(
+            TrainingStatus status,
+            LocalDate from,
+            LocalDate to
+    );
+
 }
