@@ -29,9 +29,9 @@
 .card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    padding: 16px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+    border-radius: 20px;
+    padding: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
     display: grid;
     gap: 14px;
     min-width: 0;
@@ -233,28 +233,7 @@
     font-weight: 700;
 }
 
-@media (max-width: 900px) {
-    .controls {
-        grid-template-columns: 1fr;
-    }
-
-    .controlActions {
-        display: grid;
-        grid-template-columns: 1fr;
-        width: 100%;
-    }
-
-    .primaryButton,
-    .secondaryButton {
-        width: 100%;
-    }
-
-    .summaryGrid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 560px) {
+@media (max-width: 768px) {
     .card {
         padding: 14px;
         border-radius: 16px;
@@ -272,8 +251,35 @@
         font-size: 14px;
     }
 
+    .controls {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .controlActions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .primaryButton,
+    .secondaryButton {
+        width: 100%;
+    }
+
+    .summaryGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .summaryCard {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
     .summaryValue {
-        font-size: 24px;
+        font-size: 22px;
     }
 
     .meta {
@@ -285,5 +291,19 @@
     .table td {
         padding: 10px 8px;
         font-size: 13px;
+    }
+}
+
+@media (max-width: 520px) {
+    .summaryGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .summaryValue {
+        font-size: 24px;
+    }
+
+    .title {
+        font-size: 22px;
     }
 }

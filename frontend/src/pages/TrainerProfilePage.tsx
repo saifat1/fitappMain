@@ -14,6 +14,7 @@ import type {
     UpdateTrainerProfileRequest,
 } from "../features/trainer-profile/model/trainerProfile.types";
 
+
 type ProfileTab = "info" | "security" | "reports";
 
 function resolveApiError(error: unknown, fallback: string): string {
