@@ -180,6 +180,14 @@ export default function AppLayout({ children }: Props) {
                             >
                                 ◦ Запросы на запись
                             </NavLink>
+                            <NavLink
+                                to="/analytics"
+                                className={({ isActive }) =>
+                                    isActive ? "nav-link nav-link-active" : "nav-link"
+                                }
+                            >
+                                ◦ Аналитика
+                            </NavLink>
                         </>
                     )}
                 </nav>

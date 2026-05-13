@@ -23,6 +23,7 @@ import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
 import ClientHistoryPage from "../pages/ClientHistoryPage";
 import TrainerRegisterPage from "../pages/TrainerRegisterPage";
 import TrainerSalaryReportPage from "../pages/TrainerSalaryReportPage";
+import AnalyticsPage from "../pages/AnalyticsPage";
 
 export const router = createBrowserRouter([
     {
@@ -32,6 +33,16 @@ export const router = createBrowserRouter([
     {
         path: "/trainer/register",
         element: <TrainerRegisterPage />,
+    },
+    {
+        path: "/analytics",
+        element: (
+            <ProtectedRoute>
+                <AppLayout>
+                    <AnalyticsPage />
+                </AppLayout>
+            </ProtectedRoute>
+        ),
     },
     {
         path: "/trainer/salary-report",

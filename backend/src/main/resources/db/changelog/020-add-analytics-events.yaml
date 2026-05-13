@@ -1,0 +1,108 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-add-user-activity-fields
+      author: fitapp
+      changes:
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: last_login_at
+                  type: timestamp
+              - column:
+                  name: last_seen_at
+                  type: timestamp
+              - column:
+                  name: login_count
+                  type: bigint
+                  defaultValueNumeric: 0
+
+  - changeSet:
+      id: 020-create-analytics-event
+      author: fitapp
+      changes:
+        - createTable:
+            tableName: analytics_event
+            columns:
+              - column:
+                  name: id
+                  type: bigserial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_role
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: event_type
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: occurred_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: session_id
+                  type: varchar(100)
+
+              - column:
+                  name: entity_type
+                  type: varchar(100)
+
+              - column:
+                  name: entity_id
+                  type: varchar(100)
+
+              - column:
+                  name: metadata
+                  type: text
+
+              - column:
+                  name: ip_hash
+                  type: varchar(128)
+
+              - column:
+                  name: user_agent
+                  type: varchar(512)
+
+        - addForeignKeyConstraint:
+            baseTableName: analytics_event
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_analytics_event_user
+
+        - createIndex:
+            tableName: analytics_event
+            indexName: idx_analytics_event_occurred_at
+            columns:
+              - column:
+                  name: occurred_at
+
+        - createIndex:
+            tableName: analytics_event
+            indexName: idx_analytics_event_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: analytics_event
+            indexName: idx_analytics_event_type
+            columns:
+              - column:
+                  name: event_type

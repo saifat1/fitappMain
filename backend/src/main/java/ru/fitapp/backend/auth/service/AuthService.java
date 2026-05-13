@@ -1,10 +1,12 @@
 package ru.fitapp.backend.auth.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.analytics.service.AnalyticsService;
 import ru.fitapp.backend.auth.dto.AuthResponse;
 import ru.fitapp.backend.auth.dto.CurrentUserResponse;
 import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
@@ -32,13 +34,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final TrainerAvailabilityService trainerAvailabilityService;
+    private final AnalyticsService analyticsService;
 
     public AuthService(
             UserService userService,
             InviteService inviteService,
             TrainerClientService trainerClientService,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService, TrainerAvailabilityService trainerAvailabilityService
+            JwtService jwtService, TrainerAvailabilityService trainerAvailabilityService, AnalyticsService analyticsService
     ) {
         this.userService = userService;
         this.inviteService = inviteService;
@@ -46,28 +49,25 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.trainerAvailabilityService = trainerAvailabilityService;
+        this.analyticsService = analyticsService;
     }
 
-    @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
         AppUser user = userService.getByEmail(request.getEmail());
 
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new ApiException("USER_INACTIVE", "Пользователь неактивен");
-        }
-
-        if (user.getRole() == UserRole.CLIENT && user.isCreatedByTrainer() && !user.isClaimedByClient()) {
-            throw new ApiException(
-                    "CLIENT_REGISTRATION_NOT_COMPLETED",
-                    "Аккаунт ещё не завершил регистрацию. Используйте ссылку-приглашение"
-            );
+            throw new ApiException("USER_DISABLED", "Пользователь отключен");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new ApiException("INVALID_CREDENTIALS", "Неверный email или пароль");
         }
 
+        userService.markLoginSuccess(user);
+        analyticsService.trackLoginSuccess(user, httpRequest);
+
         String token = jwtService.generateToken(user);
+
         return buildAuthResponse(user, token);
     }
 

@@ -1,0 +1,21 @@
+package ru.fitapp.backend.analytics.model;
+
+public enum AnalyticsEventType {
+    USER_LOGIN_SUCCESS,
+    APP_OPENED,
+
+    CLIENT_CREATED,
+
+    TRAINING_CREATED,
+    TRAINING_COMPLETED,
+    TRAINING_CANCELLED,
+
+    BOOKING_REQUEST_CREATED,
+    BOOKING_REQUEST_APPROVED,
+
+    TEMPLATE_CREATED,
+    TEMPLATE_USED,
+
+    PROFILE_OPENED,
+    CALENDAR_OPENED
+}

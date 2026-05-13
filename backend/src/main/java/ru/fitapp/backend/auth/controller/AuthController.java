@@ -9,6 +9,7 @@ import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
 import ru.fitapp.backend.auth.dto.RegisterTrainerRequest;
 import ru.fitapp.backend.auth.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,8 +22,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request) {
-        return authService.login(request);
+    public AuthResponse login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        return authService.login(request, httpRequest);
     }
 
     @GetMapping("/invites/{token}")

@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
+import ru.fitapp.backend.training.model.TrainingStatus;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -61,5 +62,7 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             LocalDate to,
             TrainingStatus status
     );
+
+    long countByStatus(TrainingStatus status);
 
 }

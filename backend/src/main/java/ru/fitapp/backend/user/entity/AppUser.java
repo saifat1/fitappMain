@@ -65,6 +65,15 @@ public class AppUser {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @Column(name = "last_seen_at")
+    private LocalDateTime lastSeenAt;
+
+    @Column(name = "login_count", nullable = false)
+    private Long loginCount = 0L;
+
     public AppUser() {
     }
 
@@ -75,6 +84,30 @@ public class AppUser {
     public AppUser setId(Long id) {
         this.id = id;
         return this;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
+    public LocalDateTime getLastSeenAt() {
+        return lastSeenAt;
+    }
+
+    public void setLastSeenAt(LocalDateTime lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
+    }
+
+    public Long getLoginCount() {
+        return loginCount;
+    }
+
+    public void setLoginCount(Long loginCount) {
+        this.loginCount = loginCount;
     }
 
     public String getEmail() {
@@ -215,8 +248,16 @@ public class AppUser {
     @PrePersist
     public void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        this.createdAt = now;
-        this.updatedAt = now;
+
+        if (createdAt == null) {
+            createdAt = now;
+        }
+
+        updatedAt = now;
+
+        if (loginCount == null) {
+            loginCount = 0L;
+        }
     }
 
     @PreUpdate
