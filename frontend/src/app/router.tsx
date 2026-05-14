@@ -24,12 +24,40 @@ import ClientHistoryPage from "../pages/ClientHistoryPage";
 import TrainerRegisterPage from "../pages/TrainerRegisterPage";
 import TrainerSalaryReportPage from "../pages/TrainerSalaryReportPage";
 import AnalyticsPage from "../pages/AnalyticsPage";
+import LegalDocumentPage from "../pages/LegalDocumentPage";
+import LegalConsentsPage from "../pages/LegalConsentsPage";
 
 export const router = createBrowserRouter([
     {
         path: "/",
         element: <Navigate to="/me" replace />,
     },
+    {
+        path: "/legal/consents",
+        element: (
+            <ProtectedRoute>
+                <LegalConsentsPage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/legal/terms",
+        element: <LegalDocumentPage />,
+    },
+    {
+        path: "/legal/privacy",
+        element: <LegalDocumentPage />,
+    },
+    {
+        path: "/legal/personal-data-consent",
+        element: <LegalDocumentPage />,
+    },
+    {
+        path: "/legal/health-data",
+        element: <LegalDocumentPage />,
+    },
+
+
     {
         path: "/trainer/register",
         element: <TrainerRegisterPage />,

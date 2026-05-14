@@ -1,5 +1,7 @@
 package ru.fitapp.backend.auth.dto;
 
+import java.util.List;
+
 public class AuthResponse {
 
     private String accessToken;
@@ -8,6 +10,8 @@ public class AuthResponse {
     private String email;
     private String role;
     private boolean admin;
+    private boolean requiresConsent;
+    private List<String> requiredConsents;
 
     public String getAccessToken() {
         return accessToken;
@@ -60,6 +64,24 @@ public class AuthResponse {
 
     public AuthResponse setAdmin(boolean admin) {
         this.admin = admin;
+        return this;
+    }
+
+    public boolean isRequiresConsent() {
+        return requiresConsent;
+    }
+
+    public AuthResponse setRequiresConsent(boolean requiresConsent) {
+        this.requiresConsent = requiresConsent;
+        return this;
+    }
+
+    public List<String> getRequiredConsents() {
+        return requiredConsents;
+    }
+
+    public AuthResponse setRequiredConsents(List<String> requiredConsents) {
+        this.requiredConsents = requiredConsents;
         return this;
     }
 }

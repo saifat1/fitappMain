@@ -8,6 +8,7 @@ import {
     type ReactNode,
 } from "react";
 import { authApi } from "../../../shared/api/authApi";
+import { legalApi } from "../../../shared/api/legalApi";
 import {
     getAccessToken,
     removeAccessToken,
@@ -25,10 +26,12 @@ type AuthContextValue = {
     currentUser: CurrentUserResponse | null;
     isAuthenticated: boolean;
     isInitializing: boolean;
+    requiresConsent: boolean;
     login: (payload: LoginRequest) => Promise<void>;
     registerByInvite: (payload: RegisterByInviteRequest) => Promise<void>;
     registerTrainer: (payload: RegisterTrainerRequest) => Promise<void>;
     loadMe: () => Promise<void>;
+    refreshConsentStatus: () => Promise<void>;
     logout: () => void;
 };
 
@@ -36,13 +39,17 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setTokenState] = useState<string | null>(getAccessToken());
-    const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(null);
+    const [currentUser, setCurrentUser] = useState<CurrentUserResponse | null>(
+        null
+    );
     const [isInitializing, setIsInitializing] = useState(true);
+    const [requiresConsent, setRequiresConsent] = useState(false);
 
     const logout = useCallback(() => {
         removeAccessToken();
         setTokenState(null);
         setCurrentUser(null);
+        setRequiresConsent(false);
     }, []);
 
     const loadMe = useCallback(async () => {
@@ -50,11 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentUser(me);
     }, []);
 
+    const refreshConsentStatus = useCallback(async () => {
+        const status = await legalApi.getConsentStatus();
+        setRequiresConsent(status.requiresConsent);
+    }, []);
+
     const login = useCallback(
         async (payload: LoginRequest) => {
             const response = await authApi.login(payload);
+
             setAccessToken(response.accessToken);
             setTokenState(response.accessToken);
+            setRequiresConsent(response.requiresConsent);
+
             await loadMe();
         },
         [loadMe]
@@ -63,8 +78,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const registerByInvite = useCallback(
         async (payload: RegisterByInviteRequest) => {
             const response = await authApi.registerByInvite(payload);
+
             setAccessToken(response.accessToken);
             setTokenState(response.accessToken);
+            setRequiresConsent(response.requiresConsent);
+
             await loadMe();
         },
         [loadMe]
@@ -73,8 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const registerTrainer = useCallback(
         async (payload: RegisterTrainerRequest) => {
             const response = await authApi.registerTrainer(payload);
+
             setAccessToken(response.accessToken);
             setTokenState(response.accessToken);
+            setRequiresConsent(response.requiresConsent);
+
             await loadMe();
         },
         [loadMe]
@@ -92,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
                 setTokenState(storedToken);
                 await loadMe();
+                await refreshConsentStatus();
             } catch {
                 logout();
             } finally {
@@ -100,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         void bootstrap();
-    }, [loadMe, logout]);
+    }, [loadMe, refreshConsentStatus, logout]);
 
     const value = useMemo(
         () => ({
@@ -108,20 +130,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             currentUser,
             isAuthenticated: Boolean(token && currentUser),
             isInitializing,
+            requiresConsent,
             login,
             registerByInvite,
             registerTrainer,
             loadMe,
+            refreshConsentStatus,
             logout,
         }),
         [
             token,
             currentUser,
             isInitializing,
+            requiresConsent,
             login,
             registerByInvite,
             registerTrainer,
             loadMe,
+            refreshConsentStatus,
             logout,
         ]
     );

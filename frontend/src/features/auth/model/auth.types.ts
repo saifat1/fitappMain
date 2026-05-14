@@ -32,6 +32,8 @@ export type AuthResponse = {
     email: string;
     role: UserRole;
     admin: boolean;
+    requiresConsent: boolean;
+    requiredConsents: string[];
 };
 
 export type CurrentUserResponse = {

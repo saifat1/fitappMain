@@ -22,6 +22,7 @@ import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.service.UserService;
+import ru.fitapp.backend.legal.UserConsentService;
 
 @Service
 @Transactional
@@ -34,6 +35,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final TrainerAvailabilityService trainerAvailabilityService;
     private final AnalyticsService analyticsService;
+    private final UserConsentService userConsentService;
 
     public AuthService(
             UserService userService,
@@ -42,7 +44,7 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             TrainerAvailabilityService trainerAvailabilityService,
-            AnalyticsService analyticsService
+            AnalyticsService analyticsService, UserConsentService userConsentService
     ) {
         this.userService = userService;
         this.inviteService = inviteService;
@@ -51,6 +53,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.trainerAvailabilityService = trainerAvailabilityService;
         this.analyticsService = analyticsService;
+        this.userConsentService = userConsentService;
     }
 
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
@@ -179,12 +182,20 @@ public class AuthService {
     }
 
     private AuthResponse buildAuthResponse(AppUser user, String token) {
+        var missingConsents = userConsentService.getRequiredMissingConsents(user.getId());
+
         return new AuthResponse()
                 .setAccessToken(token)
                 .setTokenType("Bearer")
                 .setUserId(user.getId())
                 .setEmail(user.getEmail())
                 .setRole(user.getRole().name())
-                .setAdmin(user.isAdmin());
+                .setAdmin(user.isAdmin())
+                .setRequiresConsent(!missingConsents.isEmpty())
+                .setRequiredConsents(
+                        missingConsents.stream()
+                                .map(Enum::name)
+                                .toList()
+                );
     }
 }
