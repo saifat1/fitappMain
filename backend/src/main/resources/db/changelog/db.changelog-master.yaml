@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/021-add-is-admin-to-app-user.yaml
   - include:
       file: db/changelog/022-create-user-consent.yaml
+  - include:
+      file: db/changelog/023-add-muscle-group-to-exercise-template.yaml

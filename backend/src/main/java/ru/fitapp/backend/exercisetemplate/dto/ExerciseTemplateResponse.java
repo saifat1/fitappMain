@@ -1,5 +1,6 @@
 package ru.fitapp.backend.exercisetemplate.dto;
 
+import ru.fitapp.backend.common.model.MuscleGroup;
 import ru.fitapp.backend.common.model.RepsMode;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ public class ExerciseTemplateResponse {
     private Long trainerId;
     private String name;
     private String description;
+    private MuscleGroup muscleGroup;
     private Integer sets;
     private RepsMode repsMode;
     private Integer repsValue;
@@ -58,6 +60,15 @@ public class ExerciseTemplateResponse {
 
     public ExerciseTemplateResponse setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public MuscleGroup getMuscleGroup() {
+        return muscleGroup;
+    }
+
+    public ExerciseTemplateResponse setMuscleGroup(MuscleGroup muscleGroup) {
+        this.muscleGroup = muscleGroup;
         return this;
     }
 

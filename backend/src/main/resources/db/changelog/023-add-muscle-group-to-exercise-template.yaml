@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-add-muscle-group-to-exercise-template
+      author: fitapp
+      changes:
+        - addColumn:
+            tableName: exercise_template
+            columns:
+              - column:
+                  name: muscle_group
+                  type: varchar(16)

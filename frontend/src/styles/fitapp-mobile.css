@@ -1,0 +1,515 @@
+/* ============================================================
+   FitApp mobile shell + list primitives (slice 3)
+   Mount in main.tsx: import "./styles/fitapp-mobile.css";
+   ============================================================ */
+
+/* shell title header (list screens) */
+.fb-topbar--shell {
+    border-bottom: 1px solid var(--fb-line);
+    justify-content: center;
+}
+
+.fb-topbar__right {
+    position: absolute;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* horizontal padding helper for content */
+.fb-pad {
+    padding: 12px 16px;
+}
+
+/* section title inside content */
+.fb-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fb-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 16px 16px 8px;
+}
+
+/* search box */
+.fb-search {
+    margin: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--fb-surface-2);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+
+.fb-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 15px;
+    color: var(--fb-ink);
+}
+
+.fb-search input::placeholder { color: var(--fb-muted); }
+
+/* ---------- List ---------- */
+.fb-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+}
+
+.fb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--fb-line);
+    padding: 14px 4px;
+}
+
+.fb-row:last-child { border-bottom: none; }
+.fb-row--button { cursor: pointer; }
+.fb-row--button:hover { background: rgba(0, 0, 0, 0.02); }
+
+.fb-row__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fb-row__title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fb-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fb-row__sub {
+    font-size: 13px;
+    color: var(--fb-muted);
+}
+
+.fb-row__chevron {
+    flex: none;
+    color: var(--fb-muted);
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* selectable radio (client/exercise picker, mockups 7–8) */
+.fb-row__radio {
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--fb-line-strong);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.fb-row__radio--checked {
+    border-color: var(--fb-green);
+    background: var(--fb-green);
+}
+
+/* status pill */
+.fb-pill {
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.fb-pill--ok { background: rgba(52, 168, 83, 0.14); color: var(--fb-green-deep); }
+.fb-pill--muted { background: var(--fb-surface-2); color: var(--fb-muted); }
+
+/* category chips (Все / Грудь / Спина …) */
+.fb-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 16px;
+    scrollbar-width: none;
+}
+
+.fb-chips::-webkit-scrollbar { display: none; }
+
+.fb-chip {
+    flex: none;
+    border: none;
+    background: var(--fb-surface-2);
+    color: var(--fb-ink-2);
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.fb-chip--active { background: var(--fb-green); color: #fff; }
+
+/* segmented control (Из шаблона / Новое) */
+.fb-segment {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 4px;
+    margin: 12px 16px;
+    padding: 4px;
+    background: var(--fb-surface-2);
+    border-radius: 12px;
+}
+
+.fb-segment__item {
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    padding: 9px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fb-muted);
+}
+
+.fb-segment__item--active {
+    background: var(--fb-surface);
+    color: var(--fb-ink);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* empty / status */
+.fb-empty {
+    text-align: center;
+    color: var(--fb-muted);
+    padding: 48px 16px;
+    font-size: 14px;
+}
+
+/* profile hero */
+.fb-profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 16px 8px;
+    text-align: center;
+}
+
+.fb-profile-hero__name { font-size: 18px; font-weight: 700; color: var(--fb-ink); }
+.fb-profile-hero__email { font-size: 13px; color: var(--fb-muted); }
+
+/* collapsible create form host (keeps legacy form usable inside the shell) */
+.fb-create { margin: 8px 8px 24px; }
+
+.fb-create__summary {
+    list-style: none;
+    cursor: pointer;
+    margin: 0 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(52, 168, 83, 0.10);
+    color: var(--fb-green-deep);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.fb-create__summary::-webkit-details-marker { display: none; }
+.fb-create[open] .fb-create__summary { margin-bottom: 8px; }
+
+/* legacy dashboard content hosted inside the mobile shell (transitional) */
+.fb-app .dashboard-page { padding: 12px 0; gap: 14px; }
+.fb-app .dashboard-hero { flex-direction: column; align-items: stretch; gap: 12px; padding: 0 16px; }
+.fb-app .dashboard-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 0 16px; }
+.fb-app .error-box { margin: 0 16px; }
+
+/* create-form fields (single column) */
+.fb-create__form {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 16px 8px;
+}
+
+.fb-create__form .fb-btn { margin-top: 18px; }
+
+.fb-field-block {
+    padding: 16px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-field-block__label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fb-muted);
+    margin-bottom: 10px;
+}
+
+.fb-chips--wrap { flex-wrap: wrap; overflow: visible; padding: 0; }
+
+.fb-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.fb-hint {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--fb-muted);
+    padding-top: 8px;
+}
+
+.fb-textarea {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-textarea__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fb-muted);
+}
+
+.fb-textarea textarea {
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: vertical;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--fb-ink);
+    padding: 2px 0;
+}
+
+/* ---------- field-like select (Группа мышц) ---------- */
+.fb-select {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 16px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-select__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fb-muted);
+}
+
+.fb-select__control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.fb-select__value { font-size: 16px; color: var(--fb-ink); }
+.fb-select__placeholder { font-size: 16px; color: var(--fb-muted); }
+.fb-select__chevron { color: var(--fb-muted); font-size: 20px; line-height: 1; }
+
+.fb-form-submit { margin-top: 24px; }
+
+/* ---------- topbar trash action ---------- */
+.fb-topbar__action {
+    position: absolute;
+    right: 8px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    color: var(--fb-ink);
+    transition: background var(--fb-ease), color var(--fb-ease);
+}
+
+.fb-topbar__action:hover { background: rgba(229, 72, 77, 0.10); color: var(--fb-danger); }
+
+/* ---------- bottom sheet (picker) ---------- */
+.fb-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: none;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.fb-sheet {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 0;
+    z-index: 41;
+    width: 100%;
+    max-width: var(--fb-screen-max);
+    background: var(--fb-surface);
+    border-radius: 18px 18px 0 0;
+    padding: 8px 8px calc(16px + env(safe-area-inset-bottom));
+    box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.18);
+}
+
+.fb-sheet__title {
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fb-muted);
+    padding: 12px 8px 8px;
+}
+
+.fb-sheet__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 14px 12px;
+    border-radius: 12px;
+    font-size: 16px;
+    color: var(--fb-ink);
+}
+
+.fb-sheet__item:hover { background: var(--fb-surface-2); }
+.fb-sheet__check { color: var(--fb-green); font-weight: 700; }
+
+/* ---------- training form extras ---------- */
+.fb-field-hint {
+    font-size: 12px;
+    color: var(--fb-green-deep);
+    padding: 6px 0 0;
+}
+
+.fb-section-title--flush { padding-left: 0; padding-right: 0; }
+
+.fb-select--static { opacity: 0.85; }
+
+.fb-row__remove {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--fb-muted);
+    font-size: 20px;
+    line-height: 1;
+    border-radius: 8px;
+}
+
+.fb-row__remove:hover { background: var(--fb-surface-2); color: var(--fb-danger); }
+
+.fb-add-link {
+    align-self: flex-start;
+    border: none;
+    background: transparent;
+    color: var(--fb-green);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 14px 0;
+}
+
+/* ---------- tall sheet with internal scroll (exercise picker) ---------- */
+.fb-sheet--tall {
+    max-height: 80dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.fb-sheet__scroll {
+    overflow-y: auto;
+    max-height: 64dvh;
+}
+
+/* ---------- training detail ---------- */
+.fb-training-client {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-training-client__main { flex: 1; min-width: 0; }
+.fb-training-client__label { font-size: 12px; color: var(--fb-muted); }
+.fb-training-client__name { font-size: 16px; font-weight: 600; color: var(--fb-ink); }
+
+.fb-readonly {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-readonly__label { font-size: 12px; color: var(--fb-muted); }
+.fb-readonly__value { font-size: 16px; color: var(--fb-ink); }
+
+/* right-anchored topbar dropdown menu */
+.fb-menu {
+    position: absolute;
+    top: 50px;
+    right: 8px;
+    z-index: 30;
+    min-width: 190px;
+    background: var(--fb-surface);
+    border-radius: 14px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+    padding: 6px;
+}
+
+.fb-menu__item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: transparent;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 15px;
+    color: var(--fb-ink);
+}
+
+.fb-menu__item:hover { background: var(--fb-surface-2); }
+.fb-menu__item--danger { color: var(--fb-danger); }
+
+/* ---------- exercise detail head (inside picker sheet) ---------- */
+.fb-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0 8px;
+}
+
+.fb-detail-head__back {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--fb-ink);
+    font-size: 22px;
+    line-height: 1;
+}
+
+.fb-detail-head__back:hover { background: var(--fb-surface-2); }
+.fb-detail-head__title { font-size: 18px; font-weight: 700; color: var(--fb-ink); }

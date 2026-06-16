@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
+import MobileShell from "../widgets/MobileShell";
+import Avatar from "../shared/ui/Avatar";
+import { avatarColor } from "../features/calendar/lib/calendarWeek";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
 import TrainerProfileSecurityCard from "../features/trainer-profile/ui/TrainerProfileSecurityCard";
 import TrainerSalaryReportSection from "../features/salary-report/ui/TrainerSalaryReportSection";
@@ -198,46 +201,36 @@ export default function TrainerProfilePage() {
 
     if (isLoading && !profile) {
         return (
-            <div className={styles.page}>
-                <section className={styles.card}>
-                    <div className={styles.empty}>Загрузка профиля...</div>
-                </section>
-            </div>
+            <MobileShell title="Профиль">
+                <div className="fb-empty">Загрузка профиля…</div>
+            </MobileShell>
         );
     }
 
     if (!profile) {
         return (
-            <div className={styles.page}>
-                <section className={styles.card}>
-                    <div className={styles.messageError}>
-                        {profileErrorMessage || "Профиль тренера не найден"}
-                    </div>
-                </section>
-            </div>
+            <MobileShell title="Профиль">
+                <div className="fb-cal-error">
+                    {profileErrorMessage || "Профиль тренера не найден"}
+                </div>
+            </MobileShell>
         );
     }
 
     return (
-        <div className={styles.page}>
-            <section className={styles.hero}>
-                <div className={styles.heroMain}>
-                    <h1 className={styles.cardTitle}>Профиль тренера</h1>
-                    <div className={styles.heroMeta}>
-                        <div>{displayName}</div>
-                        <div>{profile.email}</div>
-                        {profile.phone && <div>{profile.phone}</div>}
-                    </div>
-                </div>
-
-                <div className={styles.heroAvatar}>
-                    {profile.avatarUrl ? (
-                        <img src={profile.avatarUrl} alt="Аватар тренера" />
-                    ) : (
-                        heroInitials
-                    )}
-                </div>
-            </section>
+        <MobileShell title="Профиль">
+            <div className="fb-profile-hero">
+                <Avatar
+                    initials={heroInitials}
+                    color={avatarColor(profile.id ?? 0)}
+                    size="md"
+                />
+                <div className="fb-profile-hero__name">{displayName}</div>
+                <div className="fb-profile-hero__email">{profile.email}</div>
+                {profile.phone ? (
+                    <div className="fb-profile-hero__email">{profile.phone}</div>
+                ) : null}
+            </div>
 
             <section className={styles.card}>
                 <div className={styles.tabRow}>
@@ -301,6 +294,6 @@ export default function TrainerProfilePage() {
             )}
 
             {activeTab === "reports" && <TrainerSalaryReportSection />}
-        </div>
+        </MobileShell>
     );
 }

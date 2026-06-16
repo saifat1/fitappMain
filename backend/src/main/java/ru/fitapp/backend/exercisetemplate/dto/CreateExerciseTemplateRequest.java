@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import ru.fitapp.backend.common.model.MuscleGroup;
 import ru.fitapp.backend.common.model.RepsMode;
 
 import java.math.BigDecimal;
@@ -17,6 +18,8 @@ public class CreateExerciseTemplateRequest {
 
     @Size(max = 2000, message = "Описание не должно быть длиннее 2000 символов")
     private String description;
+
+    private MuscleGroup muscleGroup;
 
     @Min(value = 1, message = "Количество подходов должно быть не меньше 1")
     private Integer sets;
@@ -60,6 +63,15 @@ public class CreateExerciseTemplateRequest {
 
     public CreateExerciseTemplateRequest setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public MuscleGroup getMuscleGroup() {
+        return muscleGroup;
+    }
+
+    public CreateExerciseTemplateRequest setMuscleGroup(MuscleGroup muscleGroup) {
+        this.muscleGroup = muscleGroup;
         return this;
     }
 

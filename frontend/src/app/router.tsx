@@ -1,11 +1,13 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
+import WelcomePage from "../pages/WelcomePage";
 import RegisterByInvitePage from "../pages/RegisterByInvitePage";
 import MePage from "../pages/MePage";
 import NotFoundPage from "../pages/NotFoundPage";
 import ClientsPage from "../pages/ClientsPage";
 import InvitesPage from "../pages/InvitesPage";
 import TrainingsPage from "../pages/TrainingsPage";
+import TrainingCreatePage from "../pages/TrainingCreatePage";
 import TrainingDetailsPage from "../pages/TrainingDetailsPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import TrainerRoute from "../components/TrainerRoute";
@@ -15,6 +17,7 @@ import TrainerProfilePage from "../pages/TrainerProfilePage";
 import RescheduleRequestDetailsPage from "../pages/RescheduleRequestDetailsPage";
 import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
 import ExerciseTemplatesPage from "../pages/ExerciseTemplatesPage";
+import ExerciseTemplateCreatePage from "../pages/ExerciseTemplateCreatePage";
 import ExerciseTemplateDetailsPage from "../pages/ExerciseTemplateDetailsPage";
 import MorePage from "../pages/MorePage";
 import ClientBookingPage from "../pages/ClientBookingPage";
@@ -97,6 +100,10 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: "/welcome",
+        element: <WelcomePage />,
+    },
+    {
         path: "/login",
         element: <LoginPage />,
     },
@@ -105,9 +112,7 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <AppLayout>
-                        <TrainerProfilePage />
-                    </AppLayout>
+                    <TrainerProfilePage />
                 </TrainerRoute>
             </ProtectedRoute>
         ),
@@ -120,9 +125,7 @@ export const router = createBrowserRouter([
         path: "/me",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <MePage />
-                </AppLayout>
+                <MePage />
             </ProtectedRoute>
         ),
     },
@@ -137,12 +140,20 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: "/trainings/new",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <TrainingCreatePage />
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
+    },
+    {
         path: "/trainings/:trainingId",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <TrainingDetailsPage />
-                </AppLayout>
+                <TrainingDetailsPage />
             </ProtectedRoute>
         ),
     },
@@ -150,9 +161,7 @@ export const router = createBrowserRouter([
         path: "/trainer/clients",
         element: (
             <TrainerRoute>
-                <AppLayout>
-                    <ClientsPage />
-                </AppLayout>
+                <ClientsPage />
             </TrainerRoute>
         ),
     },
@@ -171,9 +180,17 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <AppLayout>
-                        <ExerciseTemplatesPage />
-                    </AppLayout>
+                    <ExerciseTemplatesPage />
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/exercise-templates/new",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <ExerciseTemplateCreatePage />
                 </TrainerRoute>
             </ProtectedRoute>
         ),
@@ -183,9 +200,7 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <AppLayout>
-                        <ExerciseTemplateDetailsPage />
-                    </AppLayout>
+                    <ExerciseTemplateDetailsPage />
                 </TrainerRoute>
             </ProtectedRoute>
         ),

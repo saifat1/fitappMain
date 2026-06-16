@@ -1,10 +1,13 @@
 export type RepsMode = "NONE" | "EXACT" | "RANGE";
 
+export type MuscleGroup = "CHEST" | "BACK" | "LEGS" | "ABS";
+
 export type ExerciseTemplateResponse = {
     id: number;
     trainerId: number;
     name: string;
     description?: string | null;
+    muscleGroup?: MuscleGroup | null;
     sets?: number | null;
     repsMode: RepsMode;
     repsValue?: number | null;
@@ -23,6 +26,7 @@ export type ExerciseTemplateResponse = {
 export type CreateExerciseTemplateRequest = {
     name: string;
     description?: string;
+    muscleGroup?: MuscleGroup | null;
     sets?: number;
     repsMode?: RepsMode;
     repsValue?: number;

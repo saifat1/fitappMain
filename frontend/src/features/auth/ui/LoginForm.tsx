@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import PasswordInput from "../../../shared/ui/PasswordInput";
+import FbTextField from "../../../shared/ui/FbTextField";
+import FbPasswordField from "../../../shared/ui/FbPasswordField";
 import { useAuth } from "../model/AuthContext";
 import type { ApiErrorResponse } from "../model/auth.types";
 
@@ -34,40 +35,43 @@ export default function LoginForm() {
     };
 
     return (
-        <form className="form" onSubmit={handleSubmit}>
-            <div className="form-row">
-                <label htmlFor="email">Email</label>
-                <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Введите email"
-                    autoComplete="email"
-                    required
-                />
-            </div>
+        <form className="fb-body" onSubmit={handleSubmit}>
+            <FbTextField
+                id="login-email"
+                label="Логин"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                autoComplete="email"
+                required
+            />
 
-            <div className="form-row">
-                <label htmlFor="password">Пароль</label>
-                <PasswordInput
-                    id="password"
-                    value={password}
-                    onChange={setPassword}
-                    placeholder="Введите пароль"
-                    autoComplete="current-password"
-                    required
-                />
-            </div>
+            <FbPasswordField
+                id="login-password"
+                label="Пароль"
+                value={password}
+                onChange={setPassword}
+                error={errorMessage || undefined}
+                autoComplete="current-password"
+                required
+            />
 
-            {errorMessage && <div className="form-error">{errorMessage}</div>}
+            <div className="fb-spacer" />
 
             <button
                 type="submit"
-                className="dashboard-btn dashboard-btn-primary"
+                className="fb-btn fb-btn--primary"
                 disabled={isSubmitting}
             >
-                {isSubmitting ? "Входим..." : "Войти"}
+                {isSubmitting ? "Входим…" : "Войти"}
+            </button>
+
+            <button
+                type="button"
+                className="fb-link"
+                onClick={() => navigate("/forgot-password")}
+            >
+                Забыли пароль?
             </button>
         </form>
     );

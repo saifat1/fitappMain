@@ -61,6 +61,7 @@ public class ExerciseTemplateService {
                 .setTrainer(trainer)
                 .setName(normalizeRequired(request.getName(), "Название шаблона обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
+                .setMuscleGroup(request.getMuscleGroup())
                 .setSets(request.getSets())
                 .setWeight(normalizeWeight(request.getWeight()))
                 .setDurationSeconds(request.getDurationSeconds())
@@ -90,6 +91,7 @@ public class ExerciseTemplateService {
         template
                 .setName(normalizeRequired(request.getName(), "Название шаблона обязательно"))
                 .setDescription(normalizeOptional(request.getDescription()))
+                .setMuscleGroup(request.getMuscleGroup())
                 .setSets(request.getSets())
                 .setWeight(normalizeWeight(request.getWeight()))
                 .setDurationSeconds(request.getDurationSeconds())
@@ -151,6 +153,7 @@ public class ExerciseTemplateService {
                 .setTrainerId(template.getTrainer().getId())
                 .setName(template.getName())
                 .setDescription(template.getDescription())
+                .setMuscleGroup(template.getMuscleGroup())
                 .setSets(template.getSets())
                 .setRepsMode(template.getRepsMode())
                 .setRepsValue(template.getRepsValue())

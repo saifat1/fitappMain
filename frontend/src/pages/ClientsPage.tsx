@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import MobileShell from "../widgets/MobileShell";
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
     CreateManualTrainerClientRequest,
@@ -455,7 +456,7 @@ export default function ClientsPage() {
     };
 
     return (
-        <div className="dashboard-page">
+        <MobileShell title="Клиенты">
             <section className="dashboard-hero">
                 <div>
                     <p className="dashboard-kicker">Клиенты</p>
@@ -940,6 +941,6 @@ export default function ClientsPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </MobileShell>
     );
 }

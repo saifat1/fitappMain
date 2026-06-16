@@ -1,6 +1,7 @@
 package ru.fitapp.backend.exercisetemplate.entity;
 
 import jakarta.persistence.*;
+import ru.fitapp.backend.common.model.MuscleGroup;
 import ru.fitapp.backend.common.model.RepsMode;
 import ru.fitapp.backend.user.entity.AppUser;
 
@@ -29,6 +30,10 @@ public class ExerciseTemplate {
 
     @Column(name = "description", length = 2000)
     private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "muscle_group", length = 16)
+    private MuscleGroup muscleGroup;
 
     @Column(name = "sets")
     private Integer sets;
@@ -103,6 +108,15 @@ public class ExerciseTemplate {
 
     public ExerciseTemplate setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public MuscleGroup getMuscleGroup() {
+        return muscleGroup;
+    }
+
+    public ExerciseTemplate setMuscleGroup(MuscleGroup muscleGroup) {
+        this.muscleGroup = muscleGroup;
         return this;
     }
 

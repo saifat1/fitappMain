@@ -1,0 +1,343 @@
+/* ============================================================
+   FROBRO design system (slice 1: onboarding + auth)
+   All classes are prefixed `fb-` and all tokens `--fb-*`,
+   so this file does NOT collide with the legacy index.css.
+   Mount once in main.tsx: import "./styles/frobro-theme.css";
+   ============================================================ */
+
+:root {
+    /* Brand */
+    --fb-green: #34a853;          /* primary action (Войти / Продолжить / Сохранить) */
+    --fb-green-strong: #2c9247;   /* pressed / hover */
+    --fb-green-deep: #1f7a38;     /* splash gradient bottom */
+    --fb-green-splash-top: #45b35f;
+    --fb-blue-splash-top: #4aa3ff;  /* alt splash variant from mockups */
+    --fb-blue-splash-bottom: #2f7fe0;
+    --fb-lime: #a8e831;           /* figma annotation accent, used sparingly */
+
+    /* Neutrals */
+    --fb-ink: #1a1a1a;            /* primary text */
+    --fb-ink-2: #4a4a4a;
+    --fb-muted: #9aa0a6;          /* placeholders, inactive labels, secondary text */
+    --fb-line: #e3e6e8;          /* field underline / dividers (rest) */
+    --fb-line-strong: #c9ced2;
+    --fb-surface: #ffffff;
+    --fb-surface-2: #f4f6f7;     /* chips / event cards */
+    --fb-page: #ffffff;
+
+    /* Feedback */
+    --fb-danger: #e5484d;
+
+    /* Shape & motion */
+    --fb-radius-pill: 28px;
+    --fb-radius-card: 18px;
+    --fb-radius-chip: 12px;
+    --fb-ease: 0.18s ease;
+
+    /* Mobile screen frame (centers content like a phone on desktop) */
+    --fb-screen-max: 430px;
+}
+
+/* ---------- Screen frame ---------- */
+.fb-screen {
+    min-height: 100dvh;
+    width: 100%;
+    max-width: var(--fb-screen-max);
+    margin: 0 auto;
+    background: var(--fb-page);
+    display: flex;
+    flex-direction: column;
+    color: var(--fb-ink);
+    font-family: Inter, Arial, sans-serif;
+}
+
+/* ---------- Top bar (back + centered title) ---------- */
+.fb-topbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 52px;
+    padding: 8px 12px;
+}
+
+.fb-topbar__back {
+    position: absolute;
+    left: 8px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    color: var(--fb-ink);
+    font-size: 22px;
+    line-height: 1;
+    transition: background var(--fb-ease);
+}
+
+.fb-topbar__back:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.fb-topbar__title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--fb-ink);
+    margin: 0;
+}
+
+/* ---------- Body / content ---------- */
+.fb-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 20px 24px;
+}
+
+.fb-spacer {
+    flex: 1;
+}
+
+/* ---------- Text field (Material-style: label on top, underline) ---------- */
+.fb-field {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 0 10px;
+    border-bottom: 1px solid var(--fb-line);
+    transition: border-color var(--fb-ease);
+}
+
+.fb-field--focused {
+    border-bottom-color: var(--fb-green);
+}
+
+.fb-field--error {
+    border-bottom-color: var(--fb-danger);
+}
+
+.fb-field__label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fb-muted);
+    transition: color var(--fb-ease);
+}
+
+.fb-field--focused .fb-field__label {
+    color: var(--fb-green);
+}
+
+.fb-field--error .fb-field__label {
+    color: var(--fb-danger);
+}
+
+.fb-field__control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fb-field__input {
+    flex: 1;
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 2px 0;
+    font-size: 16px;        /* >=16px avoids iOS zoom-on-focus */
+    color: var(--fb-ink);
+}
+
+.fb-field__input::placeholder {
+    color: var(--fb-muted);
+}
+
+.fb-field__toggle {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--fb-muted);
+    border-radius: 8px;
+    transition: color var(--fb-ease);
+}
+
+.fb-field__toggle:hover {
+    color: var(--fb-ink);
+}
+
+.fb-field__error-text {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--fb-danger);
+}
+
+/* ---------- Pill button ---------- */
+.fb-btn {
+    appearance: none;
+    border: none;
+    width: 100%;
+    min-height: 52px;
+    padding: 0 20px;
+    border-radius: var(--fb-radius-pill);
+    font-size: 16px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--fb-ease), transform var(--fb-ease), opacity var(--fb-ease);
+}
+
+.fb-btn:active {
+    transform: scale(0.99);
+}
+
+.fb-btn:disabled {
+    opacity: 0.6;
+}
+
+.fb-btn--primary {
+    background: var(--fb-green);
+    color: #fff;
+}
+
+.fb-btn--primary:hover:not(:disabled) {
+    background: var(--fb-green-strong);
+}
+
+.fb-btn--ghost {
+    background: var(--fb-surface);
+    color: var(--fb-ink);
+    border: 1px solid var(--fb-line-strong);
+}
+
+.fb-btn--block-gap {
+    margin-top: auto;
+}
+
+/* Text link (Войти / Забыли пароль? / Открыть почту) */
+.fb-link {
+    display: inline-flex;
+    align-self: center;
+    background: none;
+    border: none;
+    padding: 14px;
+    color: var(--fb-green);
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.fb-link--muted {
+    color: #fff;
+}
+
+.fb-link:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Splash / welcome ---------- */
+.fb-welcome {
+    min-height: 100dvh;
+    max-width: var(--fb-screen-max);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    background: linear-gradient(180deg, var(--fb-green-splash-top) 0%, var(--fb-green-deep) 100%);
+}
+
+.fb-welcome--blue {
+    background: linear-gradient(180deg, var(--fb-blue-splash-top) 0%, var(--fb-blue-splash-bottom) 100%);
+}
+
+.fb-welcome__hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding-top: 28px;
+    text-align: center;
+}
+
+.fb-welcome__wordmark {
+    width: 70%;
+    max-width: 260px;
+}
+
+.fb-welcome__frog {
+    flex: 1;
+    width: 100%;
+    object-fit: contain;
+    min-height: 0;
+}
+
+/* Fallback block if the frog asset isn't dropped in yet */
+.fb-welcome__frog-fallback {
+    flex: 1;
+    width: 100%;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    padding: 24px;
+}
+
+.fb-welcome__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+}
+
+/* ---------- Confirmation screen (Проверьте почту) ---------- */
+.fb-confirm {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 24px;
+}
+
+.fb-confirm__icon {
+    width: 96px;
+    height: 96px;
+}
+
+.fb-confirm__title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.fb-confirm__text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--fb-muted);
+    margin: 0;
+    max-width: 280px;
+}
+
+.fb-confirm__text strong {
+    color: var(--fb-ink);
+    font-weight: 600;
+}
+
+/* utility */
+.fb-hidden { display: none !important; }
