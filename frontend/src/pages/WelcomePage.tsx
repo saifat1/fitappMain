@@ -14,6 +14,7 @@ export default function WelcomePage() {
         <div className="fb-welcome">
             <div className="fb-welcome__hero">
                 <BrandWordmark className="fb-welcome__wordmark" color="#ffffff" />
+                <div className="fb-welcome__tagline">Все тренировки в одном месте</div>
 
                 <img
                     className="fb-welcome__frog"

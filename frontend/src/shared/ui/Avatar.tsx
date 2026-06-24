@@ -1,7 +1,7 @@
 type Props = {
     initials: string;
     color: string;
-    size?: "sm" | "md";
+    size?: "sm" | "md" | "lg";
     title?: string;
 };
 

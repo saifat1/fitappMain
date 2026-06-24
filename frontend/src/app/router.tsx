@@ -5,6 +5,8 @@ import RegisterByInvitePage from "../pages/RegisterByInvitePage";
 import MePage from "../pages/MePage";
 import NotFoundPage from "../pages/NotFoundPage";
 import ClientsPage from "../pages/ClientsPage";
+import ClientCreatePage from "../pages/ClientCreatePage";
+import ClientDetailsPage from "../pages/ClientDetailsPage";
 import InvitesPage from "../pages/InvitesPage";
 import TrainingsPage from "../pages/TrainingsPage";
 import TrainingCreatePage from "../pages/TrainingCreatePage";
@@ -162,6 +164,22 @@ export const router = createBrowserRouter([
         element: (
             <TrainerRoute>
                 <ClientsPage />
+            </TrainerRoute>
+        ),
+    },
+    {
+        path: "/trainer/clients/new",
+        element: (
+            <TrainerRoute>
+                <ClientCreatePage />
+            </TrainerRoute>
+        ),
+    },
+    {
+        path: "/trainer/clients/:clientId",
+        element: (
+            <TrainerRoute>
+                <ClientDetailsPage />
             </TrainerRoute>
         ),
     },

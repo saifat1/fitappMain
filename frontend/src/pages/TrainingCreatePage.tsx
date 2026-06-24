@@ -34,7 +34,7 @@ function clientName(client: TrainerClientResponse): string {
     return full || client.email;
 }
 
-type LocationState = { date?: string; startTime?: string } | null;
+type LocationState = { date?: string; startTime?: string; clientId?: number } | null;
 
 export default function TrainingCreatePage() {
     const navigate = useNavigate();
@@ -44,7 +44,7 @@ export default function TrainingCreatePage() {
     const defaultStart = state?.startTime ?? "12:00";
 
     const [clients, setClients] = useState<TrainerClientResponse[]>([]);
-    const [clientId, setClientId] = useState<number | null>(null);
+    const [clientId, setClientId] = useState<number | null>(state?.clientId ?? null);
     const [date, setDate] = useState(state?.date ?? formatDateKey(new Date()));
     const [start, setStart] = useState(defaultStart);
     const [end, setEnd] = useState(plusOneHour(defaultStart));
