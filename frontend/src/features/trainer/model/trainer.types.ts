@@ -20,7 +20,7 @@ export type UpdateTrainerClientRequest = {
 };
 
 export type CreateManualTrainerClientRequest = {
-    email: string;
+    email?: string;
     firstName?: string;
     lastName?: string;
 };

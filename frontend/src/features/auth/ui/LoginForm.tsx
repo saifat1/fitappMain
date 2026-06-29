@@ -65,14 +65,6 @@ export default function LoginForm() {
             >
                 {isSubmitting ? "Входим…" : "Войти"}
             </button>
-
-            <button
-                type="button"
-                className="fb-link"
-                onClick={() => navigate("/forgot-password")}
-            >
-                Забыли пароль?
-            </button>
         </form>
     );
 }

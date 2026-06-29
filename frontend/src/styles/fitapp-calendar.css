@@ -227,7 +227,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: var(--fb-green);
+    background: #ef4444;
 }
 
 .fb-day--selected .fb-day__dot { background: #fff; }

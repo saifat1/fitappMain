@@ -252,7 +252,7 @@
     display: flex;
     flex-direction: column;
     padding: 16px;
-    background: linear-gradient(180deg, var(--fb-green-splash-top) 0%, var(--fb-green-deep) 100%);
+    background: #1DA858;
 }
 
 .fb-welcome--blue {

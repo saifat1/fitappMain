@@ -114,7 +114,7 @@ export default function TrainingCreatePage() {
                 }
             }
 
-            navigate(`/trainings/${training.id}`);
+            navigate("/me");
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось создать тренировку"));
         } finally {

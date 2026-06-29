@@ -14,6 +14,7 @@ import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.trainer.client.dto.ClientHistoryResponse;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -61,11 +62,30 @@ public class TrainerClientFacadeService {
     public TrainerClientResponse createCurrentTrainerClient(CreateManualTrainerClientRequest request) {
         AppUser trainer = currentUserService.getCurrentTrainer();
 
+        String email = request.getEmail() == null ? "" : request.getEmail().trim();
+        String firstName = request.getFirstName() == null ? "" : request.getFirstName().trim();
+        String lastName = request.getLastName() == null ? "" : request.getLastName().trim();
+
+        boolean hasEmail = !email.isEmpty();
+        boolean hasName = !firstName.isEmpty() || !lastName.isEmpty();
+
+        // No email given: create a stub account with a unique placeholder address
+        // so the underlying user record stays valid (email is the login identity).
+        if (!hasEmail) {
+            email = "manual-" + UUID.randomUUID() + "@fitapp.local";
+        }
+
+        // No identifying info at all: give the client a readable stub name "Клиент N".
+        if (!hasEmail && !hasName) {
+            int number = trainerClientService.getClientsOfTrainer(trainer.getId()).size() + 1;
+            firstName = "Клиент " + number;
+        }
+
         AppUser created = trainerClientService.createManualClientForTrainer(
                 trainer,
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName()
+                email,
+                firstName.isEmpty() ? null : firstName,
+                lastName.isEmpty() ? null : lastName
         );
 
         return mapToResponse(created);

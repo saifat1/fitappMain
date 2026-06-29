@@ -27,16 +27,12 @@ export default function ClientCreatePage() {
     const [copied, setCopied] = useState(false);
 
     const handleCreate = async () => {
-        if (!email.trim()) {
-            setErrorMessage("Укажите электронную почту");
-            return;
-        }
         setErrorMessage("");
         setIsSubmitting(true);
 
         try {
             const client = await trainerApi.createManualClient({
-                email: email.trim(),
+                email: email.trim() || undefined,
                 firstName: firstName.trim() || undefined,
                 lastName: lastName.trim() || undefined,
             });
@@ -111,7 +107,7 @@ export default function ClientCreatePage() {
             <div className="fb-body">
                 <FbTextField
                     id="cl-email"
-                    label="Электронная почта"
+                    label="Электронная почта, опционально"
                     type="email"
                     value={email}
                     onChange={setEmail}

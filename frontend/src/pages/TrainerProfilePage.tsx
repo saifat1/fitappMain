@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
@@ -64,7 +65,13 @@ function buildTabButtonStyle(isActive: boolean): CSSProperties {
 }
 
 export default function TrainerProfilePage() {
-    const { currentUser } = useAuth();
+    const { currentUser, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate("/login", { replace: true });
+    };
 
     const [activeTab, setActiveTab] = useState<ProfileTab>("info");
 
@@ -294,6 +301,10 @@ export default function TrainerProfilePage() {
             )}
 
             {activeTab === "reports" && <TrainerSalaryReportSection />}
+
+            <button type="button" className="fb-btn fb-btn--ghost fb-logout" onClick={handleLogout}>
+                Выйти
+            </button>
         </MobileShell>
     );
 }

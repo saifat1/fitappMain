@@ -1,12 +1,10 @@
 package ru.fitapp.backend.trainer.client.dto;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class CreateManualTrainerClientRequest {
 
-    @NotBlank(message = "Email клиента обязателен")
     @Email(message = "Некорректный email")
     @Size(max = 255, message = "Email не должен быть длиннее 255 символов")
     private String email;
