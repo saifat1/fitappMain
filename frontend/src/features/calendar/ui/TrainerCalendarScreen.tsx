@@ -114,7 +114,7 @@ export default function TrainerCalendarScreen({
                 ) : isLoading ? (
                     <div className="fb-cal-status">Загрузка…</div>
                 ) : (
-                    <ScheduleList trainings={trainings} onOpenTraining={onOpenTraining} />
+                    <ScheduleList trainings={dayTrainings} onOpenTraining={onOpenTraining} />
                 )}
         </MobileShell>
     );

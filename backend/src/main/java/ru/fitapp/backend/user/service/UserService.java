@@ -33,6 +33,21 @@ public class UserService {
                 .orElseThrow(() -> new ApiException("USER_NOT_FOUND", "Пользователь не найден"));
     }
 
+    /** Enumeration-safe lookup: returns an active user or empty, never throws. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<AppUser> findActiveByEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return java.util.Optional.empty();
+        }
+        return userRepository.findByEmail(normalizeEmail(email))
+                .filter(user -> user.getStatus() == UserStatus.ACTIVE);
+    }
+
+    public AppUser updatePasswordHash(AppUser user, String passwordHash) {
+        user.setPasswordHash(passwordHash);
+        return userRepository.save(user);
+    }
+
     public AppUser markLoginSuccess(AppUser user) {
         LocalDateTime now = LocalDateTime.now();
 

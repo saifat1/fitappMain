@@ -28,6 +28,15 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SERVER_PORT: ${SERVER_PORT}
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-smtp.yandex.ru}
+      MAIL_PORT: ${MAIL_PORT:-465}
+      MAIL_SSL: ${MAIL_SSL:-true}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      PASSWORD_RESET_EXP_MIN: ${PASSWORD_RESET_EXP_MIN:-60}
     expose:
       - "8080"
 

@@ -45,3 +45,5 @@ databaseChangeLog:
       file: db/changelog/022-create-user-consent.yaml
   - include:
       file: db/changelog/023-add-muscle-group-to-exercise-template.yaml
+  - include:
+      file: db/changelog/024-create-password-reset-token.yaml

@@ -1,11 +1,30 @@
 app:
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:3000}
   jwt:
     secret: ${JWT_SECRET:dev-secret}
     expiration-ms: 86400000
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:3000}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@fitapp.local}
+  password-reset:
+    expiration-minutes: ${PASSWORD_RESET_EXP_MIN:60}
 spring:
   application:
     name: fitapp-backend
+  mail:
+    host: ${MAIL_HOST:smtp.yandex.ru}
+    port: ${MAIL_PORT:465}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: ${MAIL_SSL:true}
+          starttls:
+            enable: ${MAIL_STARTTLS:false}
 storage:
   uploads-dir: uploads
 

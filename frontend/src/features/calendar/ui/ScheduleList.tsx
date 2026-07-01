@@ -34,7 +34,7 @@ export default function ScheduleList({ trainings, onOpenTraining }: Props) {
     }, [trainings]);
 
     if (groups.length === 0) {
-        return <div className="fb-schedule__empty">В этом месяце записей пока нет</div>;
+        return <div className="fb-schedule__empty">На выбранный день записей нет</div>;
     }
 
     return (

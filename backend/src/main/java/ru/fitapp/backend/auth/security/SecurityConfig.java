@@ -42,6 +42,8 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/auth/register-by-invite",
                                 "/api/auth/register-trainer",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 "/api/auth/invites/**",
                                 "/uploads/**"
                         ).permitAll()
