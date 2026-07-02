@@ -3,6 +3,7 @@ import type {
     TrainerAvailabilityRule,
 } from "../../availability/model/availability.types";
 import type { TrainingResponse } from "../../training/model/training.types";
+import type { TrainerDutySlotResponse } from "../../duty-slot/model/dutySlot.types";
 
 function pad(value: number): string {
     return String(value).padStart(2, "0");
@@ -340,4 +341,85 @@ export function buildDayAgendaRows(
 
         return 0;
     });
+}
+
+/* ---------- Duty slots (дежурство) ---------- */
+
+export type DutyBlock = {
+    key: string;
+    dutyDate: string;
+    startTime: string; // HH:MM
+    endTime: string; // HH:MM
+    startHour: number;
+    hours: number;
+    slotIds: number[];
+};
+
+/**
+ * Backend stores duty slots as atomic 1-hour rows (required for hourly
+ * payroll accounting in the salary report). The UI groups back-to-back rows
+ * for the same day into a single visual block, e.g. 09:00 + 10:00 + ... +
+ * 14:00 (six 1h rows) is displayed as one 09:00–15:00 block.
+ */
+export function mergeDutySlotsIntoBlocks(
+    slots: TrainerDutySlotResponse[]
+): DutyBlock[] {
+    const sorted = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    const blocks: DutyBlock[] = [];
+    let current: DutyBlock | null = null;
+
+    for (const slot of sorted) {
+        const startTime = normalizeDutyTime(slot.startTime);
+        const endTime = normalizeDutyTime(slot.endTime);
+        const startHour = Number(startTime.slice(0, 2));
+
+        if (current && current.endTime === startTime) {
+            current.endTime = endTime;
+            current.hours += 1;
+            current.slotIds.push(slot.id);
+            continue;
+        }
+
+        current = {
+            key: `${slot.dutyDate}-${startTime}`,
+            dutyDate: slot.dutyDate,
+            startTime,
+            endTime,
+            startHour,
+            hours: 1,
+            slotIds: [slot.id],
+        };
+        blocks.push(current);
+    }
+
+    return blocks;
+}
+
+function normalizeDutyTime(value: string): string {
+    return value.length > 5 ? value.slice(0, 5) : value;
+}
+
+export function groupDutySlotsByDate(
+    slots: TrainerDutySlotResponse[]
+): Record<string, TrainerDutySlotResponse[]> {
+    return slots.reduce<Record<string, TrainerDutySlotResponse[]>>((acc, slot) => {
+        if (!acc[slot.dutyDate]) {
+            acc[slot.dutyDate] = [];
+        }
+        acc[slot.dutyDate].push(slot);
+        return acc;
+    }, {});
+}
+
+/**
+ * Hours (relative to the day) that have a duty slot. Used to compact any
+ * training rendered in the same hour so it doesn't fully cover the duty
+ * banner — it narrows and aligns to the right, leaving the duty label
+ * readable on the left.
+ */
+export function getDutyHourSet(dutySlots: TrainerDutySlotResponse[]): Set<number> {
+    return new Set(
+        dutySlots.map((slot) => Number(normalizeDutyTime(slot.startTime).slice(0, 2)))
+    );
 }

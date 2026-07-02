@@ -6,6 +6,9 @@ import type { TrainingResponse } from "../../training/model/training.types";
 type Props = {
     training: TrainingResponse;
     showTime?: boolean;
+    /** Narrows the card and aligns it to the right, leaving room to the left
+     *  for a duty block label underneath (same hour as a duty slot). */
+    compact?: boolean;
     onClick: (trainingId: number) => void;
 };
 
@@ -16,13 +19,13 @@ function timeRange(training: TrainingResponse): string {
     return start ?? "";
 }
 
-export default function TrainingEvent({ training, showTime = false, onClick }: Props) {
+export default function TrainingEvent({ training, showTime = false, compact = false, onClick }: Props) {
     const cancelled = training.status === "CANCELLED";
 
     return (
         <button
             type="button"
-            className={`fb-event ${cancelled ? "fb-event--cancelled" : ""}`}
+            className={`fb-event ${cancelled ? "fb-event--cancelled" : ""} ${compact ? "fb-event--compact" : ""}`}
             onClick={() => onClick(training.id)}
         >
             <Avatar
