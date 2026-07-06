@@ -17,6 +17,36 @@
     gap: 6px;
 }
 
+.fb-topbar__left {
+    position: absolute;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fb-topbar__back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--fb-ink);
+    cursor: pointer;
+}
+
+.fb-topbar__back:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.fb-topbar__back svg {
+    width: 22px;
+    height: 22px;
+}
+
 /* horizontal padding helper for content */
 .fb-pad {
     padding: 12px 16px;

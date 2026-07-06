@@ -7,6 +7,7 @@ import "./styles/coach-calendar.css";
 import "./styles/fitapp-theme.css";
 import "./styles/fitapp-calendar.css";
 import "./styles/fitapp-mobile.css";
+import "./styles/fitapp-notifications.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>

@@ -33,6 +33,7 @@ import TrainerSalaryReportPage from "../pages/TrainerSalaryReportPage";
 import AnalyticsPage from "../pages/AnalyticsPage";
 import LegalDocumentPage from "../pages/LegalDocumentPage";
 import LegalConsentsPage from "../pages/LegalConsentsPage";
+import NotificationsPage from "../pages/NotificationsPage";
 
 export const router = createBrowserRouter([
     {
@@ -260,6 +261,14 @@ export const router = createBrowserRouter([
                 <AppLayout>
                     <CreateRescheduleRequestPage />
                 </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/notifications",
+        element: (
+            <ProtectedRoute>
+                <NotificationsPage />
             </ProtectedRoute>
         ),
     },

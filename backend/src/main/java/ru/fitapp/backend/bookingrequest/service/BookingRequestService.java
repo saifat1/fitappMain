@@ -10,6 +10,7 @@ import ru.fitapp.backend.bookingrequest.model.BookingRequestStatus;
 import ru.fitapp.backend.bookingrequest.repository.BookingRequestRepository;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.training.repository.TrainingRepository;
@@ -31,6 +32,7 @@ public class BookingRequestService {
     private final TrainerAvailabilityService trainerAvailabilityService;
     private final TrainingRepository trainingRepository;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     public BookingRequestService(
             BookingRequestRepository bookingRequestRepository,
@@ -38,7 +40,8 @@ public class BookingRequestService {
             CurrentUserService currentUserService,
             TrainerAvailabilityService trainerAvailabilityService,
             TrainingRepository trainingRepository,
-            UserService userService
+            UserService userService,
+            NotificationService notificationService
     ) {
         this.bookingRequestRepository = bookingRequestRepository;
         this.trainerClientRepository = trainerClientRepository;
@@ -46,6 +49,7 @@ public class BookingRequestService {
         this.trainerAvailabilityService = trainerAvailabilityService;
         this.trainingRepository = trainingRepository;
         this.userService = userService;
+        this.notificationService = notificationService;
     }
 
     public BookingRequestResponse createForCurrentClient(CreateBookingRequest request) {
@@ -122,7 +126,10 @@ public class BookingRequestService {
                 .setStatus(BookingRequestStatus.PENDING)
                 .setClientComment(normalizeNullableText(request.getClientComment()));
 
-        return toResponse(bookingRequestRepository.save(bookingRequest));
+        BookingRequest saved = bookingRequestRepository.save(bookingRequest);
+        notificationService.notifyBookingRequestCreated(saved);
+
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -184,7 +191,10 @@ public class BookingRequestService {
                 .setTrainerComment(normalizeNullableText(trainerComment))
                 .setReviewedAt(LocalDateTime.now());
 
-        return toResponse(bookingRequestRepository.save(bookingRequest));
+        BookingRequest saved = bookingRequestRepository.save(bookingRequest);
+        notificationService.notifyBookingRequestApproved(saved);
+
+        return toResponse(saved);
     }
 
     public BookingRequestResponse declineForCurrentTrainer(Long requestId, String trainerComment) {
@@ -202,7 +212,10 @@ public class BookingRequestService {
                 .setTrainerComment(normalizeNullableText(trainerComment))
                 .setReviewedAt(LocalDateTime.now());
 
-        return toResponse(bookingRequestRepository.save(bookingRequest));
+        BookingRequest saved = bookingRequestRepository.save(bookingRequest);
+        notificationService.notifyBookingRequestDeclined(saved);
+
+        return toResponse(saved);
     }
 
     public BookingRequestResponse cancelForCurrentClient(Long id) {

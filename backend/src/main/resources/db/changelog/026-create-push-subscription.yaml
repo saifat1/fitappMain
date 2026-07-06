@@ -1,0 +1,66 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-create-push-subscription
+      author: claude
+      changes:
+        - createTable:
+            tableName: push_subscription
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_push_subscription
+                    nullable: false
+
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_push_subscription_user
+                    references: app_user(id)
+
+              - column:
+                  name: endpoint
+                  type: varchar(1000)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: p256dh_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: auth_key
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_agent
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: push_subscription
+            columnNames: user_id, endpoint
+            constraintName: uk_push_subscription_user_endpoint
+
+        - createIndex:
+            tableName: push_subscription
+            indexName: idx_push_subscription_user
+            columns:
+              - column:
+                  name: user_id

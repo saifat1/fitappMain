@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
@@ -17,6 +18,7 @@ import ru.fitapp.backend.analytics.model.AnalyticsEventType;
 import ru.fitapp.backend.analytics.service.AnalyticsService;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -28,14 +30,18 @@ public class TrainingService {
     private final CurrentUserService currentUserService;
     private final TrainerClientService trainerClientService;
     private final AnalyticsService analyticsService;
+    private final NotificationService notificationService;
 
     public TrainingService(TrainingRepository trainingRepository,
                            CurrentUserService currentUserService,
-                           TrainerClientService trainerClientService, AnalyticsService analyticsService) {
+                           TrainerClientService trainerClientService,
+                           AnalyticsService analyticsService,
+                           NotificationService notificationService) {
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.analyticsService = analyticsService;
+        this.notificationService = notificationService;
     }
 
     public TrainingResponse createTraining(CreateTrainingRequest request) {
@@ -147,7 +153,8 @@ public class TrainingService {
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
 
         training.setStatus(TrainingStatus.CANCELLED);
-        trainingRepository.save(training);
+        Training saved = trainingRepository.save(training);
+        notificationService.notifyTrainingCancelledByTrainer(saved);
 
         analyticsService.trackUserAction(
                 trainer,
@@ -156,6 +163,31 @@ public class TrainingService {
                 String.valueOf(training.getId()),
                 null
         );
+    }
+
+    /**
+     * Client-initiated cancellation of their own upcoming training. Mirrors
+     * cancelTraining's trainer-side flow but is reachable only for the
+     * training's own client, and notifies the trainer instead.
+     */
+    public void cancelForCurrentClient(Long trainingId) {
+        Training training = getClientOwnedTrainingEntity(trainingId);
+
+        if (training.getStatus() == TrainingStatus.CANCELLED) {
+            throw new ApiException("TRAINING_ALREADY_CANCELLED", "Тренировка уже отменена");
+        }
+        if (training.getStatus() == TrainingStatus.COMPLETED) {
+            throw new ApiException("TRAINING_ALREADY_COMPLETED", "Нельзя отменить завершённую тренировку");
+        }
+
+        LocalDateTime trainingStart = LocalDateTime.of(training.getTrainingDate(), training.getStartTime());
+        if (!trainingStart.isAfter(LocalDateTime.now())) {
+            throw new ApiException("TRAINING_IN_PAST", "Нельзя отменить прошедшую тренировку");
+        }
+
+        training.setStatus(TrainingStatus.CANCELLED);
+        Training saved = trainingRepository.save(training);
+        notificationService.notifyTrainingCancelledByClient(saved);
     }
 
     @Transactional(readOnly = true)
@@ -288,6 +320,7 @@ public class TrainingService {
 
         training.setStatus(TrainingStatus.COMPLETED);
         Training saved = trainingRepository.save(training);
+        notificationService.notifyTrainingCompleted(saved);
 
         analyticsService.trackUserAction(
                 trainer,

@@ -18,6 +18,7 @@ import ru.fitapp.backend.availability.service.TrainerAvailabilityService;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.invite.entity.Invite;
 import ru.fitapp.backend.invite.service.InviteService;
+import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserStatus;
@@ -36,6 +37,7 @@ public class AuthService {
     private final TrainerAvailabilityService trainerAvailabilityService;
     private final AnalyticsService analyticsService;
     private final UserConsentService userConsentService;
+    private final NotificationService notificationService;
 
     public AuthService(
             UserService userService,
@@ -44,7 +46,9 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
             TrainerAvailabilityService trainerAvailabilityService,
-            AnalyticsService analyticsService, UserConsentService userConsentService
+            AnalyticsService analyticsService,
+            UserConsentService userConsentService,
+            NotificationService notificationService
     ) {
         this.userService = userService;
         this.inviteService = inviteService;
@@ -54,6 +58,7 @@ public class AuthService {
         this.trainerAvailabilityService = trainerAvailabilityService;
         this.analyticsService = analyticsService;
         this.userConsentService = userConsentService;
+        this.notificationService = notificationService;
     }
 
     public AuthResponse login(LoginRequest request, HttpServletRequest httpRequest) {
@@ -99,6 +104,7 @@ public class AuthService {
             );
 
             inviteService.markAsUsed(invite);
+            notificationService.notifyNewClient(invite.getTrainer(), claimedClient);
 
             String token = jwtService.generateToken(claimedClient);
 
@@ -116,6 +122,7 @@ public class AuthService {
 
         trainerClientService.linkTrainerToClient(invite.getTrainer(), client);
         inviteService.markAsUsed(invite);
+        notificationService.notifyNewClient(invite.getTrainer(), client);
 
         String token = jwtService.generateToken(client);
 

@@ -1,0 +1,99 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-create-notification
+      author: claude
+      changes:
+        - createTable:
+            tableName: notification
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_notification
+                    nullable: false
+
+              - column:
+                  name: recipient_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_notification_recipient
+                    references: app_user(id)
+
+              - column:
+                  name: actor_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_notification_actor
+                    references: app_user(id)
+
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: body
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: related_entity_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: related_entity_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: is_read
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: read_at
+                  type: timestamp
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: notification
+            indexName: idx_notification_recipient_created
+            columns:
+              - column:
+                  name: recipient_id
+              - column:
+                  name: created_at
+
+        - createIndex:
+            tableName: notification
+            indexName: idx_notification_recipient_unread
+            columns:
+              - column:
+                  name: recipient_id
+              - column:
+                  name: is_read

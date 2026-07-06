@@ -19,6 +19,10 @@ export const trainingApi = {
     cancelTraining: (id: number) =>
         apiClient.patch(`/trainings/${id}/cancel`).then((r) => r.data),
 
+    /** Client-only: cancel a training that belongs to the current client. */
+    cancelMyTraining: (id: number) =>
+        apiClient.post(`/client/trainings/${id}/cancel`).then((r) => r.data),
+
     restoreTrainingToPlanned: (id: number) =>
         apiClient.patch(`/trainings/${id}/restore-planned`).then((r) => r.data),
 };

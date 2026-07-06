@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/model/AuthContext";
 import MobileBottomNav from "../shared/ui/MobileBottomNav";
+import NotificationBell from "../features/notification/ui/NotificationBell";
 
 type Props = {
     children: ReactNode;
@@ -52,6 +53,7 @@ function getPageTitle(pathname: string, isTrainer: boolean): string {
     if (pathname === "/trainer/booking-requests") return "Запросы на запись";
     if (pathname === "/analytics") return "Аналитика";
     if (pathname === "/client/booking") return "Запись";
+    if (pathname === "/notifications") return "Уведомления";
     if (pathname.startsWith("/client-history")) return "История тренировок";
 
     return "FitApp";
@@ -216,6 +218,8 @@ export default function AppLayout({ children }: Props) {
                     </div>
 
                     <div className="topbar-actions">
+                        <NotificationBell />
+
                         {currentUser && (
                             <button
                                 type="button"

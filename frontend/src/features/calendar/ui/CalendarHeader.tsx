@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Avatar from "../../../shared/ui/Avatar";
+import NotificationBell from "../../notification/ui/NotificationBell";
 
 export type CalendarMode = "planning" | "schedule";
 
@@ -47,14 +48,18 @@ export default function CalendarHeader({
                 </span>
             </button>
 
-            <button
-                type="button"
-                className="fb-cal-header__avatar"
-                onClick={onAvatarClick}
-                aria-label="Профиль"
-            >
-                <Avatar initials={avatarInitials} color={avatarColor} size="md" />
-            </button>
+            <div className="fb-cal-header__actions">
+                <NotificationBell />
+
+                <button
+                    type="button"
+                    className="fb-cal-header__avatar"
+                    onClick={onAvatarClick}
+                    aria-label="Профиль"
+                >
+                    <Avatar initials={avatarInitials} color={avatarColor} size="md" />
+                </button>
+            </div>
 
             {open && (
                 <>

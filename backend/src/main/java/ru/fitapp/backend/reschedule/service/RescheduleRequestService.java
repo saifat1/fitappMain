@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.reschedule.dto.CreateRescheduleRequestRequest;
 import ru.fitapp.backend.reschedule.dto.ProcessRescheduleRequestRequest;
 import ru.fitapp.backend.reschedule.dto.RescheduleRequestResponse;
@@ -29,15 +30,18 @@ public class RescheduleRequestService {
     private final TrainingService trainingService;
     private final TrainingRepository trainingRepository;
     private final CurrentUserService currentUserService;
+    private final NotificationService notificationService;
 
     public RescheduleRequestService(RescheduleRequestRepository rescheduleRequestRepository,
                                     TrainingService trainingService,
                                     TrainingRepository trainingRepository,
-                                    CurrentUserService currentUserService) {
+                                    CurrentUserService currentUserService,
+                                    NotificationService notificationService) {
         this.rescheduleRequestRepository = rescheduleRequestRepository;
         this.trainingService = trainingService;
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
+        this.notificationService = notificationService;
     }
 
     public RescheduleRequestResponse createRequest(Long trainingId,
@@ -79,6 +83,8 @@ public class RescheduleRequestService {
                 .setStatus(RescheduleRequestStatus.PENDING);
 
         RescheduleRequest saved = rescheduleRequestRepository.save(entity);
+        notificationService.notifyRescheduleRequestCreated(saved);
+
         return mapToResponse(saved);
     }
 
@@ -143,6 +149,13 @@ public class RescheduleRequestService {
         }
 
         RescheduleRequest saved = rescheduleRequestRepository.save(entity);
+
+        if (decision == RescheduleRequestStatus.APPROVED) {
+            notificationService.notifyRescheduleRequestApproved(saved);
+        } else {
+            notificationService.notifyRescheduleRequestRejected(saved);
+        }
+
         return mapToResponse(saved);
     }
 

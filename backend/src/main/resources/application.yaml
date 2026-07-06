@@ -7,6 +7,12 @@ app:
   mail:
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@fitapp.local}
+  push:
+    enabled: ${PUSH_ENABLED:false}
+    vapid:
+      public-key: ${PUSH_VAPID_PUBLIC_KEY:}
+      private-key: ${PUSH_VAPID_PRIVATE_KEY:}
+      subject: ${PUSH_VAPID_SUBJECT:mailto:no-reply@fitapp.com.ru}
   password-reset:
     expiration-minutes: ${PASSWORD_RESET_EXP_MIN:60}
 spring:

@@ -63,9 +63,12 @@
     transform: rotate(180deg);
 }
 
-.fb-cal-header__avatar {
+.fb-cal-header__actions {
     position: absolute;
     right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* avatar circle (initials) */
