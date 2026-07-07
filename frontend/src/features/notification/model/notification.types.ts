@@ -10,7 +10,8 @@ export type NotificationTypeCode =
     | "RESCHEDULE_REQUEST_REJECTED"
     | "TRAINING_CANCELLED_BY_CLIENT"
     | "TRAINING_CANCELLED_BY_TRAINER"
-    | "TRAINING_COMPLETED";
+    | "TRAINING_COMPLETED"
+    | "TRAINING_CONTRACT_EXCEEDED";
 
 export type NotificationResponse = {
     id: number;

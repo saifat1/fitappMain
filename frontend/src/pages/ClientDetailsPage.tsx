@@ -4,6 +4,7 @@ import axios from "axios";
 
 import Avatar from "../shared/ui/Avatar";
 import FbTextField from "../shared/ui/FbTextField";
+import ClientContractsSection from "../features/contract/ui/ClientContractsSection";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
 import {
@@ -189,9 +190,35 @@ export default function ClientDetailsPage() {
                             <div className="fb-client-hero__name">{clientName(client)}</div>
                             <div className="fb-client-hero__email">{client.email}</div>
                             {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
+                            {client.hasContracts && (
+                                <span className={`fb-pill ${client.contractExhausted ? "fb-pill--danger" : "fb-pill--ok"}`}>
+                                    Осталось тренировок: {client.totalRemainingTrainings}
+                                </span>
+                            )}
                         </div>
 
                         {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
+
+                        <ClientContractsSection clientId={id} onBalanceChange={load} />
+
+                        <div className="fb-list" style={{ marginTop: 12 }}>
+                            <button
+                                type="button"
+                                className="fb-row fb-row--button"
+                                onClick={() => navigate(`/trainer/clients/${id}/questionnaire`)}
+                            >
+                                <span className="fb-row__main"><span className="fb-row__title">Анкета</span></span>
+                                <span className="fb-row__chevron">›</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="fb-row fb-row--button"
+                                onClick={() => navigate(`/trainer/clients/${id}/measurements`)}
+                            >
+                                <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
+                                <span className="fb-row__chevron">›</span>
+                            </button>
+                        </div>
 
                         {isActive ? (
                             <>

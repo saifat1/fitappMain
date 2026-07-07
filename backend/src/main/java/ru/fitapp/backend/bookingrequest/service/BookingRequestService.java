@@ -10,6 +10,7 @@ import ru.fitapp.backend.bookingrequest.model.BookingRequestStatus;
 import ru.fitapp.backend.bookingrequest.repository.BookingRequestRepository;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
@@ -33,6 +34,7 @@ public class BookingRequestService {
     private final TrainingRepository trainingRepository;
     private final UserService userService;
     private final NotificationService notificationService;
+    private final ClientContractService clientContractService;
 
     public BookingRequestService(
             BookingRequestRepository bookingRequestRepository,
@@ -41,7 +43,8 @@ public class BookingRequestService {
             TrainerAvailabilityService trainerAvailabilityService,
             TrainingRepository trainingRepository,
             UserService userService,
-            NotificationService notificationService
+            NotificationService notificationService,
+            ClientContractService clientContractService
     ) {
         this.bookingRequestRepository = bookingRequestRepository;
         this.trainerClientRepository = trainerClientRepository;
@@ -50,6 +53,7 @@ public class BookingRequestService {
         this.trainingRepository = trainingRepository;
         this.userService = userService;
         this.notificationService = notificationService;
+        this.clientContractService = clientContractService;
     }
 
     public BookingRequestResponse createForCurrentClient(CreateBookingRequest request) {
@@ -63,6 +67,13 @@ public class BookingRequestService {
         boolean linked = trainerClientRepository.existsByTrainerIdAndClientId(trainer.getId(), client.getId());
         if (!linked) {
             throw new ApiException("ACCESS_DENIED", "Клиент не привязан к этому тренеру");
+        }
+
+        if (clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
+            throw new ApiException(
+                    "CONTRACT_EXHAUSTED",
+                    "У вас закончились оплаченные тренировки по договору. Обратитесь к тренеру."
+            );
         }
 
         if (request.getRequestedStart() == null || request.getRequestedEnd() == null) {
@@ -185,6 +196,10 @@ public class BookingRequestService {
                 .setClientNote(bookingRequest.getClientComment());
 
         trainingRepository.save(training);
+
+        if (clientContractService.getSummary(bookingRequest.getClient().getId(), trainer.getId()).isExhausted()) {
+            notificationService.notifyTrainingContractExceeded(training);
+        }
 
         bookingRequest
                 .setStatus(BookingRequestStatus.APPROVED)

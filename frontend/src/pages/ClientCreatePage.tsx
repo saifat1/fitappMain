@@ -20,6 +20,8 @@ export default function ClientCreatePage() {
     const [email, setEmail] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [contractNumber, setContractNumber] = useState("");
+    const [contractTotalTrainings, setContractTotalTrainings] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -35,6 +37,10 @@ export default function ClientCreatePage() {
                 email: email.trim() || undefined,
                 firstName: firstName.trim() || undefined,
                 lastName: lastName.trim() || undefined,
+                initialContractNumber: contractNumber.trim() || undefined,
+                initialContractTotalTrainings: contractTotalTrainings
+                    ? Number(contractTotalTrainings)
+                    : undefined,
             });
             const createdInvite = await trainerApi.createInviteForClient(client.id);
             setInvite(createdInvite);
@@ -116,6 +122,20 @@ export default function ClientCreatePage() {
                 />
                 <FbTextField id="cl-first" label="Имя, опционально" value={firstName} onChange={setFirstName} />
                 <FbTextField id="cl-last" label="Фамилия, опционально" value={lastName} onChange={setLastName} />
+
+                <FbTextField
+                    id="cl-contract-number"
+                    label="Номер договора, опционально"
+                    value={contractNumber}
+                    onChange={setContractNumber}
+                />
+                <FbTextField
+                    id="cl-contract-total"
+                    label="Кол-во оплаченных тренировок, опционально"
+                    type="number"
+                    value={contractTotalTrainings}
+                    onChange={setContractTotalTrainings}
+                />
 
                 <button
                     type="button"

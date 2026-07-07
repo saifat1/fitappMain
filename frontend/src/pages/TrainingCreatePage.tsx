@@ -142,6 +142,15 @@ export default function TrainingCreatePage() {
                     </span>
                 </button>
 
+                {selectedClient && selectedClient.contractExhausted ? (
+                    <div className="fb-contracts__warning">
+                        С учётом уже запланированных тренировок у клиента не остаётся оплаченных
+                        занятий по договору. Создать тренировку можно — если к моменту её
+                        завершения баланс не изменится, она будет отмечена как проведённая не в
+                        рамках договора.
+                    </div>
+                ) : null}
+
                 <FbTextField id="tr-date" label="Дата" type="date" value={date} onChange={setDate} />
                 <div className="fb-field-hint">{formatDaySubtitle(date)}</div>
 

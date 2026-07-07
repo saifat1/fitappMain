@@ -16,6 +16,9 @@ public class TrainerClientResponse {
     private LocalDateTime claimedAt;
     private String contractNumber;
     private LocalDate contractEndDate;
+    private boolean hasContracts;
+    private int totalRemainingTrainings;
+    private boolean contractExhausted;
 
     public Long getId() {
         return id;
@@ -113,6 +116,33 @@ public class TrainerClientResponse {
 
     public TrainerClientResponse setContractEndDate(LocalDate contractEndDate) {
         this.contractEndDate = contractEndDate;
+        return this;
+    }
+
+    public boolean isHasContracts() {
+        return hasContracts;
+    }
+
+    public TrainerClientResponse setHasContracts(boolean hasContracts) {
+        this.hasContracts = hasContracts;
+        return this;
+    }
+
+    public int getTotalRemainingTrainings() {
+        return totalRemainingTrainings;
+    }
+
+    public TrainerClientResponse setTotalRemainingTrainings(int totalRemainingTrainings) {
+        this.totalRemainingTrainings = totalRemainingTrainings;
+        return this;
+    }
+
+    public boolean isContractExhausted() {
+        return contractExhausted;
+    }
+
+    public TrainerClientResponse setContractExhausted(boolean contractExhausted) {
+        this.contractExhausted = contractExhausted;
         return this;
     }
 }

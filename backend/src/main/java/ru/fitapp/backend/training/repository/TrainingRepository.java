@@ -73,4 +73,12 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             LocalDate to
     );
 
+    /**
+     * Every training that already "counts" against a contract, whether it
+     * has actually consumed a slot yet (COMPLETED) or will once it happens
+     * (PLANNED). Used to warn about overbooking before the trainings are
+     * even conducted, not just after the fact.
+     */
+    long countByTrainerIdAndClientIdAndStatusIn(Long trainerId, Long clientId, List<TrainingStatus> statuses);
+
 }

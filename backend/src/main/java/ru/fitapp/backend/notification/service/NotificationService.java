@@ -173,6 +173,26 @@ public class NotificationService {
         );
     }
 
+    /**
+     * The trainer scheduled (or approved) a training for a client whose
+     * contract can no longer cover it, once already-planned trainings are
+     * counted too. Nothing is blocked — the trainer just gets a heads-up,
+     * same as if they'd seen the warning banner on the create-training
+     * screen, but this reaches them even when that screen isn't the one
+     * that created the training (e.g. approving a client's own request).
+     */
+    public void notifyTrainingContractExceeded(Training training) {
+        create(
+                training.getTrainer(),
+                training.getClient(),
+                NotificationType.TRAINING_CONTRACT_EXCEEDED,
+                "Тренировка не в рамках договора",
+                trainingSlotBody(training.getTrainingDate(), training.getStartTime()),
+                "TRAINING",
+                training.getId()
+        );
+    }
+
     // ---------- New client ----------
 
     public void notifyNewClient(AppUser trainer, AppUser client) {

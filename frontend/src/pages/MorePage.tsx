@@ -43,6 +43,56 @@ export default function MorePage() {
                             </div>
                         </article>
                     )}
+
+                    {!isTrainer && (
+                        <>
+                            <article className="exercise-compact-card is-expanded">
+                                <div className="exercise-compact-row">
+                                    <div className="exercise-compact-order">#</div>
+
+                                    <div className="exercise-compact-main">
+                                        <div className="exercise-compact-top">
+                                            <div className="exercise-compact-title-block">
+                                                <div className="exercise-compact-title">Моя анкета</div>
+                                                <div className="exercise-compact-summary">
+                                                    Личные данные, цели и история здоровья, заполненные тренером
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="exercise-compact-actions">
+                                        <Link to="/client/questionnaire" className="dashboard-btn dashboard-btn-secondary">
+                                            Открыть
+                                        </Link>
+                                    </div>
+                                </div>
+                            </article>
+
+                            <article className="exercise-compact-card is-expanded">
+                                <div className="exercise-compact-row">
+                                    <div className="exercise-compact-order">#</div>
+
+                                    <div className="exercise-compact-main">
+                                        <div className="exercise-compact-top">
+                                            <div className="exercise-compact-title-block">
+                                                <div className="exercise-compact-title">Мои измерения</div>
+                                                <div className="exercise-compact-summary">
+                                                    История замеров с сравнением по каждому показателю
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="exercise-compact-actions">
+                                        <Link to="/client/measurements" className="dashboard-btn dashboard-btn-secondary">
+                                            Открыть
+                                        </Link>
+                                    </div>
+                                </div>
+                            </article>
+                        </>
+                    )}
                 </div>
             </section>
         </div>

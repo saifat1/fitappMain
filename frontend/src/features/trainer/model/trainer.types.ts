@@ -10,6 +10,9 @@ export type TrainerClientResponse = {
     claimedAt: string | null;
     contractNumber: string | null;
     contractEndDate: string | null;
+    hasContracts: boolean;
+    totalRemainingTrainings: number;
+    contractExhausted: boolean;
 };
 
 export type UpdateTrainerClientRequest = {
@@ -23,6 +26,8 @@ export type CreateManualTrainerClientRequest = {
     email?: string;
     firstName?: string;
     lastName?: string;
+    initialContractNumber?: string;
+    initialContractTotalTrainings?: number;
 };
 
 export type CreateTrainerClientInviteRequest = {

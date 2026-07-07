@@ -164,6 +164,7 @@
 }
 
 .fb-pill--ok { background: rgba(52, 168, 83, 0.14); color: var(--fb-green-deep); }
+.fb-pill--danger { background: rgba(224, 57, 43, 0.12); color: #b1291d; }
 .fb-pill--muted { background: var(--fb-surface-2); color: var(--fb-muted); }
 
 /* category chips (Все / Грудь / Спина …) */
@@ -189,6 +190,113 @@
 }
 
 .fb-chip--active { background: var(--fb-green); color: #fff; }
+
+.fb-field-group {
+    padding: 10px 16px 4px;
+}
+
+.fb-field-group__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fb-ink);
+    margin-bottom: 8px;
+}
+
+.fb-field-group .fb-chips--wrap {
+    padding: 0;
+}
+
+.fb-measurement-sheet {
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+/* ---------- Measurement card (замер) ---------- */
+.fb-measurement-card {
+    background: var(--fb-surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+}
+
+.fb-measurement-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.fb-measurement-card__date {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--fb-ink);
+    text-transform: capitalize;
+}
+
+.fb-measurement-card__actions {
+    display: flex;
+    gap: 12px;
+}
+
+.fb-measurement-card__link {
+    border: none;
+    background: transparent;
+    color: var(--fb-green-deep);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+}
+
+.fb-measurement-card__link--danger { color: #b1291d; }
+
+.fb-measurement-card__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fb-measurement-card__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-measurement-card__row:last-child { border-bottom: none; }
+
+.fb-measurement-card__label {
+    font-size: 14px;
+    color: var(--fb-muted);
+}
+
+.fb-measurement-card__value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fb-ink);
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.fb-measurement-card__delta {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--fb-muted);
+}
+
+.fb-measurement-card__delta--up,
+.fb-measurement-card__delta--down { color: var(--fb-muted); }
+
+.fb-measurement-card__notes {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--fb-muted);
+    font-style: italic;
+}
+
 
 /* segmented control (Из шаблона / Новое) */
 .fb-segment {
@@ -431,6 +539,49 @@
 }
 
 .fb-section-title--flush { padding-left: 0; padding-right: 0; }
+
+/* ---------- Client contracts (договор) section ---------- */
+.fb-contracts {
+    margin-top: 8px;
+}
+
+.fb-contracts__summary {
+    font-size: 14px;
+    color: var(--fb-ink);
+    padding: 4px 0 10px;
+}
+
+.fb-contracts__row {
+    align-items: center;
+    gap: 10px;
+}
+
+.fb-contracts__add-btn {
+    flex: none;
+    border: 1px solid var(--fb-line);
+    background: var(--fb-surface);
+    color: var(--fb-green-deep);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.fb-contracts__add-btn:hover {
+    background: rgba(52, 168, 83, 0.08);
+}
+
+.fb-contracts__warning {
+    display: block;
+    margin: 4px 0 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(224, 57, 43, 0.08);
+    border: 1px solid rgba(224, 57, 43, 0.24);
+    color: #b1291d;
+    font-size: 13px;
+}
 
 .fb-select--static { opacity: 0.85; }
 

@@ -3,6 +3,9 @@ package ru.fitapp.backend.trainer.client.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.contract.dto.ClientContractSummary;
+import ru.fitapp.backend.contract.dto.CreateClientContractRequest;
+import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.trainer.client.dto.CreateManualTrainerClientRequest;
 import ru.fitapp.backend.trainer.client.dto.CreateTrainerClientInviteRequest;
 import ru.fitapp.backend.trainer.client.dto.TrainerClientResponse;
@@ -24,16 +27,20 @@ public class TrainerClientFacadeService {
     private final TrainerClientService trainerClientService;
     private final TrainerInviteService trainerInviteService;
     private final TrainerClientHistoryService trainerClientHistoryService;
+    private final ClientContractService clientContractService;
 
     public TrainerClientFacadeService(
             CurrentUserService currentUserService,
             TrainerClientService trainerClientService,
-            TrainerInviteService trainerInviteService, TrainerClientHistoryService trainerClientHistoryService
+            TrainerInviteService trainerInviteService,
+            TrainerClientHistoryService trainerClientHistoryService,
+            ClientContractService clientContractService
     ) {
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.trainerInviteService = trainerInviteService;
         this.trainerClientHistoryService = trainerClientHistoryService;
+        this.clientContractService = clientContractService;
     }
 
     @Transactional(readOnly = true)
@@ -42,7 +49,7 @@ public class TrainerClientFacadeService {
 
         return trainerClientService.getClientsOfTrainer(trainer.getId())
                 .stream()
-                .map(this::mapToResponse)
+                .map(client -> mapToResponse(client, trainer.getId()))
                 .toList();
     }
 
@@ -56,7 +63,7 @@ public class TrainerClientFacadeService {
     public TrainerClientResponse getCurrentTrainerClient(Long clientId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
-        return mapToResponse(client);
+        return mapToResponse(client, trainer.getId());
     }
 
     public TrainerClientResponse createCurrentTrainerClient(CreateManualTrainerClientRequest request) {
@@ -88,7 +95,17 @@ public class TrainerClientFacadeService {
                 lastName.isEmpty() ? null : lastName
         );
 
-        return mapToResponse(created);
+        if (request.getInitialContractTotalTrainings() != null && request.getInitialContractTotalTrainings() > 0) {
+            clientContractService.createContract(
+                    trainer,
+                    created,
+                    new CreateClientContractRequest()
+                            .setContractNumber(request.getInitialContractNumber())
+                            .setTotalTrainings(request.getInitialContractTotalTrainings())
+            );
+        }
+
+        return mapToResponse(created, trainer.getId());
     }
 
     public TrainerClientResponse updateCurrentTrainerClient(Long clientId, UpdateTrainerClientRequest request) {
@@ -103,7 +120,7 @@ public class TrainerClientFacadeService {
                 request.getContractEndDate()
         );
 
-        return mapToResponse(updated);
+        return mapToResponse(updated, trainer.getId());
     }
 
     public InviteResponse createInviteForCurrentTrainerClient(
@@ -120,7 +137,9 @@ public class TrainerClientFacadeService {
         trainerClientService.deactivateClientOfTrainer(trainer.getId(), clientId);
     }
 
-    private TrainerClientResponse mapToResponse(AppUser client) {
+    private TrainerClientResponse mapToResponse(AppUser client, Long trainerId) {
+        ClientContractSummary summary = clientContractService.getSummary(client.getId(), trainerId);
+
         return new TrainerClientResponse()
                 .setId(client.getId())
                 .setEmail(client.getEmail())
@@ -132,6 +151,9 @@ public class TrainerClientFacadeService {
                 .setClaimedAt(client.getClaimedAt())
                 .setCreatedAt(client.getCreatedAt())
                 .setContractNumber(client.getContractNumber())
-                .setContractEndDate(client.getContractEndDate());
+                .setContractEndDate(client.getContractEndDate())
+                .setHasContracts(summary.isHasContracts())
+                .setTotalRemainingTrainings(summary.getTotalRemainingTrainings())
+                .setContractExhausted(summary.isExhausted());
     }
 }

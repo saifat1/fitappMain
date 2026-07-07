@@ -1,0 +1,115 @@
+databaseChangeLog:
+  - changeSet:
+      id: 030-create-client-measurement
+      author: claude
+      changes:
+        - createTable:
+            tableName: client_measurement
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_client_measurement
+                    nullable: false
+
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_measurement_client
+                    references: app_user(id)
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_measurement_trainer
+                    references: app_user(id)
+
+              - column:
+                  name: measured_at
+                  type: date
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: weight_kg
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: neck_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: chest_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: waist_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: hips_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: biceps_right_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: biceps_left_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: forearm_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: thigh_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: calf_right_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: calf_left_cm
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: notes
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: client_measurement
+            indexName: idx_client_measurement_client_date
+            columns:
+              - column:
+                  name: client_id
+              - column:
+                  name: measured_at

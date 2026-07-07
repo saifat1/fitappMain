@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 028-add-contract-to-training
+      author: claude
+      changes:
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: contract_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_training_contract
+                    references: client_contract(id)
+
+        - createIndex:
+            tableName: training
+            indexName: idx_training_contract
+            columns:
+              - column:
+                  name: contract_id

@@ -9,6 +9,10 @@ import NotFoundPage from "../pages/NotFoundPage";
 import ClientsPage from "../pages/ClientsPage";
 import ClientCreatePage from "../pages/ClientCreatePage";
 import ClientDetailsPage from "../pages/ClientDetailsPage";
+import ClientQuestionnairePage from "../pages/ClientQuestionnairePage";
+import ClientMeasurementsPage from "../pages/ClientMeasurementsPage";
+import ClientMyQuestionnairePage from "../pages/ClientMyQuestionnairePage";
+import ClientMyMeasurementsPage from "../pages/ClientMyMeasurementsPage";
 import InvitesPage from "../pages/InvitesPage";
 import TrainingsPage from "../pages/TrainingsPage";
 import TrainingCreatePage from "../pages/TrainingCreatePage";
@@ -195,6 +199,22 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: "/trainer/clients/:clientId/questionnaire",
+        element: (
+            <TrainerRoute>
+                <ClientQuestionnairePage />
+            </TrainerRoute>
+        ),
+    },
+    {
+        path: "/trainer/clients/:clientId/measurements",
+        element: (
+            <TrainerRoute>
+                <ClientMeasurementsPage />
+            </TrainerRoute>
+        ),
+    },
+    {
         path: "/trainer/invites",
         element: (
             <TrainerRoute>
@@ -289,6 +309,22 @@ export const router = createBrowserRouter([
                 <AppLayout>
                     <ClientBookingPage />
                 </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/questionnaire",
+        element: (
+            <ProtectedRoute>
+                <ClientMyQuestionnairePage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/measurements",
+        element: (
+            <ProtectedRoute>
+                <ClientMyMeasurementsPage />
             </ProtectedRoute>
         ),
     },

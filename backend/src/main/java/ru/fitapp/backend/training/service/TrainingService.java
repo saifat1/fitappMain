@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
@@ -31,17 +32,20 @@ public class TrainingService {
     private final TrainerClientService trainerClientService;
     private final AnalyticsService analyticsService;
     private final NotificationService notificationService;
+    private final ClientContractService clientContractService;
 
     public TrainingService(TrainingRepository trainingRepository,
                            CurrentUserService currentUserService,
                            TrainerClientService trainerClientService,
                            AnalyticsService analyticsService,
-                           NotificationService notificationService) {
+                           NotificationService notificationService,
+                           ClientContractService clientContractService) {
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.analyticsService = analyticsService;
         this.notificationService = notificationService;
+        this.clientContractService = clientContractService;
     }
 
     public TrainingResponse createTraining(CreateTrainingRequest request) {
@@ -60,6 +64,10 @@ public class TrainingService {
                 .setTrainerNote(normalizeNote(request.getTrainerNote()));
 
         Training saved = trainingRepository.save(training);
+
+        if (clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
+            notificationService.notifyTrainingContractExceeded(saved);
+        }
 
         analyticsService.trackUserAction(
                 trainer,
@@ -151,6 +159,11 @@ public class TrainingService {
     public void cancelTraining(Long trainingId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+
+        if (training.getContract() != null) {
+            clientContractService.refundOne(training.getContract());
+            training.setContract(null);
+        }
 
         training.setStatus(TrainingStatus.CANCELLED);
         Training saved = trainingRepository.save(training);
@@ -266,6 +279,8 @@ public class TrainingService {
                 .setStatus(training.getStatus().name())
                 .setTrainerNote(training.getTrainerNote())
                 .setClientNote(training.getClientNote())
+                .setContractId(training.getContract() != null ? training.getContract().getId() : null)
+                .setContractNumber(training.getContract() != null ? training.getContract().getContractNumber() : null)
                 .setCreatedAt(training.getCreatedAt())
                 .setUpdatedAt(training.getUpdatedAt());
     }
@@ -319,6 +334,10 @@ public class TrainingService {
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
 
         training.setStatus(TrainingStatus.COMPLETED);
+        clientContractService
+                .consumeOneForCompletedTraining(training.getClient(), trainer)
+                .ifPresent(training::setContract);
+
         Training saved = trainingRepository.save(training);
         notificationService.notifyTrainingCompleted(saved);
 
@@ -342,6 +361,11 @@ public class TrainingService {
                     "TRAINING_STATUS_INVALID_FOR_RESTORE",
                     "Вернуть в запланированные можно только завершённую тренировку"
             );
+        }
+
+        if (training.getContract() != null) {
+            clientContractService.refundOne(training.getContract());
+            training.setContract(null);
         }
 
         training.setStatus(TrainingStatus.PLANNED);

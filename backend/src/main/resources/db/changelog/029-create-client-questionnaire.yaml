@@ -1,0 +1,137 @@
+databaseChangeLog:
+  - changeSet:
+      id: 029-create-client-questionnaire
+      author: claude
+      changes:
+        - createTable:
+            tableName: client_questionnaire
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_client_questionnaire
+                    nullable: false
+
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_client_questionnaire_client
+                    foreignKeyName: fk_client_questionnaire_client
+                    references: app_user(id)
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_questionnaire_trainer
+                    references: app_user(id)
+
+              - column:
+                  name: height_cm
+                  type: int
+                  constraints:
+                    nullable: true
+              - column:
+                  name: weight_kg
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: clothing_size
+                  type: varchar(50)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: body_fat_percent
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: health_conditions
+                  type: varchar(1000)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: therapy_type
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: training_experience
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: trainings_per_week
+                  type: int
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: fitness_goals
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: fitness_goal_other
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: desired_weight_kg
+                  type: decimal(5,2)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: priority_body_parts
+                  type: varchar(500)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: convenient_days
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: convenient_time_of_day
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: convenient_time_note
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: nutrition_recommendations
+                  type: varchar(2000)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: instructor_notes
+                  type: varchar(2000)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false

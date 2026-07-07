@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-create-client-contract
+      author: claude
+      changes:
+        - createTable:
+            tableName: client_contract
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_client_contract
+                    nullable: false
+
+              - column:
+                  name: client_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_contract_client
+                    references: app_user(id)
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_client_contract_trainer
+                    references: app_user(id)
+
+              - column:
+                  name: contract_number
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+
+              - column:
+                  name: total_trainings
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: remaining_trainings
+                  type: int
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: client_contract
+            indexName: idx_client_contract_client_trainer
+            columns:
+              - column:
+                  name: client_id
+              - column:
+                  name: trainer_id

@@ -1,6 +1,7 @@
 package ru.fitapp.backend.training.entity;
 
 import jakarta.persistence.*;
+import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.user.entity.AppUser;
 
@@ -51,6 +52,20 @@ public class Training {
 
     @Column(name = "client_note", length = 2000)
     private String clientNote;
+
+    /**
+     * Set only when the training is completed and a contract with remaining
+     * balance is found to draw from — see
+     * ClientContractService.consumeOneForCompletedTraining. Null means this
+     * training was (or will be) conducted outside any paid contract, which
+     * reports can filter on.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "contract_id",
+            foreignKey = @ForeignKey(name = "fk_training_contract")
+    )
+    private ClientContract contract;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -139,6 +154,15 @@ public class Training {
 
     public Training setClientNote(String clientNote) {
         this.clientNote = clientNote;
+        return this;
+    }
+
+    public ClientContract getContract() {
+        return contract;
+    }
+
+    public Training setContract(ClientContract contract) {
+        this.contract = contract;
         return this;
     }
 

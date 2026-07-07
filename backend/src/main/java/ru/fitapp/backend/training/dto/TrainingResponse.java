@@ -18,6 +18,8 @@ public class TrainingResponse {
     private String status;
     private String trainerNote;
     private String clientNote;
+    private Long contractId;
+    private String contractNumber;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -126,6 +128,24 @@ public class TrainingResponse {
 
     public TrainingResponse setClientNote(String clientNote) {
         this.clientNote = clientNote;
+        return this;
+    }
+
+    public Long getContractId() {
+        return contractId;
+    }
+
+    public TrainingResponse setContractId(Long contractId) {
+        this.contractId = contractId;
+        return this;
+    }
+
+    public String getContractNumber() {
+        return contractNumber;
+    }
+
+    public TrainingResponse setContractNumber(String contractNumber) {
+        this.contractNumber = contractNumber;
         return this;
     }
 
