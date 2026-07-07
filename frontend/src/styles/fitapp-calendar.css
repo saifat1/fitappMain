@@ -616,7 +616,7 @@
     border: 1px solid var(--fb-line);
     background: var(--fb-surface-2);
     color: var(--fb-ink);
-    font-size: 14px;
+    font-size: 16px; /* >=16px avoids iOS zoom-on-focus */
 }
 
 .fb-add-sheet__preview {
