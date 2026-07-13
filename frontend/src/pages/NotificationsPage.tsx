@@ -77,6 +77,13 @@ export default function NotificationsPage() {
             return;
         }
 
+        if (notification.type === "CONTRACT_EXPIRING") {
+            // relatedEntityId is the contract itself — actorId is the client
+            // it belongs to, which is what's actually navigable.
+            navigate(notification.actorId ? `/trainer/clients/${notification.actorId}` : "/trainer/clients");
+            return;
+        }
+
         setActiveNotification(notification);
     };
 

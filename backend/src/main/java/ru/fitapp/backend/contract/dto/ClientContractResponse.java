@@ -1,5 +1,6 @@
 package ru.fitapp.backend.contract.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ClientContractResponse {
@@ -9,6 +10,7 @@ public class ClientContractResponse {
     private int totalTrainings;
     private int remainingTrainings;
     private int usedTrainings;
+    private LocalDate endDate;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -53,6 +55,15 @@ public class ClientContractResponse {
 
     public ClientContractResponse setUsedTrainings(int usedTrainings) {
         this.usedTrainings = usedTrainings;
+        return this;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public ClientContractResponse setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
         return this;
     }
 

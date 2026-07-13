@@ -12,6 +12,7 @@ export type TrainerClientResponse = {
     contractEndDate: string | null;
     hasContracts: boolean;
     totalRemainingTrainings: number;
+    totalGrantedTrainings: number;
     contractExhausted: boolean;
 };
 

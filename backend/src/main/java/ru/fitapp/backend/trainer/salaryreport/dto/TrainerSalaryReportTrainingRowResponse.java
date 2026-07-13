@@ -14,6 +14,8 @@ public class TrainerSalaryReportTrainingRowResponse {
     private String trainingTypeLabel;
     private String contractNumber;
     private LocalDate contractEndDate;
+    private Integer contractTotalTrainings;
+    private Integer contractRemainingTrainings;
 
     public Long getTrainingId() {
         return trainingId;
@@ -93,6 +95,24 @@ public class TrainerSalaryReportTrainingRowResponse {
 
     public TrainerSalaryReportTrainingRowResponse setContractEndDate(LocalDate contractEndDate) {
         this.contractEndDate = contractEndDate;
+        return this;
+    }
+
+    public Integer getContractTotalTrainings() {
+        return contractTotalTrainings;
+    }
+
+    public TrainerSalaryReportTrainingRowResponse setContractTotalTrainings(Integer contractTotalTrainings) {
+        this.contractTotalTrainings = contractTotalTrainings;
+        return this;
+    }
+
+    public Integer getContractRemainingTrainings() {
+        return contractRemainingTrainings;
+    }
+
+    public TrainerSalaryReportTrainingRowResponse setContractRemainingTrainings(Integer contractRemainingTrainings) {
+        this.contractRemainingTrainings = contractRemainingTrainings;
         return this;
     }
 }

@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 031-add-training-type
+      author: claude
+      changes:
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: training_type
+                  type: varchar(16)
+                  defaultValue: PERSONAL
+                  constraints:
+                    nullable: false
+              - column:
+                  name: focus_muscle_groups
+                  type: varchar(255)
+                  constraints:
+                    nullable: true

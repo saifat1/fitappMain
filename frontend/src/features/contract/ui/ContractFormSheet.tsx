@@ -4,7 +4,7 @@ type Props = {
     mode: "create" | "add-trainings";
     isSaving: boolean;
     errorMessage?: string;
-    onSubmitCreate?: (contractNumber: string, totalTrainings: number) => void;
+    onSubmitCreate?: (contractNumber: string, totalTrainings: number, endDate: string) => void;
     onSubmitAddTrainings?: (count: number) => void;
     onClose: () => void;
 };
@@ -19,13 +19,14 @@ export default function ContractFormSheet({
 }: Props) {
     const [contractNumber, setContractNumber] = useState("");
     const [totalTrainings, setTotalTrainings] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [count, setCount] = useState("");
 
     const handleSubmit = () => {
         if (mode === "create") {
             const total = Number(totalTrainings);
             if (!total || total < 1) return;
-            onSubmitCreate?.(contractNumber.trim(), total);
+            onSubmitCreate?.(contractNumber.trim(), total, endDate);
         } else {
             const value = Number(count);
             if (!value || value < 1) return;
@@ -72,6 +73,20 @@ export default function ContractFormSheet({
                                 className="fb-add-sheet__select"
                                 value={totalTrainings}
                                 onChange={(event) => setTotalTrainings(event.target.value)}
+                            />
+                        </div>
+
+                        <div className="fb-add-sheet__row">
+                            <label className="fb-add-sheet__label" htmlFor="contract-end-date">
+                                Срок действия — до
+                            </label>
+                            <input
+                                id="contract-end-date"
+                                type="date"
+                                className="fb-add-sheet__select"
+                                style={{ width: "auto", maxWidth: "none", flex: 1 }}
+                                value={endDate}
+                                onChange={(event) => setEndDate(event.target.value)}
                             />
                         </div>
                     </>

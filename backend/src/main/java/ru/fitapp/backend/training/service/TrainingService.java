@@ -11,6 +11,7 @@ import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import ru.fitapp.backend.training.model.TrainingType;
 import ru.fitapp.backend.training.repository.TrainingRepository;
 import ru.fitapp.backend.trainerclient.service.TrainerClientService;
 import ru.fitapp.backend.user.entity.AppUser;
@@ -21,6 +22,7 @@ import ru.fitapp.backend.analytics.service.AnalyticsService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -53,6 +55,7 @@ public class TrainingService {
         validateTimeRange(request.getStartTime(), request.getEndTime());
 
         AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), request.getClientId());
+        TrainingType trainingType = parseTrainingType(request.getTrainingType());
 
         Training training = new Training()
                 .setTrainer(trainer)
@@ -61,11 +64,16 @@ public class TrainingService {
                 .setStartTime(request.getStartTime())
                 .setEndTime(request.getEndTime())
                 .setStatus(TrainingStatus.PLANNED)
+                .setTrainingType(trainingType)
+                .setFocusMuscleGroups(trainingType == TrainingType.INDEPENDENT ? join(request.getFocusMuscleGroups()) : null)
                 .setTrainerNote(normalizeNote(request.getTrainerNote()));
 
         Training saved = trainingRepository.save(training);
 
-        if (clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
+        // Self-guided trainings don't draw from the paid contract balance,
+        // so there's nothing to warn about for them.
+        if (trainingType == TrainingType.PERSONAL
+                && clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
             notificationService.notifyTrainingContractExceeded(saved);
         }
 
@@ -277,6 +285,8 @@ public class TrainingService {
                 .setStartTime(training.getStartTime())
                 .setEndTime(training.getEndTime())
                 .setStatus(training.getStatus().name())
+                .setTrainingType(training.getTrainingType().name())
+                .setFocusMuscleGroups(split(training.getFocusMuscleGroups()))
                 .setTrainerNote(training.getTrainerNote())
                 .setClientNote(training.getClientNote())
                 .setContractId(training.getContract() != null ? training.getContract().getId() : null)
@@ -320,6 +330,27 @@ public class TrainingService {
         }
     }
 
+    private TrainingType parseTrainingType(String value) {
+        if (value == null || value.isBlank()) {
+            return TrainingType.PERSONAL;
+        }
+        try {
+            return TrainingType.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ApiException("INVALID_TRAINING_TYPE", "Некорректный тип тренировки");
+        }
+    }
+
+    private String join(List<String> codes) {
+        if (codes == null || codes.isEmpty()) return null;
+        return String.join(",", codes);
+    }
+
+    private List<String> split(String value) {
+        if (value == null || value.isBlank()) return List.of();
+        return Arrays.stream(value.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
+    }
+
     private String normalizeNote(String value) {
         if (value == null) {
             return null;
@@ -334,9 +365,12 @@ public class TrainingService {
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
 
         training.setStatus(TrainingStatus.COMPLETED);
-        clientContractService
-                .consumeOneForCompletedTraining(training.getClient(), trainer)
-                .ifPresent(training::setContract);
+
+        if (training.getTrainingType() == TrainingType.PERSONAL) {
+            clientContractService
+                    .consumeOneForCompletedTraining(training.getClient(), trainer)
+                    .ifPresent(training::setContract);
+        }
 
         Training saved = trainingRepository.save(training);
         notificationService.notifyTrainingCompleted(saved);

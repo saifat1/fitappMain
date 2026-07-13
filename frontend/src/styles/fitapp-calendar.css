@@ -662,6 +662,8 @@
 .fb-fab:hover { background: var(--fb-green-strong); }
 .fb-fab:active { transform: scale(0.96); }
 
+.fb-fab--flush { bottom: calc(16px + env(safe-area-inset-bottom)); }
+
 /* ---------- Bottom tab bar (4 tabs) ---------- */
 .fb-tabbar {
     position: fixed;

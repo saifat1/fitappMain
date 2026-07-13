@@ -154,6 +154,7 @@ public class TrainerClientFacadeService {
                 .setContractEndDate(client.getContractEndDate())
                 .setHasContracts(summary.isHasContracts())
                 .setTotalRemainingTrainings(summary.getTotalRemainingTrainings())
+                .setTotalGrantedTrainings(summary.getTotalGrantedTrainings())
                 .setContractExhausted(summary.isExhausted());
     }
 }

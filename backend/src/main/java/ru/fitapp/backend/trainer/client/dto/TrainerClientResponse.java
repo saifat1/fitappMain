@@ -18,6 +18,7 @@ public class TrainerClientResponse {
     private LocalDate contractEndDate;
     private boolean hasContracts;
     private int totalRemainingTrainings;
+    private int totalGrantedTrainings;
     private boolean contractExhausted;
 
     public Long getId() {
@@ -134,6 +135,15 @@ public class TrainerClientResponse {
 
     public TrainerClientResponse setTotalRemainingTrainings(int totalRemainingTrainings) {
         this.totalRemainingTrainings = totalRemainingTrainings;
+        return this;
+    }
+
+    public int getTotalGrantedTrainings() {
+        return totalGrantedTrainings;
+    }
+
+    public TrainerClientResponse setTotalGrantedTrainings(int totalGrantedTrainings) {
+        this.totalGrantedTrainings = totalGrantedTrainings;
         return this;
     }
 

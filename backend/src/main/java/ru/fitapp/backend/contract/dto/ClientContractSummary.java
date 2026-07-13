@@ -4,11 +4,18 @@ public class ClientContractSummary {
 
     private final boolean hasContracts;
     private final int totalRemainingTrainings;
+    private final int totalGrantedTrainings;
     private final int plannedCount;
 
-    public ClientContractSummary(boolean hasContracts, int totalRemainingTrainings, int plannedCount) {
+    public ClientContractSummary(
+            boolean hasContracts,
+            int totalRemainingTrainings,
+            int totalGrantedTrainings,
+            int plannedCount
+    ) {
         this.hasContracts = hasContracts;
         this.totalRemainingTrainings = totalRemainingTrainings;
+        this.totalGrantedTrainings = totalGrantedTrainings;
         this.plannedCount = plannedCount;
     }
 
@@ -19,6 +26,11 @@ public class ClientContractSummary {
     /** Balance left on the contract(s) after completed trainings only — the raw number shown in the client profile. */
     public int getTotalRemainingTrainings() {
         return totalRemainingTrainings;
+    }
+
+    /** Sum of totalTrainings across all of the client's contracts — the "из N" part of the profile card. */
+    public int getTotalGrantedTrainings() {
+        return totalGrantedTrainings;
     }
 
     /** How many upcoming (PLANNED) trainings already exist for this client — each will draw down the balance once conducted. */

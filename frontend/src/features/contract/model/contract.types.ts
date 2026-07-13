@@ -4,12 +4,14 @@ export type ClientContractResponse = {
     totalTrainings: number;
     remainingTrainings: number;
     usedTrainings: number;
+    endDate: string | null;
     createdAt: string;
 };
 
 export type CreateClientContractRequest = {
     contractNumber?: string;
     totalTrainings: number;
+    endDate?: string;
 };
 
 export type AddTrainingsToContractRequest = {

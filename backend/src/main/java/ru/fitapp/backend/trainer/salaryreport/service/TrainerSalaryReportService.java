@@ -4,11 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.dutyslot.dto.TrainerDutySlotResponse;
 import ru.fitapp.backend.dutyslot.entity.TrainerDutySlot;
 import ru.fitapp.backend.dutyslot.repository.TrainerDutySlotRepository;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import ru.fitapp.backend.training.model.TrainingType;
 import ru.fitapp.backend.training.repository.TrainingRepository;
 import ru.fitapp.backend.trainer.salaryreport.dto.TrainerSalaryReportDutyRowResponse;
 import ru.fitapp.backend.trainer.salaryreport.dto.TrainerSalaryReportResponse;
@@ -89,6 +91,7 @@ public class TrainerSalaryReportService {
 
     private TrainerSalaryReportTrainingRowResponse toTrainingRow(Training training) {
         AppUser client = training.getClient();
+        ClientContract contract = training.getContract();
 
         return new TrainerSalaryReportTrainingRowResponse()
                 .setTrainingId(training.getId())
@@ -97,9 +100,11 @@ public class TrainerSalaryReportService {
                 .setEndTime(training.getEndTime())
                 .setClientId(client.getId())
                 .setClientName(buildPersonName(client, "Клиент без имени"))
-                .setTrainingTypeLabel("ПТ")
-                .setContractNumber(client.getContractNumber())
-                .setContractEndDate(client.getContractEndDate());
+                .setTrainingTypeLabel(training.getTrainingType() == TrainingType.INDEPENDENT ? "СТ" : "ПТ")
+                .setContractNumber(contract != null ? contract.getContractNumber() : null)
+                .setContractEndDate(contract != null ? contract.getEndDate() : null)
+                .setContractTotalTrainings(contract != null ? contract.getTotalTrainings() : null)
+                .setContractRemainingTrainings(contract != null ? contract.getRemainingTrainings() : null);
     }
 
     private TrainerSalaryReportDutyRowResponse toDutyRow(TrainerDutySlot dutySlot) {

@@ -3,6 +3,7 @@ package ru.fitapp.backend.training.entity;
 import jakarta.persistence.*;
 import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import ru.fitapp.backend.training.model.TrainingType;
 import ru.fitapp.backend.user.entity.AppUser;
 
 import java.time.LocalDate;
@@ -46,6 +47,14 @@ public class Training {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private TrainingStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "training_type", nullable = false, length = 16)
+    private TrainingType trainingType = TrainingType.PERSONAL;
+
+    /** Comma-joined MuscleGroup codes — only meaningful for INDEPENDENT trainings. */
+    @Column(name = "focus_muscle_groups", length = 255)
+    private String focusMuscleGroups;
 
     @Column(name = "trainer_note", length = 2000)
     private String trainerNote;
@@ -136,6 +145,24 @@ public class Training {
 
     public Training setStatus(TrainingStatus status) {
         this.status = status;
+        return this;
+    }
+
+    public TrainingType getTrainingType() {
+        return trainingType;
+    }
+
+    public Training setTrainingType(TrainingType trainingType) {
+        this.trainingType = trainingType;
+        return this;
+    }
+
+    public String getFocusMuscleGroups() {
+        return focusMuscleGroups;
+    }
+
+    public Training setFocusMuscleGroups(String focusMuscleGroups) {
+        this.focusMuscleGroups = focusMuscleGroups;
         return this;
     }
 

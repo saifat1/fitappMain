@@ -3,6 +3,7 @@ package ru.fitapp.backend.training.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 public class TrainingResponse {
 
@@ -16,6 +17,8 @@ public class TrainingResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private String status;
+    private String trainingType;
+    private List<String> focusMuscleGroups;
     private String trainerNote;
     private String clientNote;
     private Long contractId;
@@ -110,6 +113,24 @@ public class TrainingResponse {
 
     public TrainingResponse setStatus(String status) {
         this.status = status;
+        return this;
+    }
+
+    public String getTrainingType() {
+        return trainingType;
+    }
+
+    public TrainingResponse setTrainingType(String trainingType) {
+        this.trainingType = trainingType;
+        return this;
+    }
+
+    public List<String> getFocusMuscleGroups() {
+        return focusMuscleGroups;
+    }
+
+    public TrainingResponse setFocusMuscleGroups(List<String> focusMuscleGroups) {
+        this.focusMuscleGroups = focusMuscleGroups;
         return this;
     }
 

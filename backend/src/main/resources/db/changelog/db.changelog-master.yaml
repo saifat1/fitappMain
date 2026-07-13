@@ -59,3 +59,7 @@ databaseChangeLog:
       file: db/changelog/029-create-client-questionnaire.yaml
   - include:
       file: db/changelog/030-create-client-measurement.yaml
+  - include:
+      file: db/changelog/031-add-training-type.yaml
+  - include:
+      file: db/changelog/032-add-end-date-to-client-contract.yaml

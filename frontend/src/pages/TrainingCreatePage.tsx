@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 import FbTextField from "../shared/ui/FbTextField";
+import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import ClientPickerSheet from "../features/training/ui/ClientPickerSheet";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import { trainerApi } from "../shared/api/trainerApi";
@@ -14,7 +15,8 @@ import { formatDaySubtitle } from "../features/calendar/lib/calendarWeek";
 
 import type { DraftExercise } from "../features/training/model/trainingDraft";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
-import type { TrainingResponse } from "../features/training/model/training.types";
+import { MUSCLE_GROUP_OPTIONS } from "../features/training/model/training.types";
+import type { TrainingResponse, TrainingType } from "../features/training/model/training.types";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 
 function resolveApiError(error: unknown, fallback: string): string {
@@ -50,6 +52,8 @@ export default function TrainingCreatePage() {
     const [end, setEnd] = useState(plusOneHour(defaultStart));
     const [comment, setComment] = useState("");
     const [exercises, setExercises] = useState<DraftExercise[]>([]);
+    const [trainingType, setTrainingType] = useState<TrainingType>("PERSONAL");
+    const [focusMuscleGroups, setFocusMuscleGroups] = useState<string[]>([]);
 
     const [clientSheetOpen, setClientSheetOpen] = useState(false);
     const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false);
@@ -101,6 +105,8 @@ export default function TrainingCreatePage() {
                 startTime: start,
                 endTime: end,
                 trainerNote: comment.trim() || undefined,
+                trainingType,
+                focusMuscleGroups: trainingType === "INDEPENDENT" ? focusMuscleGroups : undefined,
             });
 
             // Attach queued exercises in order.
@@ -142,13 +148,39 @@ export default function TrainingCreatePage() {
                     </span>
                 </button>
 
-                {selectedClient && selectedClient.contractExhausted ? (
+                {selectedClient && trainingType === "PERSONAL" && selectedClient.contractExhausted ? (
                     <div className="fb-contracts__warning">
                         С учётом уже запланированных тренировок у клиента не остаётся оплаченных
                         занятий по договору. Создать тренировку можно — если к моменту её
                         завершения баланс не изменится, она будет отмечена как проведённая не в
                         рамках договора.
                     </div>
+                ) : null}
+
+                <div className="fb-segment">
+                    <button
+                        type="button"
+                        className={`fb-segment__item ${trainingType === "PERSONAL" ? "fb-segment__item--active" : ""}`}
+                        onClick={() => setTrainingType("PERSONAL")}
+                    >
+                        Персональная
+                    </button>
+                    <button
+                        type="button"
+                        className={`fb-segment__item ${trainingType === "INDEPENDENT" ? "fb-segment__item--active" : ""}`}
+                        onClick={() => setTrainingType("INDEPENDENT")}
+                    >
+                        Самостоятельная
+                    </button>
+                </div>
+
+                {trainingType === "INDEPENDENT" ? (
+                    <ChipToggleGroup
+                        label="Группы мышц"
+                        options={MUSCLE_GROUP_OPTIONS}
+                        selected={focusMuscleGroups}
+                        onChange={setFocusMuscleGroups}
+                    />
                 ) : null}
 
                 <FbTextField id="tr-date" label="Дата" type="date" value={date} onChange={setDate} />

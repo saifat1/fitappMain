@@ -79,7 +79,8 @@ public class TrainerSalaryReportPdfService {
                                 safe(row.getClientName()),
                                 safe(row.getTrainingTypeLabel()),
                                 safe(row.getContractNumber()),
-                                formatDate(row.getContractEndDate())
+                                formatDate(row.getContractEndDate()),
+                                formatTrainingsCount(row.getContractRemainingTrainings(), row.getContractTotalTrainings())
                         });
                     }
 
@@ -90,10 +91,11 @@ public class TrainerSalaryReportPdfService {
                                     "Клиент",
                                     "Вид",
                                     "Договор",
-                                    "Окончание договора"
+                                    "Окончание договора",
+                                    "Тренировок (ост./всего)"
                             },
                             trainingRows,
-                            new float[]{60f, 70f, 180f, 45f, 120f, 100f}
+                            new float[]{60f, 70f, 160f, 40f, 100f, 90f, 110f}
                     );
                 }
 
@@ -160,6 +162,11 @@ public class TrainerSalaryReportPdfService {
 
     private String safe(String value) {
         return value == null || value.isBlank() ? "-" : value.trim();
+    }
+
+    private String formatTrainingsCount(Integer remaining, Integer total) {
+        if (remaining == null || total == null) return "-";
+        return remaining + "/" + total;
     }
 
     private static class PdfWriter {

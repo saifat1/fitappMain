@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.bookingrequest.entity.BookingRequest;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
+import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.notification.dto.NotificationResponse;
 import ru.fitapp.backend.notification.entity.Notification;
 import ru.fitapp.backend.notification.model.NotificationType;
@@ -190,6 +191,23 @@ public class NotificationService {
                 trainingSlotBody(training.getTrainingDate(), training.getStartTime()),
                 "TRAINING",
                 training.getId()
+        );
+    }
+
+    /** ~10 days before a contract's end date — a heads-up only, nothing happens to the client automatically. */
+    public void notifyContractExpiring(ClientContract contract) {
+        String contractLabel = contract.getContractNumber() != null
+                ? "№ " + contract.getContractNumber()
+                : "без номера";
+
+        create(
+                contract.getTrainer(),
+                contract.getClient(),
+                NotificationType.CONTRACT_EXPIRING,
+                "Договор скоро истекает",
+                "Договор " + contractLabel + " действует до " + contract.getEndDate().format(DATE_FORMATTER),
+                "CONTRACT",
+                contract.getId()
         );
     }
 

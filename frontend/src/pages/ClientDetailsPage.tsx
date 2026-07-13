@@ -5,6 +5,8 @@ import axios from "axios";
 import Avatar from "../shared/ui/Avatar";
 import FbTextField from "../shared/ui/FbTextField";
 import ClientContractsSection from "../features/contract/ui/ClientContractsSection";
+import TicketIcon from "../features/training/ui/TicketIcon";
+import UpcomingTrainingRow from "../features/training/ui/UpcomingTrainingRow";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
 import {
@@ -14,7 +16,6 @@ import {
     clientStatusPill,
 } from "../features/trainer/lib/clientDisplay";
 import { formatDateKey } from "../features/calendar/lib/trainerCalendar";
-import { formatDaySubtitle } from "../features/calendar/lib/calendarWeek";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
 import type { TrainingResponse } from "../features/training/model/training.types";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
@@ -186,85 +187,125 @@ export default function ClientDetailsPage() {
                 ) : (
                     <>
                         <div className="fb-client-hero">
-                            <Avatar initials={clientInitials(client)} color={clientColor(client)} size="lg" />
+                            <span className="fb-avatar-wrap">
+                                <Avatar initials={clientInitials(client)} color={clientColor(client)} size="lg" />
+                                {isActive && <span className="fb-avatar-wrap__dot" />}
+                            </span>
                             <div className="fb-client-hero__name">{clientName(client)}</div>
                             <div className="fb-client-hero__email">{client.email}</div>
                             {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
-                            {client.hasContracts && (
-                                <span className={`fb-pill ${client.contractExhausted ? "fb-pill--danger" : "fb-pill--ok"}`}>
-                                    Осталось тренировок: {client.totalRemainingTrainings}
-                                </span>
-                            )}
                         </div>
 
                         {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-                        <ClientContractsSection clientId={id} onBalanceChange={load} />
-
-                        <div className="fb-list" style={{ marginTop: 12 }}>
-                            <button
-                                type="button"
-                                className="fb-row fb-row--button"
-                                onClick={() => navigate(`/trainer/clients/${id}/questionnaire`)}
-                            >
-                                <span className="fb-row__main"><span className="fb-row__title">Анкета</span></span>
-                                <span className="fb-row__chevron">›</span>
-                            </button>
-                            <button
-                                type="button"
-                                className="fb-row fb-row--button"
-                                onClick={() => navigate(`/trainer/clients/${id}/measurements`)}
-                            >
-                                <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
-                                <span className="fb-row__chevron">›</span>
-                            </button>
-                        </div>
+                        {client.hasContracts && (
+                            <div className={`fb-contract-card ${client.contractExhausted ? "fb-contract-card--exhausted" : ""}`}>
+                                <span className="fb-contract-card__icon">
+                                    <TicketIcon />
+                                </span>
+                                <span className="fb-contract-card__label">Осталось персональных тренировок</span>
+                                <span className="fb-contract-card__count">
+                                    {Math.max(client.totalRemainingTrainings, 0)}{" "}
+                                    <span className="fb-contract-card__count-total">
+                                        из {client.totalGrantedTrainings}
+                                    </span>
+                                </span>
+                            </div>
+                        )}
 
                         {isActive ? (
                             <>
-                                <button
-                                    type="button"
-                                    className="fb-btn fb-btn--ghost"
-                                    onClick={() => navigate("/trainings/new", { state: { clientId: id } })}
-                                >
-                                    + Новая тренировка
-                                </button>
+                                <div className="fb-section-header">
+                                    <span className="fb-section-title fb-section-title--flush">Предстоящие тренировки</span>
+                                    {upcoming.length > 0 && (
+                                        <button type="button" className="fb-section-header__link" onClick={() => navigate("/trainings")}>
+                                            Все ›
+                                        </button>
+                                    )}
+                                </div>
 
-                                <div className="fb-section-title fb-section-title--flush">Предстоящие тренировки</div>
                                 {upcoming.length === 0 ? (
                                     <div className="fb-empty">Запланированных тренировок нет</div>
                                 ) : (
                                     <div className="fb-list">
                                         {upcoming.slice(0, 3).map((t) => (
-                                            <button key={t.id} type="button" className="fb-row fb-row--button" onClick={() => navigate(`/trainings/${t.id}`)}>
-                                                <span className="fb-row__main">
-                                                    <span className="fb-row__title">Тренировка</span>
-                                                    <span className="fb-row__sub">
-                                                        {formatDaySubtitle(t.trainingDate)}, {t.startTime?.slice(0, 5)}
-                                                    </span>
-                                                </span>
-                                                <span className="fb-row__chevron">›</span>
-                                            </button>
+                                            <UpcomingTrainingRow key={t.id} training={t} onClick={() => navigate(`/trainings/${t.id}`)} />
                                         ))}
                                     </div>
                                 )}
-                                {upcoming.length > 3 && (
-                                    <button type="button" className="fb-add-link" onClick={() => navigate("/trainings")}>
-                                        Смотреть все
-                                    </button>
+
+                                {client.hasContracts && (
+                                    <div className="fb-info-note">
+                                        <span className="fb-info-note__icon">ⓘ</span>
+                                        <span>Количество персональных тренировок обновляется после проведения занятия.</span>
+                                    </div>
                                 )}
 
+                                <button type="button" className="fb-add-link" onClick={() => navigate("/me")}>
+                                    Смотреть календарь
+                                </button>
+
                                 <div className="fb-list" style={{ marginTop: 12 }}>
+                                    <button
+                                        type="button"
+                                        className="fb-row fb-row--button"
+                                        onClick={() => navigate(`/trainer/clients/${id}/questionnaire`)}
+                                    >
+                                        <span className="fb-row__main"><span className="fb-row__title">Информация о здоровье</span></span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="fb-row fb-row--button"
+                                        onClick={() => navigate(`/trainer/clients/${id}/measurements`)}
+                                    >
+                                        <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
                                     <button type="button" className="fb-row fb-row--button" onClick={() => navigate("/trainings")}>
                                         <span className="fb-row__main"><span className="fb-row__title">Архив тренировок</span></span>
                                         <span className="fb-row__chevron">›</span>
                                     </button>
                                 </div>
+
+                                <ClientContractsSection clientId={id} onBalanceChange={load} />
+
+                                <button
+                                    type="button"
+                                    className="fb-fab fb-fab--flush"
+                                    aria-label="Новая тренировка"
+                                    onClick={() => navigate("/trainings/new", { state: { clientId: id } })}
+                                >
+                                    +
+                                </button>
                             </>
                         ) : (
-                            <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleShare}>
-                                Поделиться приглашением
-                            </button>
+                            <>
+                                <div className="fb-list" style={{ marginTop: 12 }}>
+                                    <button
+                                        type="button"
+                                        className="fb-row fb-row--button"
+                                        onClick={() => navigate(`/trainer/clients/${id}/questionnaire`)}
+                                    >
+                                        <span className="fb-row__main"><span className="fb-row__title">Информация о здоровье</span></span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="fb-row fb-row--button"
+                                        onClick={() => navigate(`/trainer/clients/${id}/measurements`)}
+                                    >
+                                        <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
+                                </div>
+
+                                <ClientContractsSection clientId={id} onBalanceChange={load} />
+
+                                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleShare}>
+                                    Поделиться приглашением
+                                </button>
+                            </>
                         )}
                     </>
                 )}

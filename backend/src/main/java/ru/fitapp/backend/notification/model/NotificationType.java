@@ -24,7 +24,8 @@ public enum NotificationType {
     RESCHEDULE_REQUEST_REJECTED(NotificationKind.CANCELLATION),
     TRAINING_CANCELLED_BY_CLIENT(NotificationKind.CANCELLATION),
     TRAINING_CANCELLED_BY_TRAINER(NotificationKind.CANCELLATION),
-    TRAINING_CONTRACT_EXCEEDED(NotificationKind.CANCELLATION);
+    TRAINING_CONTRACT_EXCEEDED(NotificationKind.CANCELLATION),
+    CONTRACT_EXPIRING(NotificationKind.CANCELLATION);
 
     private final NotificationKind kind;
 

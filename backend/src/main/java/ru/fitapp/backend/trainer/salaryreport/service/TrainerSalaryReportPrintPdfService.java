@@ -344,7 +344,8 @@ public class TrainerSalaryReportPrintPdfService {
                             row.getClientName(),
                             row.getTrainingTypeLabel(),
                             row.getContractNumber(),
-                            row.getContractEndDate()
+                            row.getContractEndDate(),
+                            formatTrainingsCount(row.getContractRemainingTrainings(), row.getContractTotalTrainings())
                     ));
         }
 
@@ -358,7 +359,8 @@ public class TrainerSalaryReportPrintPdfService {
                             "",
                             row.getTypeLabel(),
                             "",
-                            null
+                            null,
+                            "-"
                     ));
         }
 
@@ -480,6 +482,11 @@ public class TrainerSalaryReportPrintPdfService {
         return value == null ? "" : value.trim();
     }
 
+    private String formatTrainingsCount(Integer remaining, Integer total) {
+        if (remaining == null || total == null) return "-";
+        return remaining + "/" + total;
+    }
+
     private record PrintRow(
             LocalDate date,
             LocalTime startTime,
@@ -487,7 +494,8 @@ public class TrainerSalaryReportPrintPdfService {
             String clientName,
             String typeLabel,
             String contractNumber,
-            LocalDate contractEndDate
+            LocalDate contractEndDate,
+            String trainingsCount
     ) {
     }
 

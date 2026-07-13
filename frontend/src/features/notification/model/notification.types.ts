@@ -11,7 +11,8 @@ export type NotificationTypeCode =
     | "TRAINING_CANCELLED_BY_CLIENT"
     | "TRAINING_CANCELLED_BY_TRAINER"
     | "TRAINING_COMPLETED"
-    | "TRAINING_CONTRACT_EXCEEDED";
+    | "TRAINING_CONTRACT_EXCEEDED"
+    | "CONTRACT_EXPIRING";
 
 export type NotificationResponse = {
     id: number;

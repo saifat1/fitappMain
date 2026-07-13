@@ -4,5 +4,6 @@ public enum MuscleGroup {
     CHEST,
     BACK,
     LEGS,
+    GLUTES,
     ABS
 }

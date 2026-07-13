@@ -10,6 +10,11 @@ type Props = {
 
 type SheetState = { mode: "create" } | { mode: "add-trainings"; contractId: number } | null;
 
+function formatEndDate(value: string): string {
+    const [year, month, day] = value.split("-");
+    return `${day}.${month}.${year}`;
+}
+
 export default function ClientContractsSection({ clientId, onBalanceChange }: Props) {
     const [contracts, setContracts] = useState<ClientContractResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -41,13 +46,14 @@ export default function ClientContractsSection({ clientId, onBalanceChange }: Pr
         setErrorMessage("");
     };
 
-    const handleCreate = async (contractNumber: string, totalTrainings: number) => {
+    const handleCreate = async (contractNumber: string, totalTrainings: number, endDate: string) => {
         setIsSaving(true);
         setErrorMessage("");
         try {
             await clientContractApi.createContract(clientId, {
                 contractNumber: contractNumber || undefined,
                 totalTrainings,
+                endDate: endDate || undefined,
             });
             closeSheet();
             await load();
@@ -98,6 +104,7 @@ export default function ClientContractsSection({ clientId, onBalanceChange }: Pr
                                     </span>
                                     <span className="fb-row__sub">
                                         {contract.remainingTrainings} из {contract.totalTrainings} осталось
+                                        {contract.endDate ? ` · до ${formatEndDate(contract.endDate)}` : ""}
                                     </span>
                                 </span>
                                 <button

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import ru.fitapp.backend.training.model.TrainingType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import ru.fitapp.backend.training.model.TrainingStatus;
 
@@ -79,6 +80,15 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
      * (PLANNED). Used to warn about overbooking before the trainings are
      * even conducted, not just after the fact.
      */
-    long countByTrainerIdAndClientIdAndStatusIn(Long trainerId, Long clientId, List<TrainingStatus> statuses);
+    /**
+     * Only PERSONAL trainings count toward contract consumption —
+     * INDEPENDENT (self-guided) ones never draw from the paid balance.
+     */
+    long countByTrainerIdAndClientIdAndTrainingTypeAndStatusIn(
+            Long trainerId,
+            Long clientId,
+            TrainingType trainingType,
+            List<TrainingStatus> statuses
+    );
 
 }

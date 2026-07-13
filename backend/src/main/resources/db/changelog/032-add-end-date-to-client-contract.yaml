@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 032-add-end-date-to-client-contract
+      author: claude
+      changes:
+        - addColumn:
+            tableName: client_contract
+            columns:
+              - column:
+                  name: end_date
+                  type: date
+                  constraints:
+                    nullable: true
+              - column:
+                  name: expiry_notified
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: client_contract
+            indexName: idx_client_contract_end_date
+            columns:
+              - column:
+                  name: end_date

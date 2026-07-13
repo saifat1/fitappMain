@@ -10,6 +10,7 @@ import ru.fitapp.backend.contract.dto.CreateClientContractRequest;
 import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.contract.repository.ClientContractRepository;
 import ru.fitapp.backend.training.model.TrainingStatus;
+import ru.fitapp.backend.training.model.TrainingType;
 import ru.fitapp.backend.training.repository.TrainingRepository;
 import ru.fitapp.backend.user.entity.AppUser;
 
@@ -36,7 +37,8 @@ public class ClientContractService {
                 .setClient(client)
                 .setContractNumber(normalize(request.getContractNumber()))
                 .setTotalTrainings(total)
-                .setRemainingTrainings(total);
+                .setRemainingTrainings(total)
+                .setEndDate(request.getEndDate());
 
         return toResponse(clientContractRepository.save(contract));
     }
@@ -65,10 +67,11 @@ public class ClientContractService {
     public ClientContractSummary getSummary(Long clientId, Long trainerId) {
         boolean hasContracts = clientContractRepository.existsByClientIdAndTrainerId(clientId, trainerId);
         int totalRemaining = clientContractRepository.sumRemainingTrainings(clientId, trainerId);
-        long plannedCount = trainingRepository.countByTrainerIdAndClientIdAndStatusIn(
-                trainerId, clientId, List.of(TrainingStatus.PLANNED)
+        int totalGranted = clientContractRepository.sumTotalTrainings(clientId, trainerId);
+        long plannedCount = trainingRepository.countByTrainerIdAndClientIdAndTrainingTypeAndStatusIn(
+                trainerId, clientId, TrainingType.PERSONAL, List.of(TrainingStatus.PLANNED)
         );
-        return new ClientContractSummary(hasContracts, totalRemaining, (int) plannedCount);
+        return new ClientContractSummary(hasContracts, totalRemaining, totalGranted, (int) plannedCount);
     }
 
     /**
@@ -111,6 +114,7 @@ public class ClientContractService {
                 .setTotalTrainings(contract.getTotalTrainings())
                 .setRemainingTrainings(contract.getRemainingTrainings())
                 .setUsedTrainings(contract.getTotalTrainings() - contract.getRemainingTrainings())
+                .setEndDate(contract.getEndDate())
                 .setCreatedAt(contract.getCreatedAt());
     }
 }
