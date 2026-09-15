@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
@@ -18,6 +18,7 @@ import TrainingsPage from "../pages/TrainingsPage";
 import TrainingCreatePage from "../pages/TrainingCreatePage";
 import TrainingDetailsPage from "../pages/TrainingDetailsPage";
 import ProtectedRoute from "../components/ProtectedRoute";
+import RootRedirect from "../components/RootRedirect";
 import TrainerRoute from "../components/TrainerRoute";
 import AppLayout from "../widgets/AppLayout";
 import RescheduleRequestsPage from "../pages/RescheduleRequestsPage";
@@ -42,7 +43,7 @@ import NotificationsPage from "../pages/NotificationsPage";
 export const router = createBrowserRouter([
     {
         path: "/",
-        element: <Navigate to="/me" replace />,
+        element: <RootRedirect />,
     },
     {
         path: "/legal/consents",

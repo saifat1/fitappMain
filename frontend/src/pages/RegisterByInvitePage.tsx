@@ -35,9 +35,13 @@ export default function RegisterByInvitePage() {
 
     if (!token) {
         return (
-            <div className="page-card">
-                <h2>Некорректная ссылка</h2>
-                <p>Токен приглашения отсутствует.</p>
+            <div className="fb-screen">
+                <header className="fb-topbar">
+                    <h1 className="fb-topbar__title">Некорректная ссылка</h1>
+                </header>
+                <div className="fb-body">
+                    <div className="fb-cal-error">Токен приглашения отсутствует.</div>
+                </div>
             </div>
         );
     }
@@ -48,25 +52,33 @@ export default function RegisterByInvitePage() {
 
     if (isInviteLoading) {
         return (
-            <div className="page-card">
-                <h2>Регистрация по приглашению</h2>
-                <p>Загрузка данных приглашения...</p>
+            <div className="fb-screen">
+                <header className="fb-topbar">
+                    <h1 className="fb-topbar__title">Регистрация по приглашению</h1>
+                </header>
+                <div className="fb-cal-status">Загрузка данных приглашения…</div>
             </div>
         );
     }
 
     if (inviteError) {
         return (
-            <div className="page-card">
-                <h2>Регистрация по приглашению</h2>
-                <p>{inviteError}</p>
+            <div className="fb-screen">
+                <header className="fb-topbar">
+                    <h1 className="fb-topbar__title">Регистрация по приглашению</h1>
+                </header>
+                <div className="fb-body">
+                    <div className="fb-cal-error">{inviteError}</div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="page-card">
-            <h2>Регистрация по приглашению</h2>
+        <div className="fb-screen">
+            <header className="fb-topbar">
+                <h1 className="fb-topbar__title">Регистрация по приглашению</h1>
+            </header>
             <RegisterByInviteForm token={token} initialEmail={inviteEmail} />
         </div>
     );

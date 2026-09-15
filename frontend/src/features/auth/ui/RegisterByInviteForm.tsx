@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import PasswordInput from "../../../shared/ui/PasswordInput";
+import FbTextField from "../../../shared/ui/FbTextField";
+import FbPasswordField from "../../../shared/ui/FbPasswordField";
 import { useAuth } from "../model/AuthContext";
 import type { ApiErrorResponse } from "../model/auth.types";
 
@@ -11,9 +12,9 @@ type Props = {
 };
 
 export default function RegisterByInviteForm({
-                                                 token,
-                                                 initialEmail = "",
-                                             }: Props) {
+    token,
+    initialEmail = "",
+}: Props) {
     const { registerByInvite } = useAuth();
     const navigate = useNavigate();
 
@@ -51,66 +52,51 @@ export default function RegisterByInviteForm({
     };
 
     return (
-        <form className="form" onSubmit={handleSubmit} autoComplete="off">
-            <div className="form-row">
-                <label htmlFor="reg-email">Email</label>
-                <input
-                    id="reg-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="Введите email"
-                    autoComplete="email"
-                    required
-                />
-            </div>
+        <form className="fb-body" onSubmit={handleSubmit} autoComplete="off">
+            <FbTextField
+                id="reg-email"
+                label="Email"
+                type="email"
+                value={email}
+                onChange={setEmail}
+                autoComplete="email"
+                required
+            />
 
-            <div className="form-row">
-                <label htmlFor="reg-password">Пароль</label>
-                <PasswordInput
-                    id="reg-password"
-                    value={password}
-                    onChange={setPassword}
-                    placeholder="Введите пароль"
-                    autoComplete="new-password"
-                    required
-                />
-            </div>
+            <FbTextField
+                id="first-name"
+                label="Имя"
+                value={firstName}
+                onChange={setFirstName}
+                autoComplete="given-name"
+                required
+            />
 
-            <div className="form-row">
-                <label htmlFor="first-name">Имя</label>
-                <input
-                    id="first-name"
-                    type="text"
-                    value={firstName}
-                    onChange={(event) => setFirstName(event.target.value)}
-                    placeholder="Введите имя"
-                    autoComplete="given-name"
-                    required
-                />
-            </div>
+            <FbTextField
+                id="last-name"
+                label="Фамилия"
+                value={lastName}
+                onChange={setLastName}
+                autoComplete="family-name"
+                required
+            />
 
-            <div className="form-row">
-                <label htmlFor="last-name">Фамилия</label>
-                <input
-                    id="last-name"
-                    type="text"
-                    value={lastName}
-                    onChange={(event) => setLastName(event.target.value)}
-                    placeholder="Введите фамилию"
-                    autoComplete="family-name"
-                    required
-                />
-            </div>
-
-            {errorMessage && <div className="form-error">{errorMessage}</div>}
+            <FbPasswordField
+                id="reg-password"
+                label="Пароль"
+                value={password}
+                onChange={setPassword}
+                error={errorMessage || undefined}
+                autoComplete="new-password"
+                required
+            />
 
             <button
                 type="submit"
-                className="dashboard-btn dashboard-btn-primary"
+                className="fb-btn fb-btn--primary fb-form-submit"
                 disabled={isSubmitting}
             >
-                {isSubmitting ? "Регистрируем..." : "Зарегистрироваться"}
+                {isSubmitting ? "Регистрируем…" : "Зарегистрироваться"}
             </button>
         </form>
     );
