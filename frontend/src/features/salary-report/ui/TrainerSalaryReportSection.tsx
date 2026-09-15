@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import styles from "./TrainerSalaryReportPage.module.css";
+import FbTextField from "../../../shared/ui/FbTextField";
 import { salaryReportApi } from "../../../shared/api/salaryReportApi";
 import type { ApiErrorResponse } from "../../auth/model/auth.types";
 import type { TrainerSalaryReportResponse } from "../model/salaryReport.types";
@@ -105,164 +105,113 @@ export default function TrainerSalaryReportSection() {
     };
 
     return (
-        <section className={styles.card}>
-            <div className={styles.header}>
-                <h2 className={styles.sectionTitle}>Зарплатный отчёт</h2>
-                <p className={styles.subtitle}>
-                    Отчёт по завершённым тренировкам и дежурным часам за выбранный месяц.
-                </p>
+        <>
+            <div className="fb-section-title fb-section-title--flush">Зарплатный отчёт</div>
+            <div className="fb-hint">
+                Отчёт по завершённым тренировкам и дежурным часам за выбранный месяц.
             </div>
 
-            {errorMessage && <div className={styles.error}>{errorMessage}</div>}
+            {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-            <div className={styles.controls}>
-                <div className={styles.field}>
-                    <label className={styles.label} htmlFor="salary-report-month">
-                        Месяц
-                    </label>
-                    <input
-                        id="salary-report-month"
-                        className={styles.input}
-                        type="month"
-                        value={monthValue}
-                        onChange={(event) => setMonthValue(event.target.value)}
-                    />
-                </div>
+            <FbTextField
+                id="salary-report-month"
+                label="Месяц"
+                type="month"
+                value={monthValue}
+                onChange={setMonthValue}
+            />
 
-                <div className={styles.controlActions}>
-                    <button
-                        type="button"
-                        className={styles.secondaryButton}
-                        onClick={() => void loadReport(selectedPeriod.year, selectedPeriod.month)}
-                        disabled={isLoading}
-                    >
-                        {isLoading ? "Загружаем..." : "Обновить"}
-                    </button>
+            <button
+                type="button"
+                className="fb-btn fb-btn--primary fb-form-submit"
+                onClick={() => void handleExportPrintPdf()}
+                disabled={isExportingPrintPdf}
+            >
+                {isExportingPrintPdf ? "Формируем форму…" : "Печатная форма PDF"}
+            </button>
 
-                    <button
-                        type="button"
-                        className={styles.primaryButton}
-                        onClick={() => void handleExportPrintPdf()}
-                        disabled={isExportingPrintPdf}
-                    >
-                        {isExportingPrintPdf ? "Формируем форму..." : "Печатная форма PDF"}
-                    </button>
-                </div>
-            </div>
+            <button
+                type="button"
+                className="fb-btn fb-btn--ghost"
+                style={{ marginTop: 10 }}
+                onClick={() => void loadReport(selectedPeriod.year, selectedPeriod.month)}
+                disabled={isLoading}
+            >
+                {isLoading ? "Загружаем…" : "Обновить"}
+            </button>
 
             {report && (
-                <div className={styles.meta}>
-                    <div>Тренер: {report.trainerName}</div>
-                    <div>
-                        Период: {String(report.month).padStart(2, "0")}.{report.year}
-                    </div>
+                <div className="fb-hint" style={{ paddingTop: 16 }}>
+                    Тренер: {report.trainerName} · Период: {String(report.month).padStart(2, "0")}.{report.year}
                 </div>
             )}
 
             {report && (
                 <>
-                    <div className={styles.summaryGrid}>
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryLabel}>Кол-во ПТ</div>
-                            <div className={styles.summaryValue}>
-                                {report.summary.personalTrainingCount}
-                            </div>
+                    <div className="fb-stat-grid">
+                        <div className="fb-stat-tile">
+                            <div className="fb-stat-tile__label">Кол-во ПТ</div>
+                            <div className="fb-stat-tile__value">{report.summary.personalTrainingCount}</div>
                         </div>
 
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryLabel}>Кол-во ЭТ</div>
-                            <div className={styles.summaryValue}>
-                                {report.summary.extraTrainingCount}
-                            </div>
+                        <div className="fb-stat-tile">
+                            <div className="fb-stat-tile__label">Кол-во ЭТ</div>
+                            <div className="fb-stat-tile__value">{report.summary.extraTrainingCount}</div>
                         </div>
 
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryLabel}>Кол-во дежурных часов</div>
-                            <div className={styles.summaryValue}>
-                                {report.summary.dutyHoursCount}
-                            </div>
+                        <div className="fb-stat-tile">
+                            <div className="fb-stat-tile__label">Деж. часов</div>
+                            <div className="fb-stat-tile__value">{report.summary.dutyHoursCount}</div>
                         </div>
                     </div>
 
-                    <div>
-                        <h3 className={styles.sectionTitle}>Завершённые тренировки</h3>
-
-                        {report.trainingRows.length === 0 ? (
-                            <div className={styles.empty}>
-                                За выбранный месяц завершённых тренировок нет.
-                            </div>
-                        ) : (
-                            <div className={styles.tableWrap}>
-                                <table className={styles.table}>
-                                    <thead>
-                                    <tr>
-                                        <th>Дата</th>
-                                        <th>Время</th>
-                                        <th>Клиент</th>
-                                        <th>Вид</th>
-                                        <th>Договор</th>
-                                        <th>Дата окончания договора</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {report.trainingRows.map((row) => (
-                                        <tr key={row.trainingId}>
-                                            <td>{formatDate(row.date)}</td>
-                                            <td>
-                                                {formatTime(row.startTime)} — {formatTime(row.endTime)}
-                                            </td>
-                                            <td>{row.clientName}</td>
-                                            <td>
-                          <span className={styles.typeBadge}>
-                            {row.trainingTypeLabel}
-                          </span>
-                                            </td>
-                                            <td>{row.contractNumber ?? "—"}</td>
-                                            <td>{formatDate(row.contractEndDate)}</td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                    <div className="fb-section-title fb-section-title--flush" style={{ marginTop: 8 }}>
+                        Завершённые тренировки
                     </div>
 
-                    <div>
-                        <h3 className={styles.sectionTitle}>Дежурные часы</h3>
+                    {report.trainingRows.length === 0 ? (
+                        <div className="fb-empty">За выбранный месяц завершённых тренировок нет.</div>
+                    ) : (
+                        <div className="fb-list" style={{ margin: "0 -16px" }}>
+                            {report.trainingRows.map((row) => (
+                                <div key={row.trainingId} className="fb-row">
+                                    <span className="fb-row__main">
+                                        <span className="fb-row__title">
+                                            {formatDate(row.date)} · {row.clientName}
+                                        </span>
+                                        <span className="fb-row__sub">
+                                            {formatTime(row.startTime)}–{formatTime(row.endTime)} · {row.trainingTypeLabel}
+                                            {row.contractNumber ? ` · Договор ${row.contractNumber}` : ""}
+                                            {row.contractEndDate ? ` до ${formatDate(row.contractEndDate)}` : ""}
+                                        </span>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                        {report.dutyRows.length === 0 ? (
-                            <div className={styles.empty}>
-                                За выбранный месяц дежурных часов нет.
-                            </div>
-                        ) : (
-                            <div className={styles.tableWrap}>
-                                <table className={styles.table}>
-                                    <thead>
-                                    <tr>
-                                        <th>Дата</th>
-                                        <th>Время</th>
-                                        <th>Тип</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {report.dutyRows.map((row) => (
-                                        <tr key={row.dutySlotId}>
-                                            <td>{formatDate(row.date)}</td>
-                                            <td>
-                                                {formatTime(row.startTime)} — {formatTime(row.endTime)}
-                                            </td>
-                                            <td>
-                                                <span className={styles.dutyBadge}>{row.typeLabel}</span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                    <div className="fb-section-title fb-section-title--flush" style={{ marginTop: 8 }}>
+                        Дежурные часы
                     </div>
+
+                    {report.dutyRows.length === 0 ? (
+                        <div className="fb-empty">За выбранный месяц дежурных часов нет.</div>
+                    ) : (
+                        <div className="fb-list" style={{ margin: "0 -16px" }}>
+                            {report.dutyRows.map((row) => (
+                                <div key={row.dutySlotId} className="fb-row">
+                                    <span className="fb-row__main">
+                                        <span className="fb-row__title">{formatDate(row.date)}</span>
+                                        <span className="fb-row__sub">
+                                            {formatTime(row.startTime)}–{formatTime(row.endTime)} · {row.typeLabel}
+                                        </span>
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </>
             )}
-        </section>
+        </>
     );
 }

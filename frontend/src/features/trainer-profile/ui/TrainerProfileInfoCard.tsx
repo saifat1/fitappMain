@@ -1,5 +1,5 @@
+import FbTextField from "../../../shared/ui/FbTextField";
 import type { TrainerProfileResponse } from "../model/trainerProfile.types";
-import styles from "./TrainerProfile.module.css";
 
 type Props = {
     profile: TrainerProfileResponse;
@@ -16,135 +16,75 @@ type Props = {
     onReset: () => void;
 };
 
-function getInitials(profile: TrainerProfileResponse): string {
-    const first = profile.firstName?.[0] ?? "";
-    const last = profile.lastName?.[0] ?? "";
-    const initials = `${first}${last}`.trim().toUpperCase();
-
-    if (initials) {
-        return initials;
-    }
-
-    return profile.email?.[0]?.toUpperCase() ?? "T";
-}
-
 export default function TrainerProfileInfoCard({
-                                                   profile,
-                                                   firstName,
-                                                   lastName,
-                                                   phone,
-                                                   isSaving,
-                                                   successMessage,
-                                                   errorMessage,
-                                                   onFirstNameChange,
-                                                   onLastNameChange,
-                                                   onPhoneChange,
-                                                   onSave,
-                                                   onReset,
-                                               }: Props) {
+    profile,
+    firstName,
+    lastName,
+    phone,
+    isSaving,
+    successMessage,
+    errorMessage,
+    onFirstNameChange,
+    onLastNameChange,
+    onPhoneChange,
+    onSave,
+    onReset,
+}: Props) {
     return (
-        <section className={styles.card}>
-            <div className={styles.cardHeader}>
-                <div>
-                    <h2 className={styles.cardTitle}>Основная информация</h2>
-                    <p className={styles.cardSubtitle}>
-                        Email сейчас только для просмотра. Загрузка фото будет следующим шагом.
-                    </p>
-                </div>
+        <>
+            <div className="fb-section-title fb-section-title--flush">Основная информация</div>
+            <div className="fb-hint">
+                Фото профиля — следующим шагом. Пока показываются инициалы.
             </div>
 
-            {successMessage && <div className={styles.messageSuccess}>{successMessage}</div>}
-            {errorMessage && <div className={styles.messageError}>{errorMessage}</div>}
+            {successMessage ? <div className="fb-success-note">{successMessage}</div> : null}
+            {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-            <div className={styles.infoLayout}>
-                <div className={styles.avatarPanel}>
-                    <div className={styles.avatarLarge}>
-                        {profile.avatarUrl ? (
-                            <img src={profile.avatarUrl} alt="Аватар тренера" />
-                        ) : (
-                            <span>{getInitials(profile)}</span>
-                        )}
-                    </div>
+            <FbTextField
+                id="trainer-profile-first-name"
+                label="Имя"
+                value={firstName}
+                onChange={onFirstNameChange}
+            />
 
-                    <div className={styles.avatarHint}>
-                        Аватар отображается уже сейчас.
-                        Загрузка и удаление фото — следующим шагом.
-                    </div>
-                </div>
+            <FbTextField
+                id="trainer-profile-last-name"
+                label="Фамилия"
+                value={lastName}
+                onChange={onLastNameChange}
+            />
 
-                <div className={styles.formGrid}>
-                    <div className={styles.field}>
-                        <label className={styles.label} htmlFor="trainer-profile-first-name">
-                            Имя
-                        </label>
-                        <input
-                            id="trainer-profile-first-name"
-                            className={styles.input}
-                            value={firstName}
-                            onChange={(event) => onFirstNameChange(event.target.value)}
-                        />
-                    </div>
+            <FbTextField
+                id="trainer-profile-phone"
+                label="Телефон"
+                value={phone}
+                onChange={onPhoneChange}
+                placeholder="+7 ..."
+            />
 
-                    <div className={styles.field}>
-                        <label className={styles.label} htmlFor="trainer-profile-last-name">
-                            Фамилия
-                        </label>
-                        <input
-                            id="trainer-profile-last-name"
-                            className={styles.input}
-                            value={lastName}
-                            onChange={(event) => onLastNameChange(event.target.value)}
-                        />
-                    </div>
-
-                    <div className={styles.field}>
-                        <label className={styles.label} htmlFor="trainer-profile-phone">
-                            Телефон
-                        </label>
-                        <input
-                            id="trainer-profile-phone"
-                            className={styles.input}
-                            value={phone}
-                            onChange={(event) => onPhoneChange(event.target.value)}
-                            placeholder="+7 ..."
-                        />
-                    </div>
-
-                    <div className={styles.field}>
-                        <label className={styles.label} htmlFor="trainer-profile-email">
-                            Email
-                        </label>
-                        <input
-                            id="trainer-profile-email"
-                            className={`${styles.input} ${styles.inputReadonly}`}
-                            value={profile.email}
-                            readOnly
-                        />
-                    </div>
-
-                    <div className={styles.fieldFull}>
-                        <div className={styles.actions}>
-                            <button
-                                type="button"
-                                className="dashboard-btn dashboard-btn-primary"
-                                onClick={onSave}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? "Сохраняем..." : "Сохранить"}
-                            </button>
-
-                            <button
-                                type="button"
-                                className="dashboard-btn dashboard-btn-secondary"
-                                onClick={onReset}
-                                disabled={isSaving}
-                            >
-                                Отменить
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div className="fb-readonly">
+                <span className="fb-readonly__label">Email</span>
+                <span className="fb-readonly__value">{profile.email}</span>
             </div>
-        </section>
+
+            <button
+                type="button"
+                className="fb-btn fb-btn--primary fb-form-submit"
+                onClick={onSave}
+                disabled={isSaving}
+            >
+                {isSaving ? "Сохраняем…" : "Сохранить"}
+            </button>
+
+            <button
+                type="button"
+                className="fb-btn fb-btn--ghost"
+                style={{ marginTop: 10 }}
+                onClick={onReset}
+                disabled={isSaving}
+            >
+                Отменить
+            </button>
+        </>
     );
 }

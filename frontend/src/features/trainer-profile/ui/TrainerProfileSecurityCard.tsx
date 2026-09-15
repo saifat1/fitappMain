@@ -1,5 +1,4 @@
-import PasswordInput from "../../../shared/ui/PasswordInput";
-import styles from "./TrainerProfile.module.css";
+import FbPasswordField from "../../../shared/ui/FbPasswordField";
 
 type Props = {
     currentPassword: string;
@@ -16,91 +15,68 @@ type Props = {
 };
 
 export default function TrainerProfileSecurityCard({
-                                                       currentPassword,
-                                                       newPassword,
-                                                       confirmPassword,
-                                                       isChanging,
-                                                       successMessage,
-                                                       errorMessage,
-                                                       onCurrentPasswordChange,
-                                                       onNewPasswordChange,
-                                                       onConfirmPasswordChange,
-                                                       onSubmit,
-                                                       onReset,
-                                                   }: Props) {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+    isChanging,
+    successMessage,
+    errorMessage,
+    onCurrentPasswordChange,
+    onNewPasswordChange,
+    onConfirmPasswordChange,
+    onSubmit,
+    onReset,
+}: Props) {
     return (
-        <section className={styles.card}>
-            <div className={styles.cardHeader}>
-                <div>
-                    <h2 className={styles.cardTitle}>Безопасность</h2>
-                    <p className={styles.cardSubtitle}>
-                        Смена пароля для входа в приложение.
-                    </p>
-                </div>
-            </div>
+        <>
+            <div className="fb-section-title fb-section-title--flush">Безопасность</div>
+            <div className="fb-hint">Смена пароля для входа в приложение.</div>
 
-            {successMessage && <div className={styles.messageSuccess}>{successMessage}</div>}
-            {errorMessage && <div className={styles.messageError}>{errorMessage}</div>}
+            {successMessage ? <div className="fb-success-note">{successMessage}</div> : null}
+            {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-            <div className={styles.formGrid}>
-                <div className={styles.fieldFull}>
-                    <label className={styles.label} htmlFor="trainer-password-current">
-                        Текущий пароль
-                    </label>
-                    <PasswordInput
-                        id="trainer-password-current"
-                        value={currentPassword}
-                        onChange={onCurrentPasswordChange}
-                        autoComplete="current-password"
-                    />
-                </div>
+            <FbPasswordField
+                id="trainer-password-current"
+                label="Текущий пароль"
+                value={currentPassword}
+                onChange={onCurrentPasswordChange}
+                autoComplete="current-password"
+            />
 
-                <div className={styles.field}>
-                    <label className={styles.label} htmlFor="trainer-password-new">
-                        Новый пароль
-                    </label>
-                    <PasswordInput
-                        id="trainer-password-new"
-                        value={newPassword}
-                        onChange={onNewPasswordChange}
-                        autoComplete="new-password"
-                    />
-                </div>
+            <FbPasswordField
+                id="trainer-password-new"
+                label="Новый пароль"
+                value={newPassword}
+                onChange={onNewPasswordChange}
+                autoComplete="new-password"
+            />
 
-                <div className={styles.field}>
-                    <label className={styles.label} htmlFor="trainer-password-confirm">
-                        Подтверждение
-                    </label>
-                    <PasswordInput
-                        id="trainer-password-confirm"
-                        value={confirmPassword}
-                        onChange={onConfirmPasswordChange}
-                        autoComplete="new-password"
-                    />
-                </div>
+            <FbPasswordField
+                id="trainer-password-confirm"
+                label="Подтверждение"
+                value={confirmPassword}
+                onChange={onConfirmPasswordChange}
+                autoComplete="new-password"
+            />
 
-                <div className={styles.fieldFull}>
-                    <div className={styles.actions}>
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-primary"
-                            onClick={onSubmit}
-                            disabled={isChanging}
-                        >
-                            {isChanging ? "Меняем..." : "Сменить пароль"}
-                        </button>
+            <button
+                type="button"
+                className="fb-btn fb-btn--primary fb-form-submit"
+                onClick={onSubmit}
+                disabled={isChanging}
+            >
+                {isChanging ? "Меняем…" : "Сменить пароль"}
+            </button>
 
-                        <button
-                            type="button"
-                            className="dashboard-btn dashboard-btn-secondary"
-                            onClick={onReset}
-                            disabled={isChanging}
-                        >
-                            Очистить
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+            <button
+                type="button"
+                className="fb-btn fb-btn--ghost"
+                style={{ marginTop: 10 }}
+                onClick={onReset}
+                disabled={isChanging}
+            >
+                Очистить
+            </button>
+        </>
     );
 }

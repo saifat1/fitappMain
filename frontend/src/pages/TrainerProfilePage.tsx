@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { CSSProperties } from "react";
 import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
 import MobileShell from "../widgets/MobileShell";
@@ -9,7 +8,6 @@ import { avatarColor } from "../features/calendar/lib/calendarWeek";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
 import TrainerProfileSecurityCard from "../features/trainer-profile/ui/TrainerProfileSecurityCard";
 import TrainerSalaryReportSection from "../features/salary-report/ui/TrainerSalaryReportSection";
-import styles from "../features/trainer-profile/ui/TrainerProfile.module.css";
 import { trainerProfileApi } from "../shared/api/trainerProfileApi";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type {
@@ -50,18 +48,8 @@ function getHeroInitials(profile: TrainerProfileResponse | null, fallbackEmail?:
     return profile?.email?.[0]?.toUpperCase() ?? fallbackEmail?.[0]?.toUpperCase() ?? "T";
 }
 
-function buildTabButtonStyle(isActive: boolean): CSSProperties {
-    return {
-        minHeight: 42,
-        padding: "0 14px",
-        borderRadius: 12,
-        border: isActive ? "1px solid #14b8a6" : "1px solid #d7deea",
-        background: isActive ? "rgba(20, 184, 166, 0.08)" : "#ffffff",
-        color: isActive ? "#0f766e" : "#0f172a",
-        fontSize: 14,
-        fontWeight: 700,
-        cursor: "pointer",
-    };
+function tabItemClass(isActive: boolean): string {
+    return `fb-segment__item ${isActive ? "fb-segment__item--active" : ""}`.trim();
 }
 
 export default function TrainerProfilePage() {
@@ -239,68 +227,54 @@ export default function TrainerProfilePage() {
                 ) : null}
             </div>
 
-            <section className={styles.card}>
-                <div className={styles.tabRow}>
-                    <button
-                        type="button"
-                        style={buildTabButtonStyle(activeTab === "info")}
-                        onClick={() => setActiveTab("info")}
-                    >
-                        О себе
-                    </button>
+            <div className="fb-segment">
+                <button type="button" className={tabItemClass(activeTab === "info")} onClick={() => setActiveTab("info")}>
+                    О себе
+                </button>
+                <button type="button" className={tabItemClass(activeTab === "security")} onClick={() => setActiveTab("security")}>
+                    Безопасность
+                </button>
+                <button type="button" className={tabItemClass(activeTab === "reports")} onClick={() => setActiveTab("reports")}>
+                    Отчёты
+                </button>
+            </div>
 
-                    <button
-                        type="button"
-                        style={buildTabButtonStyle(activeTab === "security")}
-                        onClick={() => setActiveTab("security")}
-                    >
-                        Безопасность
-                    </button>
+            <div className="fb-tab-panel">
+                {activeTab === "info" && (
+                    <TrainerProfileInfoCard
+                        profile={profile}
+                        firstName={firstName}
+                        lastName={lastName}
+                        phone={phone}
+                        isSaving={isSavingProfile}
+                        successMessage={profileSuccessMessage}
+                        errorMessage={profileErrorMessage}
+                        onFirstNameChange={setFirstName}
+                        onLastNameChange={setLastName}
+                        onPhoneChange={setPhone}
+                        onSave={handleSaveProfile}
+                        onReset={handleResetProfile}
+                    />
+                )}
 
-                    <button
-                        type="button"
-                        style={buildTabButtonStyle(activeTab === "reports")}
-                        onClick={() => setActiveTab("reports")}
-                    >
-                        Отчёты
-                    </button>
-                </div>
-            </section>
+                {activeTab === "security" && (
+                    <TrainerProfileSecurityCard
+                        currentPassword={currentPassword}
+                        newPassword={newPassword}
+                        confirmPassword={confirmPassword}
+                        isChanging={isChangingPassword}
+                        successMessage={passwordSuccessMessage}
+                        errorMessage={passwordErrorMessage}
+                        onCurrentPasswordChange={setCurrentPassword}
+                        onNewPasswordChange={setNewPassword}
+                        onConfirmPasswordChange={setConfirmPassword}
+                        onSubmit={handleChangePassword}
+                        onReset={handleResetPasswordForm}
+                    />
+                )}
 
-            {activeTab === "info" && (
-                <TrainerProfileInfoCard
-                    profile={profile}
-                    firstName={firstName}
-                    lastName={lastName}
-                    phone={phone}
-                    isSaving={isSavingProfile}
-                    successMessage={profileSuccessMessage}
-                    errorMessage={profileErrorMessage}
-                    onFirstNameChange={setFirstName}
-                    onLastNameChange={setLastName}
-                    onPhoneChange={setPhone}
-                    onSave={handleSaveProfile}
-                    onReset={handleResetProfile}
-                />
-            )}
-
-            {activeTab === "security" && (
-                <TrainerProfileSecurityCard
-                    currentPassword={currentPassword}
-                    newPassword={newPassword}
-                    confirmPassword={confirmPassword}
-                    isChanging={isChangingPassword}
-                    successMessage={passwordSuccessMessage}
-                    errorMessage={passwordErrorMessage}
-                    onCurrentPasswordChange={setCurrentPassword}
-                    onNewPasswordChange={setNewPassword}
-                    onConfirmPasswordChange={setConfirmPassword}
-                    onSubmit={handleChangePassword}
-                    onReset={handleResetPasswordForm}
-                />
-            )}
-
-            {activeTab === "reports" && <TrainerSalaryReportSection />}
+                {activeTab === "reports" && <TrainerSalaryReportSection />}
+            </div>
 
             <button type="button" className="fb-btn fb-btn--ghost fb-logout" onClick={handleLogout}>
                 Выйти
