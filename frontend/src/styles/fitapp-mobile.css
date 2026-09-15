@@ -954,3 +954,20 @@
 
 .fb-info-note__icon { flex: none; }
 
+/* long-form legal document reading (LegalDocumentPage) */
+.fb-doc-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fb-ink);
+    margin: 20px 0 8px;
+}
+
+.fb-doc-heading:first-child { margin-top: 4px; }
+
+.fb-doc-paragraph {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--fb-ink-2);
+    margin: 0 0 10px;
+}
+

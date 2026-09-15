@@ -62,12 +62,18 @@ export default function LegalConsentsPage() {
     const [error, setError] = useState("");
 
     const canSubmit = CONSENTS.every((item) => accepted[item.key]);
+    const allAccepted = canSubmit;
 
     const toggleConsent = (key: string) => {
         setAccepted((prev) => ({
             ...prev,
             [key]: !prev[key],
         }));
+    };
+
+    const toggleAll = () => {
+        const next = !allAccepted;
+        setAccepted(Object.fromEntries(CONSENTS.map((item) => [item.key, next])));
     };
 
     const handleSubmit = async () => {
@@ -91,62 +97,68 @@ export default function LegalConsentsPage() {
     };
 
     return (
-        <main className="legal-consents-page">
-            <section className="legal-consents-shell">
-                <div className="legal-consents-header">
-                    <h1>Документы и согласия</h1>
-                    <p>
-                        Для продолжения работы необходимо принять документы, связанные с
-                        использованием приложения и обработкой персональных данных.
-                    </p>
+        <div className="fb-screen">
+            <header className="fb-topbar">
+                <h1 className="fb-topbar__title">Документы и согласия</h1>
+            </header>
+
+            <div className="fb-body">
+                <div className="fb-hint" style={{ paddingTop: 0 }}>
+                    Для продолжения работы необходимо принять документы, связанные с
+                    использованием приложения и обработкой персональных данных.
                 </div>
-
-                <div className="legal-consents-list">
-                    {CONSENTS.map((item) => (
-                        <article className="legal-consent-card" key={item.key}>
-                            <div className="legal-consent-icon">{item.icon}</div>
-
-                            <div className="legal-consent-body">
-                                <h2>{item.title}</h2>
-                                <p>{item.description}</p>
-                            </div>
-
-                            <Link className="legal-consent-link" to={item.link}>
-                                {item.linkText} ↗
-                            </Link>
-
-                            <button
-                                type="button"
-                                className={
-                                    accepted[item.key]
-                                        ? "legal-consent-check is-active"
-                                        : "legal-consent-check"
-                                }
-                                onClick={() => toggleConsent(item.key)}
-                                aria-label={`Принять: ${item.title}`}
-                            >
-                                {accepted[item.key] ? "✓" : ""}
-                            </button>
-                        </article>
-                    ))}
-                </div>
-
-                {error && <div className="legal-consents-error">{error}</div>}
 
                 <button
                     type="button"
-                    className="legal-consents-submit"
-                    disabled={!canSubmit || isSubmitting}
-                    onClick={handleSubmit}
+                    className="fb-btn fb-btn--ghost"
+                    style={{ marginTop: 16 }}
+                    onClick={toggleAll}
                 >
-                    {isSubmitting ? "Сохраняем..." : "Принять и продолжить"}
+                    {allAccepted ? "Снять все отметки" : "Принять все документы"}
                 </button>
 
-                <div className="legal-consents-note">
-                    🔒 Ваши данные защищены и не передаются третьим лицам без вашего
-                    согласия
+                <div className="fb-list" style={{ marginTop: 8 }}>
+                    {CONSENTS.map((item) => (
+                        <div className="fb-row" key={item.key}>
+                            <span className="fb-row__main">
+                                <span className="fb-row__title">
+                                    {item.icon} {item.title}
+                                </span>
+                                <span className="fb-row__sub">
+                                    {item.description} ·{" "}
+                                    <Link to={item.link} style={{ color: "var(--fb-green)", fontWeight: 600 }}>
+                                        {item.linkText}
+                                    </Link>
+                                </span>
+                            </span>
+
+                            <button
+                                type="button"
+                                className={`fb-row__radio ${accepted[item.key] ? "fb-row__radio--checked" : ""}`}
+                                aria-label={`Принять: ${item.title}`}
+                                onClick={() => toggleConsent(item.key)}
+                            >
+                                {accepted[item.key] ? "✓" : ""}
+                            </button>
+                        </div>
+                    ))}
                 </div>
-            </section>
-        </main>
+
+                {error ? <div className="fb-cal-error">{error}</div> : null}
+
+                <button
+                    type="button"
+                    className="fb-btn fb-btn--primary fb-form-submit"
+                    disabled={!canSubmit || isSubmitting}
+                    onClick={() => void handleSubmit()}
+                >
+                    {isSubmitting ? "Сохраняем…" : "Принять и продолжить"}
+                </button>
+
+                <div className="fb-hint" style={{ textAlign: "center" }}>
+                    🔒 Ваши данные защищены и не передаются третьим лицам без вашего согласия
+                </div>
+            </div>
+        </div>
     );
 }

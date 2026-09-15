@@ -86,7 +86,10 @@
     font-size: 17px;
     font-weight: 600;
     color: var(--fb-ink);
+    line-height: 1.3;
     margin: 0;
+    padding: 0 52px; /* clear the absolutely-positioned back/action buttons (40px + offset) so long titles don't overlap them */
+    text-align: center;
 }
 
 /* ---------- Body / content ---------- */

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 type LegalDocument = {
     title: string;
@@ -155,51 +155,61 @@ const DOCUMENTS: Record<string, LegalDocument> = {
 
 export default function LegalDocumentPage() {
     const location = useLocation();
+    const navigate = useNavigate();
     const document = DOCUMENTS[location.pathname];
+
+    const handleBack = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+            return;
+        }
+
+        navigate("/legal/consents", { replace: true });
+    };
 
     if (!document) {
         return (
-            <main className="legal-document-page">
-                <section className="legal-document-card">
-                    <h1>Документ не найден</h1>
-                    <Link to="/legal/consents">Вернуться к согласию</Link>
-                </section>
-            </main>
+            <div className="fb-screen">
+                <header className="fb-topbar">
+                    <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={handleBack}>
+                        ‹
+                    </button>
+                    <h1 className="fb-topbar__title">Документ не найден</h1>
+                </header>
+                <div className="fb-body">
+                    <Link to="/legal/consents" style={{ color: "var(--fb-green)", fontWeight: 600 }}>
+                        Вернуться к согласию
+                    </Link>
+                </div>
+            </div>
         );
     }
 
     return (
-        <main className="legal-document-page">
-            <section className="legal-document-card">
-                <button
-                    type="button"
-                    className="legal-document-back"
-                    onClick={() => {
-                        if (window.history.length > 1) {
-                            window.history.back();
-                            return;
-                        }
-
-                        window.location.href = "/legal/consents";
-                    }}
-                >
-                    ← Вернуться
+        <div className="fb-screen">
+            <header className="fb-topbar">
+                <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={handleBack}>
+                    ‹
                 </button>
+                <h1 className="fb-topbar__title">{document.title}</h1>
+            </header>
 
-                <h1>{document.title}</h1>
-                <div className="legal-document-meta">
+            <div className="fb-body">
+                <div className="fb-hint" style={{ paddingTop: 0 }}>
                     Версия {document.version} · дата обновления: {document.updatedAt}
                 </div>
 
                 {document.sections.map((section) => (
-                    <section key={section.title} className="legal-document-section">
-                        <h2>{section.title}</h2>
+                    <div key={section.title}>
+                        <div className="fb-doc-heading">{section.title}</div>
                         {section.paragraphs.map((paragraph) => (
-                            <p key={paragraph}>{paragraph}</p>
+                            <p className="fb-doc-paragraph" key={paragraph}>
+                                {paragraph}
+                            </p>
                         ))}
-                    </section>
+                    </div>
                 ))}
-            </section>
-        </main>
+            </div>
+        </div>
     );
 }
