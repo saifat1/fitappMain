@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import ru.fitapp.backend.contract.entity.ClientContract;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.training.model.TrainingType;
+import ru.fitapp.backend.training.model.CancelledBy;
 import ru.fitapp.backend.user.entity.AppUser;
 
 import java.time.LocalDate;
@@ -55,6 +56,15 @@ public class Training {
     /** Comma-joined MuscleGroup codes — only meaningful for INDEPENDENT trainings. */
     @Column(name = "focus_muscle_groups", length = 255)
     private String focusMuscleGroups;
+
+    /** Only set when status = CANCELLED — who cancelled it drives calendar visibility (see TrainingService.getTrainings). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancelled_by", length = 16)
+    private CancelledBy cancelledBy;
+
+    /** Manually dismissed from the schedule (the "Удалить" swipe action) — stays in history/reports either way. */
+    @Column(name = "hidden_from_schedule", nullable = false)
+    private boolean hiddenFromSchedule = false;
 
     @Column(name = "trainer_note", length = 2000)
     private String trainerNote;
@@ -163,6 +173,24 @@ public class Training {
 
     public Training setFocusMuscleGroups(String focusMuscleGroups) {
         this.focusMuscleGroups = focusMuscleGroups;
+        return this;
+    }
+
+    public CancelledBy getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public Training setCancelledBy(CancelledBy cancelledBy) {
+        this.cancelledBy = cancelledBy;
+        return this;
+    }
+
+    public boolean isHiddenFromSchedule() {
+        return hiddenFromSchedule;
+    }
+
+    public Training setHiddenFromSchedule(boolean hiddenFromSchedule) {
+        this.hiddenFromSchedule = hiddenFromSchedule;
         return this;
     }
 

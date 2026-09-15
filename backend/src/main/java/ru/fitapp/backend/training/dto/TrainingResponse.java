@@ -17,6 +17,7 @@ public class TrainingResponse {
     private LocalTime startTime;
     private LocalTime endTime;
     private String status;
+    private String cancelledBy;
     private String trainingType;
     private List<String> focusMuscleGroups;
     private String trainerNote;
@@ -113,6 +114,15 @@ public class TrainingResponse {
 
     public TrainingResponse setStatus(String status) {
         this.status = status;
+        return this;
+    }
+
+    public String getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public TrainingResponse setCancelledBy(String cancelledBy) {
+        this.cancelledBy = cancelledBy;
         return this;
     }
 

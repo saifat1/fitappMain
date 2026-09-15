@@ -11,6 +11,7 @@ export type TrainingResponse = {
     startTime: string | null;
     endTime: string | null;
     status: string;
+    cancelledBy: "CLIENT" | "TRAINER" | null;
     trainingType: TrainingType;
     focusMuscleGroups: string[];
     trainerNote: string | null;

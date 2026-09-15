@@ -67,4 +67,9 @@ public class TrainingController {
         return trainingService.restoreTrainingToPlanned(trainingId);
     }
 
+    @PostMapping("/{trainingId}/hide")
+    public void hideFromSchedule(@PathVariable Long trainingId) {
+        trainingService.hideFromSchedule(trainingId);
+    }
+
 }

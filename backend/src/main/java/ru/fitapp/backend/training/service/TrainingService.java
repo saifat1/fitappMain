@@ -10,6 +10,7 @@ import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
 import ru.fitapp.backend.training.entity.Training;
+import ru.fitapp.backend.training.model.CancelledBy;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.training.model.TrainingType;
 import ru.fitapp.backend.training.repository.TrainingRepository;
@@ -102,6 +103,7 @@ public class TrainingService {
                             to
                     )
                     .stream()
+                    .filter(t -> isVisibleInCalendar(t, UserRole.TRAINER))
                     .map(this::mapToResponse)
                     .toList();
         }
@@ -114,11 +116,39 @@ public class TrainingService {
                             to
                     )
                     .stream()
+                    .filter(t -> isVisibleInCalendar(t, UserRole.CLIENT))
                     .map(this::mapToResponse)
                     .toList();
         }
 
         throw new ApiException("ACCESS_DENIED", "Недостаточно прав для просмотра тренировок");
+    }
+
+    /**
+     * Per the 13.07.2026 decision with Katerina:
+     *  - trainer-cancelled trainings never appear in the TRAINER's own
+     *    calendar (they go straight to history) — but they DO appear in the
+     *    CLIENT's calendar, marked "Отменена".
+     *  - client-cancelled trainings appear (as "Отменена") in both calendars
+     *    right up until their slot time passes, then quietly drop out of the
+     *    schedule for everyone — the record stays intact for history/reports.
+     *  - manually dismissed ("Удалить") trainings never show again for
+     *    anyone, regardless of who cancelled them.
+     */
+    private boolean isVisibleInCalendar(Training training, UserRole viewerRole) {
+        if (training.getStatus() != TrainingStatus.CANCELLED) {
+            return true;
+        }
+        if (training.isHiddenFromSchedule()) {
+            return false;
+        }
+        if (training.getCancelledBy() == CancelledBy.TRAINER && viewerRole == UserRole.TRAINER) {
+            return false;
+        }
+
+        LocalTime startTime = training.getStartTime() != null ? training.getStartTime() : LocalTime.MIDNIGHT;
+        LocalDateTime slotStart = LocalDateTime.of(training.getTrainingDate(), startTime);
+        return slotStart.isAfter(LocalDateTime.now());
     }
 
     @Transactional(readOnly = true)
@@ -174,6 +204,7 @@ public class TrainingService {
         }
 
         training.setStatus(TrainingStatus.CANCELLED);
+        training.setCancelledBy(CancelledBy.TRAINER);
         Training saved = trainingRepository.save(training);
         notificationService.notifyTrainingCancelledByTrainer(saved);
 
@@ -207,8 +238,27 @@ public class TrainingService {
         }
 
         training.setStatus(TrainingStatus.CANCELLED);
+        training.setCancelledBy(CancelledBy.CLIENT);
         Training saved = trainingRepository.save(training);
         notificationService.notifyTrainingCancelledByClient(saved);
+    }
+
+    /**
+     * Trainer-only "Удалить" swipe action on a cancelled training row —
+     * clears it from the schedule immediately instead of waiting for its
+     * slot to pass. The record itself is untouched, so history/reports are
+     * unaffected.
+     */
+    public void hideFromSchedule(Long trainingId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+
+        if (training.getStatus() != TrainingStatus.CANCELLED) {
+            throw new ApiException("TRAINING_NOT_CANCELLED", "Скрыть из расписания можно только отменённую тренировку");
+        }
+
+        training.setHiddenFromSchedule(true);
+        trainingRepository.save(training);
     }
 
     @Transactional(readOnly = true)
@@ -285,6 +335,7 @@ public class TrainingService {
                 .setStartTime(training.getStartTime())
                 .setEndTime(training.getEndTime())
                 .setStatus(training.getStatus().name())
+                .setCancelledBy(training.getCancelledBy() != null ? training.getCancelledBy().name() : null)
                 .setTrainingType(training.getTrainingType().name())
                 .setFocusMuscleGroups(split(training.getFocusMuscleGroups()))
                 .setTrainerNote(training.getTrainerNote())

@@ -32,6 +32,9 @@ type Props = {
     onCreateDutyRange: (startHour: number, hours: number) => Promise<boolean>;
     onDeleteDutyBlock: (slotIds: number[], label: string) => void;
     onOpenProfile?: () => void;
+    onCompleteTraining: (trainingId: number) => void;
+    onCancelTraining: (trainingId: number) => void;
+    onHideTraining: (trainingId: number) => void;
 };
 
 const TIMELINE_START_HOUR = 8;
@@ -55,6 +58,9 @@ export default function TrainerCalendarScreen({
     onCreateDutyRange,
     onDeleteDutyBlock,
     onOpenProfile,
+    onCompleteTraining,
+    onCancelTraining,
+    onHideTraining,
 }: Props) {
     const [mode, setMode] = useState<CalendarMode>("planning");
     const [expanded, setExpanded] = useState(false);
@@ -143,11 +149,15 @@ export default function TrainerCalendarScreen({
                 <div className="fb-cal-status">Загрузка…</div>
             ) : (
                 <ScheduleList
+                    selectedDate={selectedDate}
                     trainings={dayTrainings}
                     dutySlots={dayDutySlots}
                     processingDutyKey={processingDutyKey}
                     onOpenTraining={onOpenTraining}
                     onDeleteDutyBlock={onDeleteDutyBlock}
+                    onCompleteTraining={onCompleteTraining}
+                    onCancelTraining={onCancelTraining}
+                    onHideTraining={onHideTraining}
                 />
             )}
 

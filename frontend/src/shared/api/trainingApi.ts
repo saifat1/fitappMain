@@ -25,4 +25,8 @@ export const trainingApi = {
 
     restoreTrainingToPlanned: (id: number) =>
         apiClient.patch(`/trainings/${id}/restore-planned`).then((r) => r.data),
+
+    /** "Удалить" swipe action on a cancelled training — clears it from the schedule now, keeps it in history/reports. */
+    hideFromSchedule: (id: number) =>
+        apiClient.post(`/trainings/${id}/hide`).then((r) => r.data),
 };

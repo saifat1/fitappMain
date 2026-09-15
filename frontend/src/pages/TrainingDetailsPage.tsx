@@ -330,6 +330,17 @@ export default function TrainingDetailsPage() {
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
+                {!editing && status !== "CANCELLED" && (
+                    <button
+                        type="button"
+                        className="fb-fab fb-fab--flush"
+                        aria-label="Добавить упражнение"
+                        onClick={() => setExerciseSheetOpen(true)}
+                    >
+                        +
+                    </button>
+                )}
+
                 {editing && (
                     <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSave} disabled={isSaving}>
                         {isSaving ? "Сохраняем…" : "Сохранить"}

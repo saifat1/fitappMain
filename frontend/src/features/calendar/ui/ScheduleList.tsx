@@ -1,17 +1,24 @@
-import { useMemo } from "react";
-import TrainingEvent from "./TrainingEvent";
+import { useMemo, useState } from "react";
+import ScheduleTrainingCard from "./ScheduleTrainingCard";
+import SwipeableRow, { type SwipeAction } from "./SwipeableRow";
+import NowLine from "./NowLine";
 import DutyIcon from "./DutyIcon";
-import { WEEKDAY_LABELS } from "../lib/calendarWeek";
-import { parseDateKey, mergeDutySlotsIntoBlocks, type DutyBlock } from "../lib/trainerCalendar";
+import CheckIcon from "../../training/ui/CheckIcon";
+import CrossIcon from "../../training/ui/CrossIcon";
+import { mergeDutySlotsIntoBlocks, formatDateKey, type DutyBlock } from "../lib/trainerCalendar";
 import type { TrainingResponse } from "../../training/model/training.types";
 import type { TrainerDutySlotResponse } from "../../duty-slot/model/dutySlot.types";
 
 type Props = {
+    selectedDate: string;
     trainings: TrainingResponse[];
     dutySlots: TrainerDutySlotResponse[];
     processingDutyKey: string | null;
     onOpenTraining: (trainingId: number) => void;
     onDeleteDutyBlock: (slotIds: number[], label: string) => void;
+    onCompleteTraining: (trainingId: number) => void;
+    onCancelTraining: (trainingId: number) => void;
+    onHideTraining: (trainingId: number) => void;
 };
 
 type ScheduleItem =
@@ -29,79 +36,119 @@ function blockMinutes(block: DutyBlock): number {
     return h * 60 + m;
 }
 
+function hourLabelFor(minutes: number): string {
+    const hour = Math.floor(minutes / 60);
+    return `${String(Math.min(hour, 23)).padStart(2, "0")}:00`;
+}
+
 export default function ScheduleList({
+    selectedDate,
     trainings,
     dutySlots,
     processingDutyKey,
     onOpenTraining,
     onDeleteDutyBlock,
+    onCompleteTraining,
+    onCancelTraining,
+    onHideTraining,
 }: Props) {
+    const [openRowId, setOpenRowId] = useState<number | null>(null);
+
     const groups = useMemo(() => {
-        const trainingsByDate = new Map<string, TrainingResponse[]>();
-        for (const training of trainings) {
-            const list = trainingsByDate.get(training.trainingDate) ?? [];
-            list.push(training);
-            trainingsByDate.set(training.trainingDate, list);
+        const dutyBlocks = mergeDutySlotsIntoBlocks(dutySlots);
+
+        const items: ScheduleItem[] = [
+            ...trainings.map((training) => ({
+                kind: "training" as const,
+                sortMinutes: startMinutes(training),
+                training,
+            })),
+            ...dutyBlocks.map((block) => ({
+                kind: "duty" as const,
+                sortMinutes: blockMinutes(block),
+                block,
+            })),
+        ].sort((a, b) => a.sortMinutes - b.sortMinutes);
+
+        const byHour = new Map<string, ScheduleItem[]>();
+        for (const item of items) {
+            const label = hourLabelFor(item.sortMinutes);
+            const list = byHour.get(label) ?? [];
+            list.push(item);
+            byHour.set(label, list);
         }
-
-        const dutyByDate = new Map<string, TrainerDutySlotResponse[]>();
-        for (const slot of dutySlots) {
-            const list = dutyByDate.get(slot.dutyDate) ?? [];
-            list.push(slot);
-            dutyByDate.set(slot.dutyDate, list);
-        }
-
-        const dateKeys = new Set([...trainingsByDate.keys(), ...dutyByDate.keys()]);
-
-        return Array.from(dateKeys)
-            .sort((a, b) => a.localeCompare(b))
-            .map((dateKey) => {
-                const dutyBlocks = mergeDutySlotsIntoBlocks(dutyByDate.get(dateKey) ?? []);
-
-                const items: ScheduleItem[] = [
-                    ...(trainingsByDate.get(dateKey) ?? []).map((training) => ({
-                        kind: "training" as const,
-                        sortMinutes: startMinutes(training),
-                        training,
-                    })),
-                    ...dutyBlocks.map((block) => ({
-                        kind: "duty" as const,
-                        sortMinutes: blockMinutes(block),
-                        block,
-                    })),
-                ].sort((a, b) => a.sortMinutes - b.sortMinutes);
-
-                return { dateKey, items };
-            });
+        return Array.from(byHour.entries());
     }, [trainings, dutySlots]);
+
+    const isToday = selectedDate === formatDateKey(new Date());
+    const nowMinutes = (() => {
+        const now = new Date();
+        return now.getHours() * 60 + now.getMinutes();
+    })();
 
     if (groups.length === 0) {
         return <div className="fb-schedule__empty">На выбранный день записей нет</div>;
     }
 
+    let nowLinePlaced = !isToday;
+
     return (
         <div className="fb-schedule">
-            {groups.map(({ dateKey, items }) => {
-                const date = parseDateKey(dateKey);
-                const weekday = WEEKDAY_LABELS[(date.getDay() + 6) % 7];
+            <div className="fb-schedule__items">
+                {groups.map(([hourLabel, groupItems]) => {
+                    const showNowLineHere = !nowLinePlaced && groupItems[0].sortMinutes > nowMinutes;
+                    if (showNowLineHere) nowLinePlaced = true;
 
-                return (
-                    <div key={dateKey} className="fb-schedule__day">
-                        <div className="fb-schedule__date">
-                            <div className="fb-schedule__date-num">{date.getDate()}</div>
-                            <div className="fb-schedule__date-wd">{weekday}</div>
-                        </div>
+                    return (
+                        <div key={hourLabel} className="fb-schedule__hour-group">
+                            {showNowLineHere ? <NowLine /> : null}
+                            <div className="fb-schedule__hour-label">{hourLabel}</div>
 
-                        <div className="fb-schedule__items">
-                            {items.map((item) => {
+                            {groupItems.map((item) => {
                                 if (item.kind === "training") {
+                                    const { training } = item;
+                                    const actions: SwipeAction[] =
+                                        training.status === "PLANNED"
+                                            ? [
+                                                  {
+                                                      key: "cancel",
+                                                      label: "Отменена",
+                                                      color: "red",
+                                                      icon: <CrossIcon />,
+                                                      onClick: () => onCancelTraining(training.id),
+                                                  },
+                                                  {
+                                                      key: "complete",
+                                                      label: "Проведена",
+                                                      color: "green",
+                                                      icon: <CheckIcon />,
+                                                      onClick: () => onCompleteTraining(training.id),
+                                                  },
+                                              ]
+                                            : training.status === "CANCELLED"
+                                            ? [
+                                                  {
+                                                      key: "hide",
+                                                      label: "Удалить",
+                                                      color: "red",
+                                                      icon: <CrossIcon />,
+                                                      onClick: () => onHideTraining(training.id),
+                                                  },
+                                              ]
+                                            : [];
+
                                     return (
-                                        <TrainingEvent
-                                            key={`training-${item.training.id}`}
-                                            training={item.training}
-                                            showTime
-                                            onClick={onOpenTraining}
-                                        />
+                                        <SwipeableRow
+                                            key={`training-${training.id}`}
+                                            actions={actions}
+                                            isOpen={openRowId === training.id}
+                                            onOpenChange={(open) => setOpenRowId(open ? training.id : null)}
+                                        >
+                                            <ScheduleTrainingCard
+                                                training={training}
+                                                onClick={() => onOpenTraining(training.id)}
+                                            />
+                                        </SwipeableRow>
                                     );
                                 }
 
@@ -128,9 +175,11 @@ export default function ScheduleList({
                                 );
                             })}
                         </div>
-                    </div>
-                );
-            })}
+                    );
+                })}
+
+                {!nowLinePlaced ? <NowLine /> : null}
+            </div>
         </div>
     );
 }

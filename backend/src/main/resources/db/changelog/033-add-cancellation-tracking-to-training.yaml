@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 033-add-cancellation-tracking-to-training
+      author: claude
+      changes:
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: cancelled_by
+                  type: varchar(16)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: hidden_from_schedule
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

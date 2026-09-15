@@ -192,6 +192,38 @@ export default function MePage() {
         }
     };
 
+    const handleCompleteTraining = async (trainingId: number) => {
+        setErrorMessage("");
+        try {
+            await trainingApi.completeTraining(trainingId);
+            await loadTrainings();
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось отметить тренировку проведённой"));
+        }
+    };
+
+    const handleCancelTraining = async (trainingId: number) => {
+        if (!window.confirm("Отменить тренировку?")) return;
+
+        setErrorMessage("");
+        try {
+            await trainingApi.cancelTraining(trainingId);
+            await loadTrainings();
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось отменить тренировку"));
+        }
+    };
+
+    const handleHideTraining = async (trainingId: number) => {
+        setErrorMessage("");
+        try {
+            await trainingApi.hideFromSchedule(trainingId);
+            await loadTrainings();
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось удалить тренировку из расписания"));
+        }
+    };
+
     return (
         <TrainerCalendarScreen
             currentUser={currentUser}
@@ -215,6 +247,9 @@ export default function MePage() {
             onCreateDutyRange={handleCreateDutyRange}
             onDeleteDutyBlock={handleDeleteDutyBlock}
             onOpenProfile={() => navigate("/trainer/profile")}
+            onCompleteTraining={handleCompleteTraining}
+            onCancelTraining={handleCancelTraining}
+            onHideTraining={handleHideTraining}
         />
     );
 }

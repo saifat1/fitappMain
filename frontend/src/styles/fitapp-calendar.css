@@ -452,6 +452,18 @@
     min-width: 0;
 }
 
+.fb-schedule__hour-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fb-schedule__hour-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--fb-muted);
+}
+
 .fb-schedule__empty {
     text-align: center;
     color: var(--fb-muted);
@@ -503,6 +515,130 @@
     font-size: 12px;
     color: var(--fb-green-deep);
     opacity: 0.85;
+}
+
+/* ---------- Swipeable row (reveal actions on drag) ---------- */
+.fb-swipe-row {
+    position: relative;
+    overflow: hidden;
+}
+
+.fb-swipe-row__actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    z-index: 0;
+}
+
+.fb-swipe-row__action {
+    flex: none;
+    width: 58px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: none;
+    background: transparent;
+    padding: 2px;
+    cursor: pointer;
+}
+
+.fb-swipe-row__action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    color: #fff;
+}
+
+.fb-swipe-row__action-icon svg { width: 22px; height: 22px; }
+
+.fb-swipe-row__action-icon--red { background: #e63d5b; }
+.fb-swipe-row__action-icon--green { background: var(--fb-green); }
+
+.fb-swipe-row__action-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--fb-muted);
+}
+
+.fb-swipe-row__content {
+    position: relative;
+    z-index: 1;
+    background: var(--fb-page);
+}
+
+/* ---------- Schedule card (CardPerson) ---------- */
+.fb-schedule-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border: none;
+    border-radius: 28px;
+    background: var(--fb-surface-2);
+    padding: 8px 16px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fb-schedule-card--completed {
+    background: rgba(52, 168, 83, 0.14);
+}
+
+.fb-schedule-card__name {
+    flex: 1;
+    min-width: 0;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--fb-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fb-schedule-card__badge {
+    flex: none;
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 100px;
+    line-height: 15px;
+}
+
+.fb-schedule-card__badge--planned { background: #667381; }
+.fb-schedule-card__badge--completed { background: var(--fb-green); }
+.fb-schedule-card__badge--cancelled { background: #e5484d; }
+
+/* ---------- Now line (current time indicator) ---------- */
+.fb-now-line {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.fb-now-line__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5484d;
+    margin-left: -4px;
+}
+
+.fb-now-line__line {
+    flex: 1;
+    height: 2px;
+    background: #e5484d;
 }
 
 /* ---------- Add entry bottom sheet ---------- */
