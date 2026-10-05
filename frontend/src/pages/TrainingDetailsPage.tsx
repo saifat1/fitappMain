@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 import Avatar from "../shared/ui/Avatar";
+import { useAuth } from "../features/auth/model/AuthContext";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
@@ -53,6 +54,8 @@ export default function TrainingDetailsPage() {
     const navigate = useNavigate();
     const { trainingId } = useParams<{ trainingId: string }>();
     const id = Number(trainingId);
+    const { currentUser } = useAuth();
+    const isClient = currentUser?.role === "CLIENT";
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
     const [exercises, setExercises] = useState<TrainingExerciseResponse[]>([]);
@@ -213,7 +216,7 @@ export default function TrainingDetailsPage() {
                 <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => (editing ? setEditing(false) : navigate(-1))}>‹</button>
                 <h1 className="fb-topbar__title">Тренировка</h1>
 
-                {!editing && (
+                {!editing && (!isClient || status === "PLANNED") && (
                     <button type="button" className="fb-topbar__action" aria-label="Меню" onClick={() => setMenuOpen((v) => !v)}>
                         ⋮
                     </button>
@@ -223,6 +226,12 @@ export default function TrainingDetailsPage() {
                     <>
                         <button type="button" className="fb-overlay" aria-label="Закрыть" onClick={() => setMenuOpen(false)} />
                         <div className="fb-menu" role="menu">
+                            {isClient ? (
+                                <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); navigate(`/trainings/${id}/reschedule-request`); }}>
+                                    Перенести
+                                </button>
+                            ) : (
+                            <>
                             {status !== "CANCELLED" && (
                                 <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); setEditing(true); }}>
                                     Редактировать
@@ -231,11 +240,6 @@ export default function TrainingDetailsPage() {
                             {status === "PLANNED" && (
                                 <button type="button" className="fb-menu__item" onClick={() => void runAction(() => trainingApi.completeTraining(id), "Не удалось завершить")}>
                                     Завершить
-                                </button>
-                            )}
-                            {status === "PLANNED" && (
-                                <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); navigate(`/trainings/${id}/reschedule-request`); }}>
-                                    Перенести
                                 </button>
                             )}
                             {status !== "PLANNED" && (
@@ -247,6 +251,8 @@ export default function TrainingDetailsPage() {
                                 <button type="button" className="fb-menu__item fb-menu__item--danger" onClick={handleDelete}>
                                     Удалить
                                 </button>
+                            )}
+                            </>
                             )}
                         </div>
                     </>
@@ -330,7 +336,7 @@ export default function TrainingDetailsPage() {
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-                {!editing && status !== "CANCELLED" && (
+                {!editing && !isClient && status !== "CANCELLED" && (
                     <button
                         type="button"
                         className="fb-fab fb-fab--flush"

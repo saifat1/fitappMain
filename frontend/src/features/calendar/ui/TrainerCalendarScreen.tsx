@@ -12,6 +12,7 @@ import {
 } from "../lib/calendarWeek";
 import type { TrainingResponse } from "../../training/model/training.types";
 import type { CurrentUserResponse } from "../../auth/model/auth.types";
+import PendingReschedulesBanner from "../../reschedule/ui/PendingReschedulesBanner";
 import type { TrainerDutySlotResponse } from "../../duty-slot/model/dutySlot.types";
 
 type Props = {
@@ -124,6 +125,8 @@ export default function TrainerCalendarScreen({
             />
 
             <div className="fb-divider" />
+
+            <PendingReschedulesBanner />
 
             {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 

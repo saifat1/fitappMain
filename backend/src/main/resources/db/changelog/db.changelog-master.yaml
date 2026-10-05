@@ -65,3 +65,5 @@ databaseChangeLog:
       file: db/changelog/032-add-end-date-to-client-contract.yaml
   - include:
       file: db/changelog/033-add-cancellation-tracking-to-training.yaml
+  - include:
+      file: db/changelog/034-add-original-training-to-booking-request.yaml

@@ -1,6 +1,8 @@
 package ru.fitapp.backend.bookingrequest.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class BookingRequestResponse {
 
@@ -13,6 +15,10 @@ public class BookingRequestResponse {
     private String clientEmail;
     private String clientFirstName;
     private String clientLastName;
+    private Long originalTrainingId;
+    private LocalDate originalTrainingDate;
+    private LocalTime originalStartTime;
+    private LocalTime originalEndTime;
     private LocalDateTime requestedStart;
     private LocalDateTime requestedEnd;
     private String status;
@@ -172,6 +178,42 @@ public class BookingRequestResponse {
 
     public BookingRequestResponse setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+        return this;
+    }
+
+    public Long getOriginalTrainingId() {
+        return originalTrainingId;
+    }
+
+    public BookingRequestResponse setOriginalTrainingId(Long originalTrainingId) {
+        this.originalTrainingId = originalTrainingId;
+        return this;
+    }
+
+    public LocalDate getOriginalTrainingDate() {
+        return originalTrainingDate;
+    }
+
+    public BookingRequestResponse setOriginalTrainingDate(LocalDate originalTrainingDate) {
+        this.originalTrainingDate = originalTrainingDate;
+        return this;
+    }
+
+    public LocalTime getOriginalStartTime() {
+        return originalStartTime;
+    }
+
+    public BookingRequestResponse setOriginalStartTime(LocalTime originalStartTime) {
+        this.originalStartTime = originalStartTime;
+        return this;
+    }
+
+    public LocalTime getOriginalEndTime() {
+        return originalEndTime;
+    }
+
+    public BookingRequestResponse setOriginalEndTime(LocalTime originalEndTime) {
+        this.originalEndTime = originalEndTime;
         return this;
     }
 }

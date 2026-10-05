@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
+import { useAuth } from "../features/auth/model/AuthContext";
 
 type Tab = {
     to: string;
@@ -25,7 +26,7 @@ function Icon({ children }: { children: ReactNode }) {
     );
 }
 
-const TABS: Tab[] = [
+const TRAINER_TABS: Tab[] = [
     {
         to: "/me",
         label: "Календарь",
@@ -69,10 +70,47 @@ const TABS: Tab[] = [
     },
 ];
 
+const CLIENT_TABS: Tab[] = [
+    {
+        to: "/me",
+        label: "Главная",
+        end: true,
+        icon: (
+            <Icon>
+                <path d="M4 11.5 12 4l8 7.5" />
+                <path d="M6 10v9a1 1 0 0 0 1 1h3v-5h4v5h3a1 1 0 0 0 1-1v-9" />
+            </Icon>
+        ),
+    },
+    {
+        to: "/trainings",
+        label: "Тренировки",
+        icon: (
+            <Icon>
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M3 9h18M8 2v4M16 2v4" />
+            </Icon>
+        ),
+    },
+    {
+        to: "/client/profile",
+        label: "Профиль",
+        icon: (
+            <Icon>
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 21c0-3.5 3-6 7-6s7 2.5 7 6" />
+            </Icon>
+        ),
+    },
+];
+
 export default function AppTabBar() {
+    const { currentUser } = useAuth();
+    const tabs = currentUser?.role === "CLIENT" ? CLIENT_TABS : TRAINER_TABS;
+
     return (
-        <nav className="fb-tabbar">
-            {TABS.map((tab) => (
+        <nav className="fb-tabbar" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+            {tabs.map((tab) => (
                 <NavLink
                     key={tab.to}
                     to={tab.to}

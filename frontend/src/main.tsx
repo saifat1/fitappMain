@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "react-day-picker/style.css";
 import "./index.css";
-import "./styles/coach-calendar.css";
 import "./styles/fitapp-theme.css";
 import "./styles/fitapp-calendar.css";
 import "./styles/fitapp-mobile.css";

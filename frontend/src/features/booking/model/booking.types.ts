@@ -11,6 +11,11 @@ export type BookingRequestResponse = {
   clientEmail?: string | null;
   clientFirstName?: string | null;
   clientLastName?: string | null;
+  /** Set when the request reschedules an existing training. */
+  originalTrainingId?: number | null;
+  originalTrainingDate?: string | null;
+  originalStartTime?: string | null;
+  originalEndTime?: string | null;
   requestedStart: string;
   requestedEnd: string;
   status: BookingRequestStatus;
@@ -22,6 +27,7 @@ export type BookingRequestResponse = {
 
 export type CreateBookingRequest = {
   trainerId: number;
+  originalTrainingId?: number;
   requestedStart: string;
   requestedEnd: string;
   clientComment?: string;

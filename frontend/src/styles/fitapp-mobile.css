@@ -971,3 +971,118 @@
     margin: 0 0 10px;
 }
 
+
+/* ---------- Client home ---------- */
+.fb-client-greeting {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 16px;
+}
+.fb-client-greeting__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fb-client-greeting__title { font-size: 20px; font-weight: 700; color: var(--fb-ink); }
+.fb-client-greeting__sub { font-size: 14px; color: var(--fb-ink-2); }
+
+.fb-next-training {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    border-radius: var(--fb-radius-card);
+    background: var(--fb-surface-2);
+}
+.fb-next-training__head { display: flex; align-items: center; gap: 12px; }
+.fb-next-training__main { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.fb-next-training__title { font-size: 16px; font-weight: 600; color: var(--fb-ink); }
+.fb-next-training__sub { font-size: 14px; color: var(--fb-ink-2); }
+.fb-next-training__actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 8px;
+}
+.fb-next-training__actions .fb-btn { min-height: 44px; }
+
+/* ---------- Reschedule: "было → стало" ---------- */
+.fb-reschedule-compare {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+.fb-reschedule-compare__cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--fb-surface-2);
+}
+.fb-reschedule-compare__cell--new { background: rgba(52, 168, 83, 0.12); }
+.fb-reschedule-compare__label { font-size: 12px; color: var(--fb-ink-2); }
+.fb-reschedule-compare__cell--new .fb-reschedule-compare__label { color: var(--fb-green-deep); }
+.fb-reschedule-compare__date { font-size: 15px; font-weight: 600; color: var(--fb-ink); }
+.fb-reschedule-compare__time { font-size: 15px; color: var(--fb-ink); }
+.fb-reschedule-compare__cell--old .fb-reschedule-compare__date,
+.fb-reschedule-compare__cell--old .fb-reschedule-compare__time {
+    color: var(--fb-ink-2);
+    text-decoration: line-through;
+}
+
+.fb-btn--danger-text { color: var(--fb-danger); }
+
+/* ---------- 404 ---------- */
+.fb-not-found {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 32px 24px;
+    text-align: center;
+}
+.fb-not-found__icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(52, 168, 83, 0.12);
+    color: var(--fb-green-deep);
+}
+.fb-not-found__code { font-size: 48px; font-weight: 700; line-height: 1; color: var(--fb-ink); }
+.fb-not-found__title { font-size: 20px; font-weight: 600; color: var(--fb-ink); }
+.fb-not-found__text { max-width: 280px; font-size: 15px; color: var(--fb-ink-2); }
+.fb-not-found .fb-btn { margin-top: 16px; width: 100%; }
+
+/* ---------- Trainer calendar: pending reschedules ---------- */
+.fb-reschedule-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 16px 8px;
+    padding: 12px 14px;
+    min-height: 48px;
+    border-radius: 12px;
+    border: 1px solid rgba(52, 168, 83, 0.24);
+    background: rgba(52, 168, 83, 0.08);
+    color: var(--fb-ink);
+    text-align: left;
+}
+.fb-reschedule-banner__count {
+    flex: none;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--fb-green);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+}
+.fb-reschedule-banner__text { flex: 1; font-size: 14px; font-weight: 500; }

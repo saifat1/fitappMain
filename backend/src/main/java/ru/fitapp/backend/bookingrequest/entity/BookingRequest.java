@@ -2,6 +2,7 @@ package ru.fitapp.backend.bookingrequest.entity;
 
 import jakarta.persistence.*;
 import ru.fitapp.backend.bookingrequest.model.BookingRequestStatus;
+import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.user.entity.AppUser;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,18 @@ public class BookingRequest {
             foreignKey = @ForeignKey(name = "fk_booking_request_client")
     )
     private AppUser client;
+
+    /**
+     * Set when the request is a reschedule of an existing training. The
+     * original stays PLANNED until the trainer approves; only then it is
+     * cancelled (and hidden), so a declined request changes nothing.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "original_training_id",
+            foreignKey = @ForeignKey(name = "fk_booking_request_original_training")
+    )
+    private Training originalTraining;
 
     @Column(name = "requested_start", nullable = false)
     private LocalDateTime requestedStart;
@@ -80,6 +93,15 @@ public class BookingRequest {
 
     public BookingRequest setClient(AppUser client) {
         this.client = client;
+        return this;
+    }
+
+    public Training getOriginalTraining() {
+        return originalTraining;
+    }
+
+    public BookingRequest setOriginalTraining(Training originalTraining) {
+        this.originalTraining = originalTraining;
         return this;
     }
 

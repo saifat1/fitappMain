@@ -16,8 +16,20 @@ public class CreateBookingRequest {
     @NotNull(message = "requestedEnd обязателен")
     private LocalDateTime requestedEnd;
 
+    /** Optional: the training this request reschedules. */
+    private Long originalTrainingId;
+
     @Size(max = 2000, message = "Комментарий клиента не должен быть длиннее 2000 символов")
     private String clientComment;
+
+    public Long getOriginalTrainingId() {
+        return originalTrainingId;
+    }
+
+    public CreateBookingRequest setOriginalTrainingId(Long originalTrainingId) {
+        this.originalTrainingId = originalTrainingId;
+        return this;
+    }
 
     public Long getTrainerId() {
         return trainerId;

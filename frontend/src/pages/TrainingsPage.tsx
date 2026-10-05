@@ -1,419 +1,221 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+import type { ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
+import MobileShell from "../widgets/MobileShell";
+import UpcomingTrainingRow from "../features/training/ui/UpcomingTrainingRow";
+import { useAuth } from "../features/auth/model/AuthContext";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainerApi } from "../shared/api/trainerApi";
-import { useAuth } from "../features/auth/model/AuthContext";
+import { clientName } from "../features/trainer/lib/clientDisplay";
+import { getClientDisplayName } from "../features/calendar/lib/trainerCalendar";
+import { addDaysKey, groupByMonth, todayKey } from "../features/training/lib/trainingDates";
 
-import TrainingCreateModal from "../features/training/ui/TrainingCreateModal";
-import TrainingQuickFilters from "../features/training/ui/TrainingQuickFilters";
-import TrainingCard from "../features/training/ui/TrainingCard";
-import TrainingsStats from "../features/training/ui/TrainingsStats";
-
-import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type { TrainingResponse } from "../features/training/model/training.types";
-import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
+import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 
-import {
-    formatDateForInput,
-    getTodayRange,
-    getWeekRange,
-    partitionTrainingsByToday,
-    sortTrainingsByDateTime,
-    type TrainingViewMode,
-} from "../features/training/lib/trainingView";
+/** How far back/ahead the list looks. One request; enough for a client's archive. */
+const PAST_DAYS = 365;
+const FUTURE_DAYS = 180;
+
+type Period = "upcoming" | "past";
+type TypeFilter = "ALL" | "PERSONAL" | "INDEPENDENT";
+
+const TYPE_FILTERS: { code: TypeFilter; label: string }[] = [
+    { code: "ALL", label: "Все" },
+    { code: "PERSONAL", label: "Персональные" },
+    { code: "INDEPENDENT", label: "Самостоятельные" },
+];
 
 function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
         return error.response?.data?.message ?? fallback;
     }
-
     return fallback;
+}
+
+function compareAsc(a: TrainingResponse, b: TrainingResponse): number {
+    return `${a.trainingDate} ${a.startTime ?? ""}`.localeCompare(`${b.trainingDate} ${b.startTime ?? ""}`);
+}
+
+function shortName(fullName: string): string {
+    const [first, last] = fullName.split(" ");
+    return last ? `${first} ${last[0]}.` : first;
 }
 
 export default function TrainingsPage() {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+    const [searchParams] = useSearchParams();
+
     const isTrainer = currentUser?.role === "TRAINER";
-
-    const initialRange = getTodayRange();
-
-    const [viewMode, setViewMode] = useState<TrainingViewMode>("today");
-    const [from, setFrom] = useState(initialRange.from);
-    const [to, setTo] = useState(initialRange.to);
-    const [draftFrom, setDraftFrom] = useState(initialRange.from);
-    const [draftTo, setDraftTo] = useState(initialRange.to);
+    const clientIdParam = Number(searchParams.get("clientId"));
+    const clientId = isTrainer && Number.isFinite(clientIdParam) && clientIdParam > 0 ? clientIdParam : null;
 
     const [trainings, setTrainings] = useState<TrainingResponse[]>([]);
-    const [clients, setClients] = useState<TrainerClientResponse[]>([]);
-
+    const [clientTitle, setClientTitle] = useState("");
+    const [period, setPeriod] = useState<Period>(searchParams.get("period") === "past" ? "past" : "upcoming");
+    const [typeFilter, setTypeFilter] = useState<TypeFilter>("ALL");
     const [isLoading, setIsLoading] = useState(true);
-    const [isCreating, setIsCreating] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const [processingTrainingId, setProcessingTrainingId] = useState<number | null>(null);
-    const [isMobileMetaOpen, setIsMobileMetaOpen] = useState(false);
 
-    const [clientId, setClientId] = useState("");
-    const [trainingDate, setTrainingDate] = useState(formatDateForInput(new Date()));
-    const [startTime, setStartTime] = useState("18:00");
-    const [endTime, setEndTime] = useState("19:00");
-    const [trainerNote, setTrainerNote] = useState("");
-
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-    const loadClients = useCallback(async () => {
-        if (!isTrainer) {
-            return;
-        }
-
-        try {
-            const data = await trainerApi.getClients();
-            setClients(data);
-        } catch (error) {
-            setErrorMessage(resolveApiError(error, "Не удалось загрузить клиентов"));
-        }
-    }, [isTrainer]);
-
-    const loadTrainings = useCallback(async () => {
+    const load = useCallback(async () => {
         setIsLoading(true);
         setErrorMessage("");
-
+        const today = todayKey();
         try {
-            const data = await trainingApi.getTrainings(from, to);
-            setTrainings(sortTrainingsByDateTime(data));
+            const data: TrainingResponse[] = await trainingApi.getTrainings(
+                addDaysKey(today, -PAST_DAYS),
+                addDaysKey(today, FUTURE_DAYS)
+            );
+            setTrainings(clientId ? data.filter((t) => t.clientId === clientId) : data);
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось загрузить тренировки"));
         } finally {
             setIsLoading(false);
         }
-    }, [from, to]);
+    }, [clientId]);
 
     useEffect(() => {
-        void loadClients();
-    }, [loadClients]);
+        void load();
+    }, [load]);
 
     useEffect(() => {
-        void loadTrainings();
-    }, [loadTrainings]);
-
-    useEffect(() => {
-        if (!clientId && clients.length > 0) {
-            setClientId(String(clients[0].id));
-        }
-    }, [clients, clientId]);
-
-    const applyToday = () => {
-        const range = getTodayRange();
-        setViewMode("today");
-        setFrom(range.from);
-        setTo(range.to);
-        setDraftFrom(range.from);
-        setDraftTo(range.to);
-    };
-
-    const applyWeek = () => {
-        const range = getWeekRange();
-        setViewMode("week");
-        setFrom(range.from);
-        setTo(range.to);
-        setDraftFrom(range.from);
-        setDraftTo(range.to);
-    };
-
-    const applyRange = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-
-        if (draftFrom > draftTo) {
-            setErrorMessage("Дата начала периода не может быть позже даты окончания");
-            return;
-        }
-
-        setErrorMessage("");
-        setFrom(draftFrom);
-        setTo(draftTo);
-    };
-
-    const handleCreateTraining = async (e: FormEvent) => {
-        e.preventDefault();
-
         if (!clientId) {
-            setErrorMessage("Выбери клиента");
+            setClientTitle("");
             return;
         }
+        trainerApi
+            .getClient(clientId)
+            .then((client) => setClientTitle(shortName(clientName(client))))
+            .catch(() => setClientTitle(""));
+    }, [clientId]);
 
-        if (!startTime || !endTime) {
-            setErrorMessage("Укажи время начала и окончания");
-            return;
-        }
-
-        if (endTime <= startTime) {
-            setErrorMessage("Время окончания должно быть позже времени начала");
-            return;
-        }
-
-        setIsCreating(true);
-        setErrorMessage("");
-
-        try {
-            await trainingApi.createTraining({
-                clientId: Number(clientId),
-                trainingDate,
-                startTime,
-                endTime,
-                trainerNote,
-            });
-
-            setTrainerNote("");
-            setIsCreateOpen(false);
-            await loadTrainings();
-        } catch (error) {
-            setErrorMessage(resolveApiError(error, "Ошибка создания тренировки"));
-        } finally {
-            setIsCreating(false);
-        }
-    };
-
-    const handleComplete = async (id: number) => {
-        const previous = trainings;
-
-        setProcessingTrainingId(id);
-        setErrorMessage("");
-
-        setTrainings((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, status: "COMPLETED" } : item
-            )
-        );
-
-        try {
-            await trainingApi.completeTraining(id);
-        } catch (error) {
-            setTrainings(previous);
-            setErrorMessage(resolveApiError(error, "Ошибка завершения тренировки"));
-        } finally {
-            setProcessingTrainingId(null);
-        }
-    };
-
-    const handleCancel = async (id: number) => {
-        const previous = trainings;
-
-        setProcessingTrainingId(id);
-        setErrorMessage("");
-
-        setTrainings((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, status: "CANCELLED" } : item
-            )
-        );
-
-        try {
-            await trainingApi.cancelTraining(id);
-        } catch (error) {
-            setTrainings(previous);
-            setErrorMessage(resolveApiError(error, "Ошибка отмены тренировки"));
-        } finally {
-            setProcessingTrainingId(null);
-        }
-    };
-
-    const { todayTrainings, otherTrainings, rangeIncludesToday } = useMemo(
-        () => partitionTrainingsByToday(trainings, from, to),
-        [trainings, from, to]
+    const stats = useMemo(
+        () => ({
+            completed: trainings.filter((t) => t.status === "COMPLETED").length,
+            planned: trainings.filter((t) => t.status === "PLANNED").length,
+            cancelled: trainings.filter((t) => t.status === "CANCELLED").length,
+        }),
+        [trainings]
     );
 
-    const showTodaySection = viewMode === "today" || rangeIncludesToday;
-    const showOtherSection = viewMode !== "today";
-    const otherItems = rangeIncludesToday ? otherTrainings : trainings;
+    const groups = useMemo(() => {
+        const today = todayKey();
+        const byPeriod = trainings.filter((t) =>
+            period === "upcoming" ? t.trainingDate >= today : t.trainingDate < today
+        );
+        const byType = byPeriod.filter((t) => typeFilter === "ALL" || t.trainingType === typeFilter);
+        const sorted = [...byType].sort(compareAsc);
+        if (period === "past") sorted.reverse();
+        return groupByMonth(sorted, (t) => t.trainingDate);
+    }, [trainings, period, typeFilter]);
 
-    return (
-        <div className="trainings-page trainings-page-compact entity-page-compact">
-            <section className="trainings-header-bar entity-header-bar">
-                <div className="trainings-header-main entity-header-main">
-                    <h1 className="trainings-header-title entity-header-title">Тренировки</h1>
+    // In the trainer's unfiltered list each row needs the client's name.
+    const rowTitle = (t: TrainingResponse): string | undefined =>
+        isTrainer && !clientId ? getClientDisplayName(t) : undefined;
 
-                    <div className="trainings-period-switch">
-                        <button
-                            type="button"
-                            className={`trainings-period-btn ${viewMode === "today" ? "is-active" : ""}`}
-                            onClick={applyToday}
-                        >
-                            Сегодня
-                        </button>
-
-                        <button
-                            type="button"
-                            className={`trainings-period-btn ${viewMode === "week" ? "is-active" : ""}`}
-                            onClick={applyWeek}
-                        >
-                            7 дней
-                        </button>
-
-                        <button
-                            type="button"
-                            className={`trainings-period-btn ${viewMode === "range" ? "is-active" : ""}`}
-                            onClick={() => setViewMode("range")}
-                        >
-                            Период
-                        </button>
+    const content: ReactNode = (
+        <div className="fb-tab-panel">
+            {clientId && (
+                <div className="fb-stat-grid">
+                    <div className="fb-stat-tile">
+                        <div className="fb-stat-tile__value">{stats.completed}</div>
+                        <div className="fb-stat-tile__label">Проведено</div>
+                    </div>
+                    <div className="fb-stat-tile">
+                        <div className="fb-stat-tile__value">{stats.planned}</div>
+                        <div className="fb-stat-tile__label">В плане</div>
+                    </div>
+                    <div className="fb-stat-tile">
+                        <div className="fb-stat-tile__value">{stats.cancelled}</div>
+                        <div className="fb-stat-tile__label">Отменено</div>
                     </div>
                 </div>
-
-                {isTrainer && (
-                    <button
-                        type="button"
-                        className="dashboard-btn dashboard-btn-primary trainings-create-top-btn entity-header-action"
-                        onClick={() => setIsCreateOpen(true)}
-                    >
-                        Создать тренировку
-                    </button>
-                )}
-            </section>
-
-            {errorMessage && <div className="error-box">{errorMessage}</div>}
-
-            {showTodaySection && (
-                <section className="trainings-panel trainings-panel-compact entity-panel-compact">
-                    <div className="trainings-section-head entity-section-head">
-                        <h2 className="trainings-section-title entity-section-title">Сегодня</h2>
-                        <span className="trainings-section-count entity-section-count">
-              {todayTrainings.length}
-            </span>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="trainings-empty-text">Загрузка...</div>
-                    ) : todayTrainings.length === 0 ? (
-                        <div className="trainings-empty">
-                            <div className="trainings-empty-title">На сегодня тренировок нет</div>
-                            <div className="trainings-empty-text">
-                                Выбери другой период или создай новую тренировку.
-                            </div>
-                        </div>
-                    ) : (
-                        <section className="trainings-list trainings-list-compact entity-list-compact">
-                            {todayTrainings.map((training) => (
-                                <TrainingCard
-                                    key={training.id}
-                                    training={training}
-                                    isTrainer={isTrainer}
-                                    isProcessing={processingTrainingId === training.id}
-                                    onOpen={(id) => navigate(`/trainings/${id}`)}
-                                    onComplete={handleComplete}
-                                    onCancel={handleCancel}
-                                />
-                            ))}
-                        </section>
-                    )}
-                </section>
             )}
 
-            {showOtherSection && (
-                <section className="trainings-panel trainings-panel-compact entity-panel-compact">
-                    <div className="trainings-section-head entity-section-head">
-                        <h2 className="trainings-section-title entity-section-title">
-                            {rangeIncludesToday ? "Остальные" : "Тренировки"}
-                        </h2>
-                        <span className="trainings-section-count entity-section-count">
-              {otherItems.length}
-            </span>
-                    </div>
-
-                    {isLoading ? (
-                        <div className="trainings-empty-text">Загрузка...</div>
-                    ) : otherItems.length === 0 ? (
-                        <div className="trainings-empty">
-                            <div className="trainings-empty-title">Тренировок нет</div>
-                            <div className="trainings-empty-text">
-                                В выбранном диапазоне записи отсутствуют.
-                            </div>
-                        </div>
-                    ) : (
-                        <section className="trainings-list trainings-list-compact entity-list-compact">
-                            {otherItems.map((training) => (
-                                <TrainingCard
-                                    key={training.id}
-                                    training={training}
-                                    isTrainer={isTrainer}
-                                    isProcessing={processingTrainingId === training.id}
-                                    onOpen={(id) => navigate(`/trainings/${id}`)}
-                                    onComplete={handleComplete}
-                                    onCancel={handleCancel}
-                                />
-                            ))}
-                        </section>
-                    )}
-                </section>
-            )}
-
-            <section className="trainings-meta-panel desktop-meta-panel entity-panel-compact">
-                <TrainingQuickFilters
-                    viewMode={viewMode}
-                    draftFrom={draftFrom}
-                    draftTo={draftTo}
-                    isLoading={isLoading}
-                    onSelectToday={applyToday}
-                    onSelectWeek={applyWeek}
-                    onSelectRange={() => setViewMode("range")}
-                    onChangeDraftFrom={setDraftFrom}
-                    onChangeDraftTo={setDraftTo}
-                    onApplyRange={applyRange}
-                />
-
-                <TrainingsStats trainings={trainings} />
-            </section>
-
-            <section className="trainings-meta-panel mobile-meta-panel entity-panel-compact">
+            <div className="fb-segment" style={clientId ? { marginTop: 16 } : undefined}>
                 <button
                     type="button"
-                    className="trainings-mobile-meta-toggle"
-                    onClick={() => setIsMobileMetaOpen((prev) => !prev)}
+                    className={`fb-segment__item ${period === "upcoming" ? "fb-segment__item--active" : ""}`}
+                    onClick={() => setPeriod("upcoming")}
                 >
-                    <span>Фильтры и статистика</span>
-                    <strong>{isMobileMetaOpen ? "Скрыть" : "Показать"}</strong>
+                    Предстоящие
                 </button>
+                <button
+                    type="button"
+                    className={`fb-segment__item ${period === "past" ? "fb-segment__item--active" : ""}`}
+                    onClick={() => setPeriod("past")}
+                >
+                    Прошедшие
+                </button>
+            </div>
 
-                {isMobileMetaOpen && (
-                    <div className="trainings-mobile-meta-content">
-                        <TrainingQuickFilters
-                            viewMode={viewMode}
-                            draftFrom={draftFrom}
-                            draftTo={draftTo}
-                            isLoading={isLoading}
-                            onSelectToday={applyToday}
-                            onSelectWeek={applyWeek}
-                            onSelectRange={() => setViewMode("range")}
-                            onChangeDraftFrom={setDraftFrom}
-                            onChangeDraftTo={setDraftTo}
-                            onApplyRange={applyRange}
-                        />
+            <div className="fb-chips" style={{ marginTop: 12 }}>
+                {TYPE_FILTERS.map((f) => (
+                    <button
+                        key={f.code}
+                        type="button"
+                        className={`fb-chip ${typeFilter === f.code ? "fb-chip--active" : ""}`}
+                        onClick={() => setTypeFilter(f.code)}
+                    >
+                        {f.label}
+                    </button>
+                ))}
+            </div>
 
-                        <TrainingsStats trainings={trainings} />
+            {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
+
+            {isLoading ? (
+                <div className="fb-cal-status">Загрузка…</div>
+            ) : groups.length === 0 ? (
+                <div className="fb-empty" style={{ marginTop: 16 }}>
+                    {period === "upcoming" ? "Запланированных тренировок нет" : "Прошедших тренировок нет"}
+                </div>
+            ) : (
+                groups.map((group) => (
+                    <div key={group.title}>
+                        <div className="fb-section-title">{group.title}</div>
+                        <div className="fb-list">
+                            {group.items.map((t) => (
+                                <UpcomingTrainingRow
+                                    key={t.id}
+                                    training={t}
+                                    title={rowTitle(t)}
+                                    onClick={() => navigate(`/trainings/${t.id}`)}
+                                />
+                            ))}
+                        </div>
                     </div>
-                )}
-            </section>
-
-            {isTrainer && (
-                <TrainingCreateModal
-                    isOpen={isCreateOpen}
-                    isSubmitting={isCreating}
-                    clients={clients}
-                    clientId={clientId}
-                    trainingDate={trainingDate}
-                    startTime={startTime}
-                    endTime={endTime}
-                    trainerNote={trainerNote}
-                    onChangeClientId={setClientId}
-                    onChangeDate={setTrainingDate}
-                    onChangeStartTime={setStartTime}
-                    onChangeEndTime={setEndTime}
-                    onChangeNote={setTrainerNote}
-                    onSubmit={handleCreateTraining}
-                    onClose={() => setIsCreateOpen(false)}
-                />
+                ))
             )}
+        </div>
+    );
+
+    if (!isTrainer) {
+        return <MobileShell title="Тренировки">{content}</MobileShell>;
+    }
+
+    return (
+        <div className="fb-screen">
+            <header className="fb-topbar">
+                <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => navigate(-1)}>
+                    ‹
+                </button>
+                <h1 className="fb-topbar__title">{clientTitle ? `Тренировки · ${clientTitle}` : "Тренировки"}</h1>
+            </header>
+
+            {content}
+
+            <button
+                type="button"
+                className="fb-fab fb-fab--flush"
+                aria-label="Новая тренировка"
+                onClick={() => navigate("/trainings/new", clientId ? { state: { clientId } } : undefined)}
+            >
+                +
+            </button>
         </div>
     );
 }

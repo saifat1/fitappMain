@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 034-add-original-training-to-booking-request
+      author: claude
+      changes:
+        - addColumn:
+            tableName: booking_request
+            columns:
+              - column:
+                  name: original_training_id
+                  type: bigint
+                  constraints:
+                    nullable: true
+                    foreignKeyName: fk_booking_request_original_training
+                    references: training(id)

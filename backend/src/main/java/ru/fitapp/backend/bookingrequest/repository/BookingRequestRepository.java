@@ -34,4 +34,6 @@ public interface BookingRequestRepository extends JpaRepository<BookingRequest, 
     );
 
     Optional<BookingRequest> findByIdAndClientId(Long id, Long clientId);
+
+    boolean existsByOriginalTrainingIdAndStatus(Long originalTrainingId, BookingRequestStatus status);
 }

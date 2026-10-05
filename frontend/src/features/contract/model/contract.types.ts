@@ -17,3 +17,12 @@ export type CreateClientContractRequest = {
 export type AddTrainingsToContractRequest = {
     count: number;
 };
+
+export type MyContractSummary = {
+    hasContracts: boolean;
+    totalRemainingTrainings: number;
+    totalGrantedTrainings: number;
+    plannedCount: number;
+    effectivelyAvailable: number;
+    exhausted: boolean;
+};

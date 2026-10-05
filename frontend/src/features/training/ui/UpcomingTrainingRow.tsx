@@ -1,12 +1,16 @@
 import CalendarIcon from "./CalendarIcon";
 import HouseIcon from "./HouseIcon";
-import { formatDaySubtitle } from "../../calendar/lib/calendarWeek";
+import { durationMinutes, formatTrainingDay } from "../lib/trainingDates";
 import { MUSCLE_GROUP_OPTIONS } from "../model/training.types";
 import type { TrainingResponse } from "../model/training.types";
 
 type Props = {
     training: TrainingResponse;
     onClick: () => void;
+    /** Overrides the "Персональная / Самостоятельная" title (e.g. client name in the trainer's list). */
+    title?: string;
+    /** Hide the status badge where every row is planned anyway. */
+    showStatus?: boolean;
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -21,14 +25,6 @@ const STATUS_CLASS: Record<string, string> = {
     CANCELLED: "fb-status-badge--cancelled",
 };
 
-function durationMinutes(start: string | null, end: string | null): number | null {
-    if (!start || !end) return null;
-    const [sh, sm] = start.split(":").map(Number);
-    const [eh, em] = end.split(":").map(Number);
-    const minutes = eh * 60 + em - (sh * 60 + sm);
-    return minutes > 0 ? minutes : null;
-}
-
 function muscleGroupsLabel(codes: string[]): string {
     if (codes.length === 0) return "Группы мышц не указаны";
     return codes
@@ -36,7 +32,7 @@ function muscleGroupsLabel(codes: string[]): string {
         .join(" + ");
 }
 
-export default function UpcomingTrainingRow({ training, onClick }: Props) {
+export default function UpcomingTrainingRow({ training, onClick, title, showStatus = true }: Props) {
     const isPersonal = training.trainingType !== "INDEPENDENT";
     const duration = durationMinutes(training.startTime, training.endTime);
 
@@ -47,9 +43,9 @@ export default function UpcomingTrainingRow({ training, onClick }: Props) {
             </span>
 
             <span className="fb-row__main">
-                <span className="fb-row__title">{isPersonal ? "Персональная" : "Самостоятельная"}</span>
+                <span className="fb-row__title">{title ?? (isPersonal ? "Персональная" : "Самостоятельная")}</span>
                 <span className="fb-row__sub">
-                    {formatDaySubtitle(training.trainingDate)}
+                    {formatTrainingDay(training.trainingDate)}
                     {isPersonal
                         ? training.startTime
                             ? `, ${training.startTime.slice(0, 5)}${duration ? ` · ${duration} мин` : ""}`
@@ -58,9 +54,11 @@ export default function UpcomingTrainingRow({ training, onClick }: Props) {
                 </span>
             </span>
 
-            <span className={`fb-status-badge ${STATUS_CLASS[training.status] ?? ""}`}>
-                {STATUS_LABEL[training.status] ?? training.status}
-            </span>
+            {showStatus && (
+                <span className={`fb-status-badge ${STATUS_CLASS[training.status] ?? ""}`}>
+                    {STATUS_LABEL[training.status] ?? training.status}
+                </span>
+            )}
 
             <span className="fb-row__chevron">›</span>
         </button>

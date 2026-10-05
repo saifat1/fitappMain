@@ -218,7 +218,7 @@ export default function ClientDetailsPage() {
                                 <div className="fb-section-header">
                                     <span className="fb-section-title fb-section-title--flush">Предстоящие тренировки</span>
                                     {upcoming.length > 0 && (
-                                        <button type="button" className="fb-section-header__link" onClick={() => navigate("/trainings")}>
+                                        <button type="button" className="fb-section-header__link" onClick={() => navigate(`/trainings?clientId=${id}`)}>
                                             Все ›
                                         </button>
                                     )}
@@ -262,7 +262,7 @@ export default function ClientDetailsPage() {
                                         <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
                                         <span className="fb-row__chevron">›</span>
                                     </button>
-                                    <button type="button" className="fb-row fb-row--button" onClick={() => navigate("/trainings")}>
+                                    <button type="button" className="fb-row fb-row--button" onClick={() => navigate(`/trainings?clientId=${id}&period=past`)}>
                                         <span className="fb-row__main"><span className="fb-row__title">Архив тренировок</span></span>
                                         <span className="fb-row__chevron">›</span>
                                     </button>

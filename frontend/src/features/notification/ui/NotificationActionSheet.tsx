@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { bookingRequestApi } from "../../../shared/api/bookingRequestApi";
 import { rescheduleApi } from "../../../shared/api/rescheduleApi";
 import { formatNotificationTimeLabel } from "../lib/notificationDisplay";
@@ -17,6 +18,7 @@ type Props = {
  * "Понятно" acknowledgement (Button/Long).
  */
 export default function NotificationActionSheet({ notification, onClose, onResolved }: Props) {
+    const navigate = useNavigate();
     const [isSaving, setIsSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
@@ -81,6 +83,17 @@ export default function NotificationActionSheet({ notification, onClose, onResol
                     <h3 className="fb-notif-sheet__title">{notification.title}</h3>
                     <p className="fb-notif-sheet__subtitle">{subtitle}</p>
                 </div>
+
+                {notification.type === "BOOKING_REQUEST_CREATED" && notification.relatedEntityId ? (
+                    <button
+                        type="button"
+                        className="fb-link"
+                        style={{ alignSelf: "flex-start", padding: "8px 0" }}
+                        onClick={() => navigate(`/reschedule-requests/${notification.relatedEntityId}`)}
+                    >
+                        Подробнее
+                    </button>
+                ) : null}
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 

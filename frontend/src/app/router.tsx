@@ -39,6 +39,7 @@ import AnalyticsPage from "../pages/AnalyticsPage";
 import LegalDocumentPage from "../pages/LegalDocumentPage";
 import LegalConsentsPage from "../pages/LegalConsentsPage";
 import NotificationsPage from "../pages/NotificationsPage";
+import ClientProfilePage from "../pages/ClientProfilePage";
 
 export const router = createBrowserRouter([
     {
@@ -151,9 +152,7 @@ export const router = createBrowserRouter([
         path: "/trainings",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <TrainingsPage />
-                </AppLayout>
+                <TrainingsPage />
             </ProtectedRoute>
         ),
     },
@@ -259,9 +258,7 @@ export const router = createBrowserRouter([
         path: "/reschedule-requests",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <RescheduleRequestsPage />
-                </AppLayout>
+                <RescheduleRequestsPage />
             </ProtectedRoute>
         ),
     },
@@ -269,9 +266,7 @@ export const router = createBrowserRouter([
         path: "/reschedule-requests/:id",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <RescheduleRequestDetailsPage />
-                </AppLayout>
+                <RescheduleRequestDetailsPage />
             </ProtectedRoute>
         ),
     },
@@ -279,9 +274,7 @@ export const router = createBrowserRouter([
         path: "/trainings/:trainingId/reschedule-request",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <CreateRescheduleRequestPage />
-                </AppLayout>
+                <CreateRescheduleRequestPage />
             </ProtectedRoute>
         ),
     },
@@ -310,6 +303,14 @@ export const router = createBrowserRouter([
                 <AppLayout>
                     <ClientBookingPage />
                 </AppLayout>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/profile",
+        element: (
+            <ProtectedRoute>
+                <ClientProfilePage />
             </ProtectedRoute>
         ),
     },

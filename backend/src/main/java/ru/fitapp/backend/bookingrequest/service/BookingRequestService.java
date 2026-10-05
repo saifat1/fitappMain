@@ -13,6 +13,7 @@ import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.entity.Training;
+import ru.fitapp.backend.training.model.CancelledBy;
 import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.training.repository.TrainingRepository;
 import ru.fitapp.backend.trainerclient.repository.TrainerClientRepository;
@@ -69,7 +70,13 @@ public class BookingRequestService {
             throw new ApiException("ACCESS_DENIED", "Клиент не привязан к этому тренеру");
         }
 
-        if (clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
+        Training originalTraining = resolveOriginalTraining(request.getOriginalTrainingId(), client, trainer);
+
+        // A reschedule doesn't add a training: the original is still PLANNED and
+        // already counted in the summary, so the exhaustion check would block
+        // clients with exactly enough balance.
+        if (originalTraining == null
+                && clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
             throw new ApiException(
                     "CONTRACT_EXHAUSTED",
                     "У вас закончились оплаченные тренировки по договору. Обратитесь к тренеру."
@@ -132,6 +139,7 @@ public class BookingRequestService {
         BookingRequest bookingRequest = new BookingRequest()
                 .setTrainer(trainer)
                 .setClient(client)
+                .setOriginalTraining(originalTraining)
                 .setRequestedStart(request.getRequestedStart())
                 .setRequestedEnd(request.getRequestedEnd())
                 .setStatus(BookingRequestStatus.PENDING)
@@ -173,6 +181,18 @@ public class BookingRequestService {
             throw new ApiException("BOOKING_REQUEST_ALREADY_REVIEWED", "Запрос уже обработан");
         }
 
+        // Reschedule: free the original slot first, so a shift that overlaps the
+        // old time isn't reported as "slot taken". If the overlap check below
+        // fails, the transaction rolls this back.
+        Training original = bookingRequest.getOriginalTraining();
+        if (original != null && original.getStatus() == TrainingStatus.PLANNED) {
+            original
+                    .setStatus(TrainingStatus.CANCELLED)
+                    .setCancelledBy(CancelledBy.CLIENT)
+                    .setHiddenFromSchedule(true);
+            trainingRepository.saveAndFlush(original);
+        }
+
         long overlappingTrainings = trainingRepository.countOverlappingTrainings(
                 trainer.getId(),
                 bookingRequest.getRequestedStart().toLocalDate(),
@@ -192,8 +212,14 @@ public class BookingRequestService {
                 .setStartTime(bookingRequest.getRequestedStart().toLocalTime())
                 .setEndTime(bookingRequest.getRequestedEnd().toLocalTime())
                 .setStatus(TrainingStatus.PLANNED)
-                .setTrainerNote("Создано из подтвержденного запроса на запись")
+                .setTrainerNote(original != null
+                        ? "Перенесено по запросу клиента"
+                        : "Создано из подтвержденного запроса на запись")
                 .setClientNote(bookingRequest.getClientComment());
+
+        if (original != null) {
+            training.setTrainingType(original.getTrainingType());
+        }
 
         trainingRepository.save(training);
 
@@ -254,6 +280,7 @@ public class BookingRequestService {
     }
 
     private BookingRequestResponse toResponse(BookingRequest bookingRequest) {
+        Training original = bookingRequest.getOriginalTraining();
         return new BookingRequestResponse()
                 .setId(bookingRequest.getId())
                 .setTrainerId(bookingRequest.getTrainer().getId())
@@ -264,6 +291,10 @@ public class BookingRequestService {
                 .setClientEmail(bookingRequest.getClient().getEmail())
                 .setClientFirstName(bookingRequest.getClient().getFirstName())
                 .setClientLastName(bookingRequest.getClient().getLastName())
+                .setOriginalTrainingId(original != null ? original.getId() : null)
+                .setOriginalTrainingDate(original != null ? original.getTrainingDate() : null)
+                .setOriginalStartTime(original != null ? original.getStartTime() : null)
+                .setOriginalEndTime(original != null ? original.getEndTime() : null)
                 .setRequestedStart(bookingRequest.getRequestedStart())
                 .setRequestedEnd(bookingRequest.getRequestedEnd())
                 .setStatus(bookingRequest.getStatus().name())
@@ -272,6 +303,33 @@ public class BookingRequestService {
                 .setReviewedAt(bookingRequest.getReviewedAt())
                 .setCreatedAt(bookingRequest.getCreatedAt())
                 .setUpdatedAt(bookingRequest.getUpdatedAt());
+    }
+
+    /**
+     * Validates the training a reschedule request points at: it must belong to
+     * this client and trainer, still be planned, and have no other pending
+     * reschedule.
+     */
+    private Training resolveOriginalTraining(Long originalTrainingId, AppUser client, AppUser trainer) {
+        if (originalTrainingId == null) {
+            return null;
+        }
+
+        Training training = trainingRepository.findById(originalTrainingId)
+                .orElseThrow(() -> new ApiException("TRAINING_NOT_FOUND", "Тренировка не найдена"));
+
+        if (!training.getClient().getId().equals(client.getId())
+                || !training.getTrainer().getId().equals(trainer.getId())) {
+            throw new ApiException("TRAINING_NOT_FOUND", "Тренировка не найдена");
+        }
+        if (training.getStatus() != TrainingStatus.PLANNED) {
+            throw new ApiException("TRAINING_NOT_PLANNED", "Перенести можно только запланированную тренировку");
+        }
+        if (bookingRequestRepository.existsByOriginalTrainingIdAndStatus(training.getId(), BookingRequestStatus.PENDING)) {
+            throw new ApiException("RESCHEDULE_ALREADY_REQUESTED", "Запрос на перенос этой тренировки уже отправлен");
+        }
+
+        return training;
     }
 
     private AppUser getCurrentClient() {

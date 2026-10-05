@@ -50,7 +50,7 @@ public class NotificationService {
                 request.getTrainer(),
                 request.getClient(),
                 NotificationType.BOOKING_REQUEST_CREATED,
-                "Заявка на тренировку",
+                request.getOriginalTraining() != null ? "Запрос на перенос" : "Заявка на тренировку",
                 trainingSlotBody(request.getRequestedStart().toLocalDate(), request.getRequestedStart().toLocalTime()),
                 "BOOKING_REQUEST",
                 request.getId()
