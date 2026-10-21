@@ -88,13 +88,13 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
      * even conducted, not just after the fact.
      */
     /**
-     * Only PERSONAL trainings count toward contract consumption —
-     * INDEPENDENT (self-guided) ones never draw from the paid balance.
+     * Only contract types (PERSONAL, CIRCUIT — see TrainingType.CONTRACT_TYPES) count toward
+     * contract consumption — INDEPENDENT (self-guided) ones never draw from the paid balance.
      */
-    long countByTrainerIdAndClientIdAndTrainingTypeAndStatusIn(
+    long countByTrainerIdAndClientIdAndTrainingTypeInAndStatusIn(
             Long trainerId,
             Long clientId,
-            TrainingType trainingType,
+            Collection<TrainingType> trainingTypes,
             List<TrainingStatus> statuses
     );
 

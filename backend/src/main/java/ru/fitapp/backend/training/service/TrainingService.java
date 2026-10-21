@@ -80,7 +80,7 @@ public class TrainingService {
 
         // Self-guided trainings don't draw from the paid contract balance,
         // so there's nothing to warn about for them.
-        if (trainingType == TrainingType.PERSONAL
+        if (trainingType.drawsFromContract()
                 && clientContractService.getSummary(client.getId(), trainer.getId()).isExhausted()) {
             notificationService.notifyTrainingContractExceeded(saved);
         }
@@ -436,7 +436,7 @@ public class TrainingService {
 
         training.setStatus(TrainingStatus.COMPLETED);
 
-        if (training.getTrainingType() == TrainingType.PERSONAL) {
+        if (training.getTrainingType().drawsFromContract()) {
             clientContractService
                     .consumeOneForCompletedTraining(training.getClient(), trainer)
                     .ifPresent(training::setContract);

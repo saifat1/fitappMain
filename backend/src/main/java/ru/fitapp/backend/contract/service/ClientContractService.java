@@ -68,8 +68,8 @@ public class ClientContractService {
         boolean hasContracts = clientContractRepository.existsByClientIdAndTrainerId(clientId, trainerId);
         int totalRemaining = clientContractRepository.sumRemainingTrainings(clientId, trainerId);
         int totalGranted = clientContractRepository.sumTotalTrainings(clientId, trainerId);
-        long plannedCount = trainingRepository.countByTrainerIdAndClientIdAndTrainingTypeAndStatusIn(
-                trainerId, clientId, TrainingType.PERSONAL, List.of(TrainingStatus.PLANNED)
+        long plannedCount = trainingRepository.countByTrainerIdAndClientIdAndTrainingTypeInAndStatusIn(
+                trainerId, clientId, TrainingType.CONTRACT_TYPES, List.of(TrainingStatus.PLANNED)
         );
         return new ClientContractSummary(hasContracts, totalRemaining, totalGranted, (int) plannedCount);
     }
