@@ -1,6 +1,6 @@
 export type RepsMode = "NONE" | "EXACT" | "RANGE";
 
-export type MuscleGroup = "CHEST" | "BACK" | "LEGS" | "ABS";
+export type MuscleGroup = "CHEST" | "BACK" | "SHOULDERS" | "LEGS" | "ABS";
 
 export type ExerciseTemplateResponse = {
     id: number;

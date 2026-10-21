@@ -43,6 +43,7 @@ export type UpdateTrainingRequest = {
 export const MUSCLE_GROUP_OPTIONS: { code: string; label: string }[] = [
     { code: "CHEST", label: "Грудь" },
     { code: "BACK", label: "Спина" },
+    { code: "SHOULDERS", label: "Плечи" },
     { code: "LEGS", label: "Ноги" },
     { code: "GLUTES", label: "Ягодицы" },
     { code: "ABS", label: "Пресс" },

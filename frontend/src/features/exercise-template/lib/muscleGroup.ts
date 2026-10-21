@@ -1,10 +1,11 @@
 import type { MuscleGroup } from "../model/exerciseTemplate.types";
 
-export const MUSCLE_GROUPS: MuscleGroup[] = ["CHEST", "BACK", "LEGS", "ABS"];
+export const MUSCLE_GROUPS: MuscleGroup[] = ["CHEST", "BACK", "SHOULDERS", "LEGS", "ABS"];
 
 export const MUSCLE_GROUP_LABEL: Record<MuscleGroup, string> = {
     CHEST: "Грудь",
     BACK: "Спина",
+    SHOULDERS: "Плечи",
     LEGS: "Ноги",
     ABS: "Пресс",
 };
