@@ -249,7 +249,10 @@
 
 /* ---------- Splash / welcome ---------- */
 .fb-welcome {
-    min-height: 100dvh;
+    /* Exactly one screen tall: the frog shrinks to fit so the buttons never need a scroll. */
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     max-width: var(--fb-screen-max);
     margin: 0 auto;
     display: flex;
@@ -264,6 +267,7 @@
 
 .fb-welcome__hero {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -279,9 +283,10 @@
 }
 
 .fb-welcome__frog {
-    flex: 1;
+    flex: 1 1 0;
     width: 100%;
     object-fit: contain;
+    object-position: center bottom;
     min-height: 0;
 }
 
@@ -300,9 +305,14 @@
 }
 
 .fb-welcome__actions {
+    flex: none;
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    /* The hero PNG has ~12% transparent space below the frog's feet — tuck the buttons into it. */
+    margin-top: -6dvh;
     padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
 }
 
