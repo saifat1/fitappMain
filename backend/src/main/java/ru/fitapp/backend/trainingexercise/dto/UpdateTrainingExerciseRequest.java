@@ -57,6 +57,20 @@ public class UpdateTrainingExerciseRequest {
     @Size(max = 50, message = "Подходов не может быть больше 50")
     private List<TrainingExerciseSetDto> setDetails;
 
+    /** Circuit station fields; when present, replaces all fields of the exercise. */
+    @Valid
+    @Size(max = 50, message = "Полей не может быть больше 50")
+    private List<TrainingExerciseFieldDto> fields;
+
+    public List<TrainingExerciseFieldDto> getFields() {
+        return fields;
+    }
+
+    public UpdateTrainingExerciseRequest setFields(List<TrainingExerciseFieldDto> fields) {
+        this.fields = fields;
+        return this;
+    }
+
     public String getTitle() {
         return title;
     }

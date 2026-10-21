@@ -7,7 +7,7 @@ import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import ClientPickerSheet from "../features/training/ui/ClientPickerSheet";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import CircuitExercisesEditor from "../features/training/ui/CircuitExercisesEditor";
-import { parseTimer, type CircuitStation } from "../features/training/model/circuit";
+import { hasInvalidTimer, stationFieldsPayload, type CircuitStation } from "../features/training/model/circuit";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
@@ -110,7 +110,7 @@ export default function TrainingCreatePage() {
                 setErrorMessage("У каждого упражнения должно быть название");
                 return;
             }
-            if (stations.some((s) => s.timer !== null && s.timer.trim() !== "" && parseTimer(s.timer) === undefined)) {
+            if (stations.some(hasInvalidTimer)) {
                 setErrorMessage("Секундомер: укажите время в формате мм:сс, например 1:30");
                 return;
             }
@@ -137,9 +137,8 @@ export default function TrainingCreatePage() {
                 for (const station of stations) {
                     await trainingExerciseApi.createExercise(training.id, {
                         title: station.title.trim(),
-                        description: station.text?.trim() || undefined,
-                        durationSeconds: parseTimer(station.timer),
                         repsMode: "NONE",
+                        fields: stationFieldsPayload(station),
                     });
                 }
                 navigate("/me");

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
@@ -10,7 +10,17 @@ import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 import { setsBreakdown, summaryFromParts } from "../features/training/model/trainingDraft";
-import { formatTimer } from "../features/training/model/circuit";
+import {
+    exerciseFields,
+    formatTimer,
+    hasInvalidTimer,
+    newStation,
+    stationFieldsPayload,
+    stationFromExercise,
+    type CircuitStation,
+} from "../features/training/model/circuit";
+import CircuitStationEditor from "../features/training/ui/CircuitStationEditor";
+import CircuitTimer from "../features/training/ui/CircuitTimer";
 import {
     getInitials,
     avatarColor,
@@ -40,12 +50,18 @@ function time(value: string | null): string {
     return value ? value.slice(0, 5) : "—";
 }
 
-/** Circuit station: "Секундомер 1:30 · <текст>". */
+/** Circuit station fields in order: "<текст> · Секундомер 1:30 · …". */
 function circuitSummary(ex: TrainingExerciseResponse): string {
-    const parts: string[] = [];
-    if (ex.durationSeconds != null) parts.push(`Секундомер ${formatTimer(ex.durationSeconds)}`);
-    if (ex.description) parts.push(ex.description);
+    const parts = exerciseFields(ex).map((f) =>
+        f.type === "TIMER" ? `Секундомер ${formatTimer(f.seconds ?? 0)}` : (f.text ?? "")
+    );
     return parts.length ? parts.join(" · ") : "Без параметров";
+}
+
+function circuitTimers(ex: TrainingExerciseResponse): number[] {
+    return exerciseFields(ex)
+        .filter((f) => f.type === "TIMER" && f.seconds != null && f.seconds > 0)
+        .map((f) => f.seconds as number);
 }
 
 function exerciseSummary(ex: TrainingExerciseResponse): string {
@@ -86,6 +102,9 @@ export default function TrainingDetailsPage() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false);
     const [editingExercise, setEditingExercise] = useState<TrainingExerciseResponse | null>(null);
+    // Circuit station sheet: exerciseId null — a new station.
+    const [stationDraft, setStationDraft] = useState<{ exerciseId: number | null; station: CircuitStation } | null>(null);
+    const [stationError, setStationError] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
     // edit fields
@@ -204,6 +223,46 @@ export default function TrainingDetailsPage() {
         } catch (error) {
             // Keep the sheet open so the trainer doesn't lose the input; the form shows the message.
             throw new Error(resolveApiError(error, "Не удалось сохранить упражнение"));
+        }
+    };
+
+    const openStation = (ex: TrainingExerciseResponse | null) => {
+        setStationError("");
+        setStationDraft(ex ? { exerciseId: ex.id, station: stationFromExercise(ex) } : { exerciseId: null, station: newStation() });
+    };
+
+    const saveStation = async () => {
+        if (!stationDraft) return;
+        const { exerciseId, station } = stationDraft;
+        if (!station.title.trim()) {
+            setStationError("Укажите название упражнения");
+            return;
+        }
+        if (hasInvalidTimer(station)) {
+            setStationError("Секундомер: укажите время в формате мм:сс, например 1:30");
+            return;
+        }
+        setStationError("");
+        setIsSaving(true);
+        try {
+            const fields = stationFieldsPayload(station);
+            if (exerciseId == null) {
+                await trainingExerciseApi.createExercise(id, { title: station.title.trim(), repsMode: "NONE", fields });
+                await loadExercises();
+            } else {
+                // Legacy stations kept text/timer in description/duration — clear them once fields are saved.
+                const updated = await trainingExerciseApi.updateExercise(id, exerciseId, {
+                    title: station.title.trim(),
+                    description: "",
+                    fields,
+                });
+                setExercises((prev) => prev.map((item) => (item.id === exerciseId ? updated : item)));
+            }
+            setStationDraft(null);
+        } catch (error) {
+            setStationError(resolveApiError(error, "Не удалось сохранить упражнение"));
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -353,7 +412,8 @@ export default function TrainingDetailsPage() {
                 ) : (
                     <div className="fb-list">
                         {exercises.map((ex, index) => (
-                            <div key={ex.id} className="fb-row">
+                            <Fragment key={ex.id}>
+                            <div className="fb-row">
                                 {!editing && (
                                     <button
                                         type="button"
@@ -369,7 +429,7 @@ export default function TrainingDetailsPage() {
                                         type="button"
                                         className="fb-row__main fb-row__main--button"
                                         aria-label={`Редактировать упражнение ${ex.title}`}
-                                        onClick={() => setEditingExercise(ex)}
+                                        onClick={() => (isCircuit ? openStation(ex) : setEditingExercise(ex))}
                                     >
                                         <span className="fb-row__title">{rowTitle(ex, index)}</span>
                                         <span className="fb-row__sub">{rowSub(ex)}</span>
@@ -386,12 +446,20 @@ export default function TrainingDetailsPage() {
                                     </button>
                                 )}
                             </div>
+                            {isCircuit && !editing && status !== "CANCELLED" && circuitTimers(ex).length > 0 && (
+                                <div className="fb-timers">
+                                    {circuitTimers(ex).map((seconds, i) => (
+                                        <CircuitTimer key={`${ex.id}-${i}-${seconds}`} seconds={seconds} />
+                                    ))}
+                                </div>
+                            )}
+                            </Fragment>
                         ))}
                     </div>
                 )}
 
                 {editing && (
-                    <button type="button" className="fb-add-link" onClick={() => setExerciseSheetOpen(true)}>
+                    <button type="button" className="fb-add-link" onClick={() => (isCircuit ? openStation(null) : setExerciseSheetOpen(true))}>
                         + Добавить упражнение
                     </button>
                 )}
@@ -403,7 +471,7 @@ export default function TrainingDetailsPage() {
                         type="button"
                         className="fb-fab fb-fab--flush"
                         aria-label="Добавить упражнение"
-                        onClick={() => setExerciseSheetOpen(true)}
+                        onClick={() => (isCircuit ? openStation(null) : setExerciseSheetOpen(true))}
                     >
                         +
                     </button>
@@ -432,6 +500,31 @@ export default function TrainingDetailsPage() {
                             exercise={editingExercise}
                             onSave={(payload) => saveExercise(editingExercise.id, payload)}
                         />
+                    </div>
+                </>
+            )}
+
+            {stationDraft && (
+                <>
+                    <button type="button" className="fb-sheet-backdrop" aria-label="Закрыть" onClick={() => setStationDraft(null)} />
+                    <div className="fb-sheet fb-sheet--tall" role="dialog" aria-label="Упражнение круговой тренировки">
+                        <div className="fb-sheet__scroll fb-pad">
+                            <div className="fb-circuit">
+                                <CircuitStationEditor
+                                    station={stationDraft.station}
+                                    number={
+                                        stationDraft.exerciseId == null
+                                            ? exercises.length + 1
+                                            : exercises.findIndex((ex) => ex.id === stationDraft.exerciseId) + 1
+                                    }
+                                    onChange={(station) => setStationDraft({ ...stationDraft, station })}
+                                />
+                            </div>
+                            {stationError ? <div className="fb-cal-error">{stationError}</div> : null}
+                            <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={() => void saveStation()} disabled={isSaving}>
+                                {isSaving ? "Сохраняем…" : "Сохранить"}
+                            </button>
+                        </div>
                     </div>
                 </>
             )}

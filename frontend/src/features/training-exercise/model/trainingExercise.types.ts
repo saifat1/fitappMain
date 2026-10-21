@@ -12,6 +12,19 @@ export type TrainingExerciseSetPayload = {
     weight?: number;
 };
 
+/** Circuit station field: TEXT carries `text`, TIMER carries `seconds`. */
+export type TrainingExerciseField = {
+    type: "TEXT" | "TIMER";
+    text: string | null;
+    seconds: number | null;
+};
+
+export type TrainingExerciseFieldPayload = {
+    type: "TEXT" | "TIMER";
+    text?: string;
+    seconds?: number;
+};
+
 export type TrainingExerciseResponse = {
     id: number;
     trainingId: number;
@@ -31,6 +44,7 @@ export type TrainingExerciseResponse = {
     trainerNote: string | null;
     clientNote: string | null;
     setDetails: TrainingExerciseSet[];
+    fields: TrainingExerciseField[];
     createdAt: string;
     updatedAt: string;
 };
@@ -48,6 +62,7 @@ export type CreateTrainingExerciseRequest = {
     restSeconds?: number;
     trainerNote?: string;
     setDetails?: TrainingExerciseSetPayload[];
+    fields?: TrainingExerciseFieldPayload[];
 };
 
 export type UpdateTrainingExerciseRequest = {
@@ -66,6 +81,8 @@ export type UpdateTrainingExerciseRequest = {
     clientNote?: string;
     orderNum?: number;
     setDetails?: TrainingExerciseSetPayload[];
+    /** Replaces all station fields. */
+    fields?: TrainingExerciseFieldPayload[];
 };
 
 export type UpdateExerciseCompletionRequest = {

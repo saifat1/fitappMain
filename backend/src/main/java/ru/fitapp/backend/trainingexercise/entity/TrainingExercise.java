@@ -73,6 +73,11 @@ public class TrainingExercise {
     @OrderBy("setNumber ASC")
     private List<TrainingExerciseSet> setDetails = new ArrayList<>();
 
+    /** Circuit-training station fields (text notes / timers), see {@link TrainingExerciseField}. */
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
+    private List<TrainingExerciseField> fields = new ArrayList<>();
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -233,6 +238,16 @@ public class TrainingExercise {
     public TrainingExercise addSetDetail(TrainingExerciseSet item) {
         item.setExercise(this);
         this.setDetails.add(item);
+        return this;
+    }
+
+    public List<TrainingExerciseField> getFields() {
+        return fields;
+    }
+
+    public TrainingExercise addField(TrainingExerciseField item) {
+        item.setExercise(this);
+        this.fields.add(item);
         return this;
     }
 

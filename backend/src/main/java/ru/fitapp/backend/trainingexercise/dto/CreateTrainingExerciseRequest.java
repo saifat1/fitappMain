@@ -51,6 +51,20 @@ public class CreateTrainingExerciseRequest {
     @Size(max = 50, message = "Подходов не может быть больше 50")
     private List<TrainingExerciseSetDto> setDetails;
 
+    /** Circuit station fields in display order. */
+    @Valid
+    @Size(max = 50, message = "Полей не может быть больше 50")
+    private List<TrainingExerciseFieldDto> fields;
+
+    public List<TrainingExerciseFieldDto> getFields() {
+        return fields;
+    }
+
+    public CreateTrainingExerciseRequest setFields(List<TrainingExerciseFieldDto> fields) {
+        this.fields = fields;
+        return this;
+    }
+
     public String getTitle() {
         return title;
     }

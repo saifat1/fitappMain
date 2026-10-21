@@ -11,11 +11,13 @@ import ru.fitapp.backend.exercisetemplate.service.ExerciseTemplateService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.service.TrainingService;
 import ru.fitapp.backend.trainingexercise.dto.CreateTrainingExerciseRequest;
+import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseFieldDto;
 import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseResponse;
 import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseSetDto;
 import ru.fitapp.backend.trainingexercise.dto.UpdateExerciseCompletionRequest;
 import ru.fitapp.backend.trainingexercise.dto.UpdateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.entity.TrainingExercise;
+import ru.fitapp.backend.trainingexercise.entity.TrainingExerciseField;
 import ru.fitapp.backend.trainingexercise.entity.TrainingExerciseSet;
 import ru.fitapp.backend.trainingexercise.repository.TrainingExerciseRepository;
 import ru.fitapp.backend.user.entity.AppUser;
@@ -32,6 +34,7 @@ import java.util.List;
 public class TrainingExerciseService {
 
     private static final int MAX_SETS = 50;
+    private static final int MAX_FIELDS = 50;
 
     private final TrainingExerciseRepository trainingExerciseRepository;
     private final TrainingService trainingService;
@@ -84,6 +87,7 @@ public class TrainingExerciseService {
         );
 
         applySetDetails(exercise, request.getSetDetails());
+        applyFields(exercise, request.getFields());
 
         TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
@@ -191,6 +195,10 @@ public class TrainingExerciseService {
             } else if (request.getSets() != null) {
                 syncSetDetails(exercise);
             }
+
+            if (request.getFields() != null) {
+                applyFields(exercise, request.getFields());
+            }
         }
 
         if (request.getIsCompleted() != null) {
@@ -273,6 +281,13 @@ public class TrainingExerciseService {
                                 .setReps(item.getReps())
                                 .setWeight(item.getWeight()))
                         .toList())
+                .setFields(exercise.getFields()
+                        .stream()
+                        .map(item -> new TrainingExerciseFieldDto()
+                                .setType(item.getType())
+                                .setText(item.getTextValue())
+                                .setSeconds(item.getSeconds()))
+                        .toList())
                 .setCreatedAt(exercise.getCreatedAt())
                 .setUpdatedAt(exercise.getUpdatedAt());
     }
@@ -346,6 +361,42 @@ public class TrainingExerciseService {
     }
 
     private record SetValues(Integer reps, BigDecimal weight) {
+    }
+
+    /**
+     * Replaces circuit station fields with the given list, numbered in list order.
+     * Empty fields (blank text, timer without time) are dropped. No unique key on
+     * position, so plain clear + insert is safe here.
+     */
+    private void applyFields(TrainingExercise exercise, List<TrainingExerciseFieldDto> items) {
+        if (items == null) {
+            return;
+        }
+
+        if (items.size() > MAX_FIELDS) {
+            throw new ApiException("VALIDATION_ERROR", "Полей не может быть больше " + MAX_FIELDS);
+        }
+
+        exercise.getFields().clear();
+
+        int position = 1;
+        for (TrainingExerciseFieldDto item : items) {
+            if (item == null || item.getType() == null) {
+                throw new ApiException("VALIDATION_ERROR", "Не указан тип поля");
+            }
+
+            String text = item.getType() == TrainingExerciseField.Type.TEXT ? normalizeOptional(item.getText()) : null;
+            Integer seconds = item.getType() == TrainingExerciseField.Type.TIMER ? item.getSeconds() : null;
+            if (text == null && seconds == null) {
+                continue;
+            }
+
+            exercise.addField(new TrainingExerciseField()
+                    .setPosition(position++)
+                    .setType(item.getType())
+                    .setTextValue(text)
+                    .setSeconds(seconds));
+        }
     }
 
     private Integer defaultSetReps(TrainingExercise exercise) {

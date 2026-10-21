@@ -26,6 +26,7 @@ public class TrainingExerciseResponse {
     private String trainerNote;
     private String clientNote;
     private List<TrainingExerciseSetDto> setDetails;
+    private List<TrainingExerciseFieldDto> fields;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -188,6 +189,15 @@ public class TrainingExerciseResponse {
 
     public TrainingExerciseResponse setSetDetails(List<TrainingExerciseSetDto> setDetails) {
         this.setDetails = setDetails;
+        return this;
+    }
+
+    public List<TrainingExerciseFieldDto> getFields() {
+        return fields;
+    }
+
+    public TrainingExerciseResponse setFields(List<TrainingExerciseFieldDto> fields) {
+        this.fields = fields;
         return this;
     }
 
