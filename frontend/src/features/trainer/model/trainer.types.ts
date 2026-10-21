@@ -3,6 +3,7 @@ export type TrainerClientResponse = {
     email: string;
     firstName: string | null;
     lastName: string | null;
+    phone: string | null;
     status: string;
     createdAt: string;
     createdByTrainer: boolean;
@@ -19,6 +20,8 @@ export type TrainerClientResponse = {
 export type UpdateTrainerClientRequest = {
     firstName?: string;
     lastName?: string;
+    /** Empty string clears the phone; omit to leave it unchanged. */
+    phone?: string;
     contractNumber?: string;
     contractEndDate?: string | null;
 };
@@ -27,6 +30,7 @@ export type CreateManualTrainerClientRequest = {
     email?: string;
     firstName?: string;
     lastName?: string;
+    phone?: string;
     initialContractNumber?: string;
     initialContractTotalTrainings?: number;
 };

@@ -41,6 +41,7 @@ export default function ClientDetailsPage() {
     const [editing, setEditing] = useState(false);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [phone, setPhone] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
     const load = useCallback(async () => {
@@ -50,6 +51,7 @@ export default function ClientDetailsPage() {
             setClient(data);
             setFirstName(data.firstName ?? "");
             setLastName(data.lastName ?? "");
+            setPhone(data.phone ?? "");
 
             if (data.claimedByClient) {
                 const today = new Date();
@@ -96,8 +98,10 @@ export default function ClientDetailsPage() {
             const updated = await trainerApi.updateClient(id, {
                 firstName: firstName.trim() || undefined,
                 lastName: lastName.trim() || undefined,
+                phone: phone.trim(),
             });
             setClient(updated);
+            setPhone(updated.phone ?? "");
             setEditing(false);
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось сохранить"));
@@ -177,6 +181,16 @@ export default function ClientDetailsPage() {
                         </div>
                         <FbTextField id="cl-first" label="Имя" value={firstName} onChange={setFirstName} />
                         <FbTextField id="cl-last" label="Фамилия" value={lastName} onChange={setLastName} />
+                        <FbTextField
+                            id="cl-phone"
+                            label="Номер телефона"
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder="+7 900 000-00-00"
+                            value={phone}
+                            onChange={setPhone}
+                        />
 
                         {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
@@ -193,6 +207,11 @@ export default function ClientDetailsPage() {
                             </span>
                             <div className="fb-client-hero__name">{clientName(client)}</div>
                             <div className="fb-client-hero__email">{client.email}</div>
+                            {client.phone && (
+                                <a className="fb-client-hero__email" href={`tel:${client.phone.replace(/[^\d+]/g, "")}`}>
+                                    {client.phone}
+                                </a>
+                            )}
                             {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
                         </div>
 

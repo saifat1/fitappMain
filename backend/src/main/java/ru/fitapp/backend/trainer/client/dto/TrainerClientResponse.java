@@ -9,6 +9,7 @@ public class TrainerClientResponse {
     private String email;
     private String firstName;
     private String lastName;
+    private String phone;
     private String status;
     private LocalDateTime createdAt;
     private boolean createdByTrainer;
@@ -54,6 +55,15 @@ public class TrainerClientResponse {
 
     public TrainerClientResponse setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public TrainerClientResponse setPhone(String phone) {
+        this.phone = phone;
         return this;
     }
 

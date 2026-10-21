@@ -118,10 +118,16 @@ public class TrainerClientService {
             Long clientId,
             String firstName,
             String lastName,
+            String phone,
             String contractNumber,
             LocalDate contractEndDate
     ) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
+
+        if (phone != null) {
+            String normalizedPhone = phone.trim();
+            client.setPhone(normalizedPhone.isEmpty() ? null : normalizedPhone);
+        }
 
         if (firstName != null) {
             String normalizedFirstName = firstName.trim();

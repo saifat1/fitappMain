@@ -20,6 +20,7 @@ export default function ClientCreatePage() {
     const [email, setEmail] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
+    const [phone, setPhone] = useState("");
     const [contractNumber, setContractNumber] = useState("");
     const [contractTotalTrainings, setContractTotalTrainings] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,6 +38,7 @@ export default function ClientCreatePage() {
                 email: email.trim() || undefined,
                 firstName: firstName.trim() || undefined,
                 lastName: lastName.trim() || undefined,
+                phone: phone.trim() || undefined,
                 initialContractNumber: contractNumber.trim() || undefined,
                 initialContractTotalTrainings: contractTotalTrainings
                     ? Number(contractTotalTrainings)
@@ -122,6 +124,16 @@ export default function ClientCreatePage() {
                 />
                 <FbTextField id="cl-first" label="Имя, опционально" value={firstName} onChange={setFirstName} />
                 <FbTextField id="cl-last" label="Фамилия, опционально" value={lastName} onChange={setLastName} />
+                <FbTextField
+                    id="cl-phone"
+                    label="Номер телефона, опционально"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="+7 900 000-00-00"
+                    value={phone}
+                    onChange={setPhone}
+                />
 
                 <FbTextField
                     id="cl-contract-number"

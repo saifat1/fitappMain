@@ -95,6 +95,12 @@ public class TrainerClientFacadeService {
                 lastName.isEmpty() ? null : lastName
         );
 
+        String phone = request.getPhone() == null ? "" : request.getPhone().trim();
+        if (!phone.isEmpty()) {
+            // Managed entity inside this transaction — persisted on commit.
+            created.setPhone(phone);
+        }
+
         if (request.getInitialContractTotalTrainings() != null && request.getInitialContractTotalTrainings() > 0) {
             clientContractService.createContract(
                     trainer,
@@ -116,6 +122,7 @@ public class TrainerClientFacadeService {
                 clientId,
                 request.getFirstName(),
                 request.getLastName(),
+                request.getPhone(),
                 request.getContractNumber(),
                 request.getContractEndDate()
         );
@@ -145,6 +152,7 @@ public class TrainerClientFacadeService {
                 .setEmail(client.getEmail())
                 .setFirstName(client.getFirstName())
                 .setLastName(client.getLastName())
+                .setPhone(client.getPhone())
                 .setStatus(client.getStatus().name())
                 .setCreatedByTrainer(client.isCreatedByTrainer())
                 .setClaimedByClient(client.isClaimedByClient())
