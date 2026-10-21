@@ -1,5 +1,6 @@
 package ru.fitapp.backend.auth.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,6 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableWebSecurity
@@ -60,19 +62,23 @@ public class SecurityConfig {
                 .build();
     }
 
+    /** The stand's own address (APP_PUBLIC_BASE_URL) is allowed too, so a new server needs only .env, not a code patch. */
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.public-base-url:http://localhost:3000}") String publicBaseUrl
+    ) {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
+        configuration.setAllowedOrigins(Stream.of(
                 "http://localhost:3000",
                 "http://localhost:5174",
                 "http://localhost:5173",
                 "http://89.111.137.65:8081",
                 "http://89-111-137-65.swtest.ru:8081",
                 "https://89-111-137-65.swtest.ru",
-                "https://89.111.137.65"
-        ));
+                "https://89.111.137.65",
+                publicBaseUrl.replaceAll("/+$", "")
+        ).distinct().toList());
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
