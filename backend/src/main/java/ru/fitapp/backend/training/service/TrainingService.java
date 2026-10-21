@@ -133,14 +133,15 @@ public class TrainingService {
      *    right up until their slot time passes, then quietly drop out of the
      *    schedule for everyone — the record stays intact for history/reports.
      *  - manually dismissed ("Удалить") trainings never show again for
-     *    anyone, regardless of who cancelled them.
+     *    anyone, regardless of who cancelled them — this includes deleted
+     *    COMPLETED trainings, which keep their status for contract/reports.
      */
     private boolean isVisibleInCalendar(Training training, UserRole viewerRole) {
-        if (training.getStatus() != TrainingStatus.CANCELLED) {
-            return true;
-        }
         if (training.isHiddenFromSchedule()) {
             return false;
+        }
+        if (training.getStatus() != TrainingStatus.CANCELLED) {
+            return true;
         }
         if (training.getCancelledBy() == CancelledBy.TRAINER && viewerRole == UserRole.TRAINER) {
             return false;
@@ -197,6 +198,15 @@ public class TrainingService {
     public void cancelTraining(Long trainingId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+
+        // "Удалить" on a training that already took place only removes it from the
+        // schedule: it stays COMPLETED, stays drawn from the contract and in the
+        // salary report. Undoing a completion is a separate action ("Вернуть в план").
+        if (training.getStatus() == TrainingStatus.COMPLETED) {
+            training.setHiddenFromSchedule(true);
+            trainingRepository.save(training);
+            return;
+        }
 
         if (training.getContract() != null) {
             clientContractService.refundOne(training.getContract());
@@ -454,6 +464,7 @@ public class TrainingService {
         }
 
         training.setStatus(TrainingStatus.PLANNED);
+        training.setHiddenFromSchedule(false);
         Training saved = trainingRepository.save(training);
         return mapToResponse(saved);
     }

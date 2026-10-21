@@ -146,7 +146,10 @@ export default function TrainingDetailsPage() {
     };
 
     const handleDelete = () => {
-        if (!window.confirm("Удалить тренировку?")) return;
+        const question = training?.status === "COMPLETED"
+            ? "Удалить проведённую тренировку из расписания? Она останется списанной с договора и в отчёте. Чтобы вернуть её на договор, используйте «Вернуть в план»."
+            : "Удалить тренировку?";
+        if (!window.confirm(question)) return;
         setMenuOpen(false);
         (async () => {
             try {
