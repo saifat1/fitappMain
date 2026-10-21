@@ -19,6 +19,8 @@ public class TrainingResponse {
     private String status;
     private String cancelledBy;
     private String trainingType;
+    private String title;
+    private String description;
     private List<String> focusMuscleGroups;
     private String trainerNote;
     private String clientNote;
@@ -123,6 +125,24 @@ public class TrainingResponse {
 
     public TrainingResponse setCancelledBy(String cancelledBy) {
         this.cancelledBy = cancelledBy;
+        return this;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public TrainingResponse setTitle(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public TrainingResponse setDescription(String description) {
+        this.description = description;
         return this;
     }
 

@@ -10,6 +10,7 @@ import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 import { setsBreakdown, summaryFromParts } from "../features/training/model/trainingDraft";
+import { formatTimer } from "../features/training/model/circuit";
 import {
     getInitials,
     avatarColor,
@@ -37,6 +38,14 @@ function clientName(t: TrainingResponse): string {
 
 function time(value: string | null): string {
     return value ? value.slice(0, 5) : "—";
+}
+
+/** Circuit station: "Секундомер 1:30 · <текст>". */
+function circuitSummary(ex: TrainingExerciseResponse): string {
+    const parts: string[] = [];
+    if (ex.durationSeconds != null) parts.push(`Секундомер ${formatTimer(ex.durationSeconds)}`);
+    if (ex.description) parts.push(ex.description);
+    return parts.length ? parts.join(" · ") : "Без параметров";
 }
 
 function exerciseSummary(ex: TrainingExerciseResponse): string {
@@ -236,6 +245,9 @@ export default function TrainingDetailsPage() {
     const status = training.status;
     const pill = STATUS_PILL[status] ?? null;
     const canEditExercises = !isClient && status !== "CANCELLED";
+    const isCircuit = training.trainingType === "CIRCUIT";
+    const rowTitle = (ex: TrainingExerciseResponse, index: number) => (isCircuit ? `${index + 1}. ${ex.title}` : ex.title);
+    const rowSub = (ex: TrainingExerciseResponse) => (isCircuit ? circuitSummary(ex) : exerciseSummary(ex));
 
     return (
         <div className="fb-screen">
@@ -300,6 +312,13 @@ export default function TrainingDetailsPage() {
                     {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
                 </div>
 
+                {isCircuit && (
+                    <>
+                        <ReadonlyRow label="Круговая тренировка" value={training.title ?? "—"} />
+                        {training.description && <ReadonlyRow label="Описание" value={training.description} />}
+                    </>
+                )}
+
                 {editing ? (
                     <>
                         <FieldDate value={date} onChange={setDate} />
@@ -333,7 +352,7 @@ export default function TrainingDetailsPage() {
                     <div className="fb-empty">Упражнений пока нет</div>
                 ) : (
                     <div className="fb-list">
-                        {exercises.map((ex) => (
+                        {exercises.map((ex, index) => (
                             <div key={ex.id} className="fb-row">
                                 {!editing && (
                                     <button
@@ -352,13 +371,13 @@ export default function TrainingDetailsPage() {
                                         aria-label={`Редактировать упражнение ${ex.title}`}
                                         onClick={() => setEditingExercise(ex)}
                                     >
-                                        <span className="fb-row__title">{ex.title}</span>
-                                        <span className="fb-row__sub">{exerciseSummary(ex)}</span>
+                                        <span className="fb-row__title">{rowTitle(ex, index)}</span>
+                                        <span className="fb-row__sub">{rowSub(ex)}</span>
                                     </button>
                                 ) : (
                                     <span className="fb-row__main">
-                                        <span className="fb-row__title">{ex.title}</span>
-                                        <span className="fb-row__sub">{exerciseSummary(ex)}</span>
+                                        <span className="fb-row__title">{rowTitle(ex, index)}</span>
+                                        <span className="fb-row__sub">{rowSub(ex)}</span>
                                     </span>
                                 )}
                                 {editing && (

@@ -1,7 +1,7 @@
 import CalendarIcon from "./CalendarIcon";
 import HouseIcon from "./HouseIcon";
 import { durationMinutes, formatTrainingDay } from "../lib/trainingDates";
-import { MUSCLE_GROUP_OPTIONS } from "../model/training.types";
+import { MUSCLE_GROUP_OPTIONS, trainingTitle } from "../model/training.types";
 import type { TrainingResponse } from "../model/training.types";
 
 type Props = {
@@ -43,7 +43,7 @@ export default function UpcomingTrainingRow({ training, onClick, title, showStat
             </span>
 
             <span className="fb-row__main">
-                <span className="fb-row__title">{title ?? (isPersonal ? "Персональная" : "Самостоятельная")}</span>
+                <span className="fb-row__title">{title ?? trainingTitle(training)}</span>
                 <span className="fb-row__sub">
                     {formatTrainingDay(training.trainingDate)}
                     {isPersonal

@@ -1,4 +1,16 @@
-export type TrainingType = "PERSONAL" | "INDEPENDENT";
+export type TrainingType = "PERSONAL" | "INDEPENDENT" | "CIRCUIT";
+
+export const TRAINING_TYPE_LABEL: Record<TrainingType, string> = {
+    PERSONAL: "Персональная",
+    INDEPENDENT: "Самостоятельная",
+    CIRCUIT: "Круговая",
+};
+
+/** "Круговая · <название>" for circuit trainings, otherwise the plain type label. */
+export function trainingTitle(training: Pick<TrainingResponse, "trainingType" | "title">): string {
+    const label = TRAINING_TYPE_LABEL[training.trainingType] ?? TRAINING_TYPE_LABEL.PERSONAL;
+    return training.trainingType === "CIRCUIT" && training.title ? `${label} · ${training.title}` : label;
+}
 
 export type TrainingResponse = {
     id: number;
@@ -14,6 +26,9 @@ export type TrainingResponse = {
     cancelledBy: "CLIENT" | "TRAINER" | null;
     trainingType: TrainingType;
     focusMuscleGroups: string[];
+    /** Circuit trainings only. */
+    title: string | null;
+    description: string | null;
     trainerNote: string | null;
     clientNote: string | null;
     contractId: number | null;
@@ -30,6 +45,8 @@ export type CreateTrainingRequest = {
     trainerNote?: string;
     trainingType?: TrainingType;
     focusMuscleGroups?: string[];
+    title?: string;
+    description?: string;
 };
 
 export type UpdateTrainingRequest = {

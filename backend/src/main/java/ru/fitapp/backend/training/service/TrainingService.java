@@ -58,6 +58,11 @@ public class TrainingService {
         AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), request.getClientId());
         TrainingType trainingType = parseTrainingType(request.getTrainingType());
 
+        String title = normalizeNote(request.getTitle());
+        if (trainingType == TrainingType.CIRCUIT && title == null) {
+            throw new ApiException("VALIDATION_ERROR", "Укажите название круговой тренировки");
+        }
+
         Training training = new Training()
                 .setTrainer(trainer)
                 .setClient(client)
@@ -67,6 +72,8 @@ public class TrainingService {
                 .setStatus(TrainingStatus.PLANNED)
                 .setTrainingType(trainingType)
                 .setFocusMuscleGroups(trainingType == TrainingType.INDEPENDENT ? join(request.getFocusMuscleGroups()) : null)
+                .setTitle(title)
+                .setDescription(normalizeNote(request.getDescription()))
                 .setTrainerNote(normalizeNote(request.getTrainerNote()));
 
         Training saved = trainingRepository.save(training);
@@ -348,6 +355,8 @@ public class TrainingService {
                 .setCancelledBy(training.getCancelledBy() != null ? training.getCancelledBy().name() : null)
                 .setTrainingType(training.getTrainingType().name())
                 .setFocusMuscleGroups(split(training.getFocusMuscleGroups()))
+                .setTitle(training.getTitle())
+                .setDescription(training.getDescription())
                 .setTrainerNote(training.getTrainerNote())
                 .setClientNote(training.getClientNote())
                 .setContractId(training.getContract() != null ? training.getContract().getId() : null)

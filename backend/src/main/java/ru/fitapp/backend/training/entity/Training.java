@@ -53,6 +53,14 @@ public class Training {
     @Column(name = "training_type", nullable = false, length = 16)
     private TrainingType trainingType = TrainingType.PERSONAL;
 
+    /** Name of the workout — used by CIRCUIT trainings. */
+    @Column(name = "title", length = 255)
+    private String title;
+
+    /** Workout description — used by CIRCUIT trainings. */
+    @Column(name = "description", length = 2000)
+    private String description;
+
     /** Comma-joined MuscleGroup codes — only meaningful for INDEPENDENT trainings. */
     @Column(name = "focus_muscle_groups", length = 255)
     private String focusMuscleGroups;
@@ -164,6 +172,24 @@ public class Training {
 
     public Training setTrainingType(TrainingType trainingType) {
         this.trainingType = trainingType;
+        return this;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public Training setTitle(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Training setDescription(String description) {
+        this.description = description;
         return this;
     }
 

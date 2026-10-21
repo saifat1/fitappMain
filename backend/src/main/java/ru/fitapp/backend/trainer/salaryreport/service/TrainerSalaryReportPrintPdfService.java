@@ -488,11 +488,11 @@ public class TrainerSalaryReportPrintPdfService {
 
     /**
      * "ПТ" column: contract size / balance after this training (10/9 … 10/0);
-     * "СТ" for independent trainings; "—" for a personal training outside any contract.
+     * "СТ" / "КТ" for independent / circuit trainings; "—" for a personal training outside any contract.
      */
     private String formatPtLabel(String typeLabel, Integer total, Integer remaining) {
         if (total != null && remaining != null) return total + "/" + remaining;
-        if ("СТ".equals(typeLabel)) return typeLabel;
+        if ("СТ".equals(typeLabel) || "КТ".equals(typeLabel)) return typeLabel;
         return "—";
     }
 

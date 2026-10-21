@@ -20,12 +20,13 @@ const PAST_DAYS = 365;
 const FUTURE_DAYS = 180;
 
 type Period = "upcoming" | "past";
-type TypeFilter = "ALL" | "PERSONAL" | "INDEPENDENT";
+type TypeFilter = "ALL" | "PERSONAL" | "INDEPENDENT" | "CIRCUIT";
 
 const TYPE_FILTERS: { code: TypeFilter; label: string }[] = [
     { code: "ALL", label: "Все" },
     { code: "PERSONAL", label: "Персональные" },
     { code: "INDEPENDENT", label: "Самостоятельные" },
+    { code: "CIRCUIT", label: "Круговые" },
 ];
 
 function resolveApiError(error: unknown, fallback: string): string {

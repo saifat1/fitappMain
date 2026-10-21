@@ -6,6 +6,8 @@ import FbTextField from "../shared/ui/FbTextField";
 import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import ClientPickerSheet from "../features/training/ui/ClientPickerSheet";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
+import CircuitExercisesEditor from "../features/training/ui/CircuitExercisesEditor";
+import { parseTimer, type CircuitStation } from "../features/training/model/circuit";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
@@ -54,6 +56,10 @@ export default function TrainingCreatePage() {
     const [exercises, setExercises] = useState<DraftExercise[]>([]);
     const [trainingType, setTrainingType] = useState<TrainingType>("PERSONAL");
     const [focusMuscleGroups, setFocusMuscleGroups] = useState<string[]>([]);
+    const [circuitTitle, setCircuitTitle] = useState("");
+    const [circuitDescription, setCircuitDescription] = useState("");
+    const [stations, setStations] = useState<CircuitStation[]>([]);
+    const isCircuit = trainingType === "CIRCUIT";
 
     const [clientSheetOpen, setClientSheetOpen] = useState(false);
     const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false);
@@ -94,6 +100,20 @@ export default function TrainingCreatePage() {
             setErrorMessage("Время окончания должно быть позже начала");
             return;
         }
+        if (isCircuit) {
+            if (!circuitTitle.trim()) {
+                setErrorMessage("Укажите название тренировки");
+                return;
+            }
+            if (stations.some((s) => !s.title.trim())) {
+                setErrorMessage("У каждого упражнения должно быть название");
+                return;
+            }
+            if (stations.some((s) => s.timer !== null && s.timer.trim() !== "" && parseTimer(s.timer) === undefined)) {
+                setErrorMessage("Секундомер: укажите время в формате мм:сс, например 1:30");
+                return;
+            }
+        }
 
         setErrorMessage("");
         setIsSubmitting(true);
@@ -107,7 +127,23 @@ export default function TrainingCreatePage() {
                 trainerNote: comment.trim() || undefined,
                 trainingType,
                 focusMuscleGroups: trainingType === "INDEPENDENT" ? focusMuscleGroups : undefined,
+                title: isCircuit ? circuitTitle.trim() : undefined,
+                description: isCircuit ? circuitDescription.trim() || undefined : undefined,
             });
+
+            if (isCircuit) {
+                // Stations become regular training exercises, numbered by their order.
+                for (const station of stations) {
+                    await trainingExerciseApi.createExercise(training.id, {
+                        title: station.title.trim(),
+                        description: station.text?.trim() || undefined,
+                        durationSeconds: parseTimer(station.timer),
+                        repsMode: "NONE",
+                    });
+                }
+                navigate("/me");
+                return;
+            }
 
             // Attach queued exercises in order.
             for (const exercise of exercises) {
@@ -172,7 +208,24 @@ export default function TrainingCreatePage() {
                     >
                         Самостоятельная
                     </button>
+                    <button
+                        type="button"
+                        className={`fb-segment__item ${trainingType === "CIRCUIT" ? "fb-segment__item--active" : ""}`}
+                        onClick={() => setTrainingType("CIRCUIT")}
+                    >
+                        Круговая
+                    </button>
                 </div>
+
+                {isCircuit ? (
+                    <>
+                        <FbTextField id="tr-circuit-title" label="Название тренировки" value={circuitTitle} onChange={setCircuitTitle} />
+                        <label className="fb-textarea">
+                            <span className="fb-textarea__label">Описание тренировки</span>
+                            <textarea rows={3} value={circuitDescription} onChange={(e) => setCircuitDescription(e.target.value)} />
+                        </label>
+                    </>
+                ) : null}
 
                 {trainingType === "INDEPENDENT" ? (
                     <ChipToggleGroup
@@ -204,6 +257,10 @@ export default function TrainingCreatePage() {
 
                 <div className="fb-section-title fb-section-title--flush">Упражнения</div>
 
+                {isCircuit ? (
+                    <CircuitExercisesEditor stations={stations} onChange={setStations} />
+                ) : (
+                <>
                 {exercises.length > 0 && (
                     <div className="fb-list">
                         {exercises.map((exercise) => (
@@ -228,6 +285,8 @@ export default function TrainingCreatePage() {
                 <button type="button" className="fb-add-link" onClick={() => setExerciseSheetOpen(true)}>
                     + Добавить упражнение
                 </button>
+                </>
+                )}
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 

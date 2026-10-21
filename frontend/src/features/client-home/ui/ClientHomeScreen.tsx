@@ -19,7 +19,7 @@ import { avatarColor, getInitials } from "../../calendar/lib/calendarWeek";
 import { sortTrainingsByDateTime } from "../../training/lib/trainingView";
 import { addDaysKey, durationMinutes, formatTrainingDay, shortTime, todayKey } from "../../training/lib/trainingDates";
 
-import type { TrainingResponse } from "../../training/model/training.types";
+import { trainingTitle, type TrainingResponse } from "../../training/model/training.types";
 import type { ClientTrainerResponse } from "../../clienttrainer/model/clienttrainer.types";
 import type { MyContractSummary } from "../../contract/model/contract.types";
 import type { ApiErrorResponse } from "../../auth/model/auth.types";
@@ -152,7 +152,7 @@ export default function ClientHomeScreen() {
                                     {next.startTime ? `, ${shortTime(next.startTime)}` : ""}
                                 </span>
                                 <span className="fb-next-training__sub">
-                                    {nextIsPersonal ? "Персональная" : "Самостоятельная"}
+                                    {trainingTitle(next)}
                                     {nextDuration ? ` · ${nextDuration} мин` : ""}
                                 </span>
                             </div>

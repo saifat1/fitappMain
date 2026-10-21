@@ -71,3 +71,5 @@ databaseChangeLog:
       file: db/changelog/035-create-training-exercise-set.yaml
   - include:
       file: db/changelog/036-add-end-date-to-trainer-availability-exception.yaml
+  - include:
+      file: db/changelog/037-add-title-and-description-to-training.yaml

@@ -22,11 +22,36 @@ public class CreateTrainingRequest {
     @Size(max = 2000, message = "Заметка тренера не должна быть длиннее 2000 символов")
     private String trainerNote;
 
-    /** PERSONAL (default) or INDEPENDENT. */
+    /** PERSONAL (default), INDEPENDENT or CIRCUIT. */
     private String trainingType;
 
     /** Only meaningful for INDEPENDENT trainings. */
     private List<String> focusMuscleGroups;
+
+    /** Required for CIRCUIT trainings. */
+    @Size(max = 255, message = "Название тренировки не должно быть длиннее 255 символов")
+    private String title;
+
+    @Size(max = 2000, message = "Описание тренировки не должно быть длиннее 2000 символов")
+    private String description;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public CreateTrainingRequest setTitle(String title) {
+        this.title = title;
+        return this;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public CreateTrainingRequest setDescription(String description) {
+        this.description = description;
+        return this;
+    }
 
     public Long getClientId() {
         return clientId;

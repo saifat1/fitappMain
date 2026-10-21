@@ -136,7 +136,11 @@ public class TrainerSalaryReportService {
                 .setEndTime(training.getEndTime())
                 .setClientId(client.getId())
                 .setClientName(buildPersonName(client, "Клиент без имени"))
-                .setTrainingTypeLabel(training.getTrainingType() == TrainingType.INDEPENDENT ? "СТ" : "ПТ")
+                .setTrainingTypeLabel(switch (training.getTrainingType()) {
+                    case INDEPENDENT -> "СТ";
+                    case CIRCUIT -> "КТ";
+                    case PERSONAL -> "ПТ";
+                })
                 .setContractNumber(contract != null ? contract.getContractNumber() : null)
                 .setContractEndDate(contract != null ? contract.getEndDate() : null)
                 .setContractTotalTrainings(contract != null ? contract.getTotalTrainings() : null)

@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 037-add-title-and-description-to-training
+      author: claude
+      changes:
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: title
+                  type: varchar(255)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: description
+                  type: varchar(2000)
+                  constraints:
+                    nullable: true
