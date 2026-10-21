@@ -62,6 +62,16 @@ public class TrainerClientController {
         trainerClientFacadeService.deactivateCurrentTrainerClient(clientId);
     }
 
+    @PostMapping("/{clientId}/archive")
+    public TrainerClientResponse archiveCurrentTrainerClient(@PathVariable Long clientId) {
+        return trainerClientFacadeService.archiveCurrentTrainerClient(clientId);
+    }
+
+    @PostMapping("/{clientId}/restore")
+    public TrainerClientResponse restoreCurrentTrainerClient(@PathVariable Long clientId) {
+        return trainerClientFacadeService.restoreCurrentTrainerClient(clientId);
+    }
+
     @GetMapping("/{clientId}/history")
     public ClientHistoryResponse getCurrentTrainerClientHistory(@PathVariable Long clientId) {
         return trainerClientFacadeService.getCurrentTrainerClientHistory(clientId);

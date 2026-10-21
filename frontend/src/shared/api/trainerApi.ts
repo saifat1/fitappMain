@@ -38,6 +38,16 @@ export const trainerApi = {
         await apiClient.delete(`/trainer/clients/${clientId}`);
     },
 
+    archiveClient: async (clientId: number): Promise<TrainerClientResponse> => {
+        const response = await apiClient.post(`/trainer/clients/${clientId}/archive`);
+        return response.data;
+    },
+
+    restoreClient: async (clientId: number): Promise<TrainerClientResponse> => {
+        const response = await apiClient.post(`/trainer/clients/${clientId}/restore`);
+        return response.data;
+    },
+
     createInviteForClient: async (
         clientId: number,
         payload?: CreateTrainerClientInviteRequest

@@ -149,10 +149,18 @@ public class TrainerClientService {
         return userRepository.save(client);
     }
 
+    /** Archive ("заморозка"): the client can't sign in and is listed in the trainer's «Архив» tab. */
     public void deactivateClientOfTrainer(Long trainerId, Long clientId) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
         client.setStatus(UserStatus.INACTIVE);
         userRepository.save(client);
+    }
+
+    /** Brings an archived client back to the active list. */
+    public AppUser restoreClientOfTrainer(Long trainerId, Long clientId) {
+        AppUser client = getClientOfTrainer(trainerId, clientId);
+        client.setStatus(UserStatus.ACTIVE);
+        return userRepository.save(client);
     }
 
     private void validateTrainer(AppUser trainer) {

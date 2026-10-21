@@ -84,6 +84,30 @@
 
 .fb-search input::placeholder { color: var(--fb-muted); }
 
+/* list pagination (‹ Стр. 1 из 3 ›) */
+.fb-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 16px 96px;   /* room for the FAB */
+}
+
+.fb-pager__btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--fb-line);
+    border-radius: 50%;
+    background: var(--fb-surface);
+    color: var(--fb-ink);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.fb-pager__btn:disabled { opacity: 0.4; cursor: default; }
+.fb-pager__info { font-size: 14px; color: var(--fb-muted); }
+
 /* ---------- List ---------- */
 .fb-list {
     display: flex;

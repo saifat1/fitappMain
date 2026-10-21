@@ -144,6 +144,17 @@ public class TrainerClientFacadeService {
         trainerClientService.deactivateClientOfTrainer(trainer.getId(), clientId);
     }
 
+    public TrainerClientResponse archiveCurrentTrainerClient(Long clientId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        trainerClientService.deactivateClientOfTrainer(trainer.getId(), clientId);
+        return mapToResponse(trainerClientService.getClientOfTrainer(trainer.getId(), clientId), trainer.getId());
+    }
+
+    public TrainerClientResponse restoreCurrentTrainerClient(Long clientId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        return mapToResponse(trainerClientService.restoreClientOfTrainer(trainer.getId(), clientId), trainer.getId());
+    }
+
     private TrainerClientResponse mapToResponse(AppUser client, Long trainerId) {
         ClientContractSummary summary = clientContractService.getSummary(client.getId(), trainerId);
 

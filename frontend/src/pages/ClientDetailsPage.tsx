@@ -14,6 +14,7 @@ import {
     clientInitials,
     clientColor,
     clientStatusPill,
+    isArchivedClient,
 } from "../features/trainer/lib/clientDisplay";
 import { formatDateKey } from "../features/calendar/lib/trainerCalendar";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
@@ -110,6 +111,31 @@ export default function ClientDetailsPage() {
         }
     };
 
+    const handleArchive = () => {
+        setMenuOpen(false);
+        if (!window.confirm("Перенести клиента в архив? Он пропадёт из списка «Клиенты» и не сможет войти в приложение, пока его не восстановят.")) return;
+        (async () => {
+            try {
+                await trainerApi.archiveClient(id);
+                navigate("/trainer/clients?tab=archive");
+            } catch (error) {
+                setErrorMessage(resolveApiError(error, "Не удалось перенести клиента в архив"));
+            }
+        })();
+    };
+
+    const handleRestore = () => {
+        setMenuOpen(false);
+        (async () => {
+            try {
+                const restored = await trainerApi.restoreClient(id);
+                setClient(restored);
+            } catch (error) {
+                setErrorMessage(resolveApiError(error, "Не удалось восстановить клиента"));
+            }
+        })();
+    };
+
     const handleDelete = () => {
         setMenuOpen(false);
         if (!window.confirm("Удалить клиента?")) return;
@@ -164,6 +190,15 @@ export default function ClientDetailsPage() {
                             <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); setEditing(true); }}>
                                 Редактировать
                             </button>
+                            {isArchivedClient(client) ? (
+                                <button type="button" className="fb-menu__item" onClick={handleRestore}>
+                                    Восстановить из архива
+                                </button>
+                            ) : (
+                                <button type="button" className="fb-menu__item" onClick={handleArchive}>
+                                    Архив
+                                </button>
+                            )}
                             <button type="button" className="fb-menu__item fb-menu__item--danger" onClick={handleDelete}>
                                 Удалить
                             </button>
