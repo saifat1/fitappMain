@@ -61,6 +61,14 @@ public class Training {
     @Column(name = "description", length = 2000)
     private String description;
 
+    /** Number of rounds — CIRCUIT trainings only. */
+    @Column(name = "rounds")
+    private Integer rounds;
+
+    /** Rest timer at the end of each round (except the last), seconds — CIRCUIT trainings only. */
+    @Column(name = "round_rest_seconds")
+    private Integer roundRestSeconds;
+
     /** Comma-joined MuscleGroup codes — only meaningful for INDEPENDENT trainings. */
     @Column(name = "focus_muscle_groups", length = 255)
     private String focusMuscleGroups;
@@ -190,6 +198,24 @@ public class Training {
 
     public Training setDescription(String description) {
         this.description = description;
+        return this;
+    }
+
+    public Integer getRounds() {
+        return rounds;
+    }
+
+    public Training setRounds(Integer rounds) {
+        this.rounds = rounds;
+        return this;
+    }
+
+    public Integer getRoundRestSeconds() {
+        return roundRestSeconds;
+    }
+
+    public Training setRoundRestSeconds(Integer roundRestSeconds) {
+        this.roundRestSeconds = roundRestSeconds;
         return this;
     }
 

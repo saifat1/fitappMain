@@ -62,6 +62,28 @@ public class UpdateTrainingExerciseRequest {
     @Size(max = 50, message = "Полей не может быть больше 50")
     private List<TrainingExerciseFieldDto> fields;
 
+    /** Null weight/duration mean "don't change"; these flags clear them (circuit exercise editor). */
+    private Boolean clearWeight;
+    private Boolean clearDuration;
+
+    public Boolean getClearWeight() {
+        return clearWeight;
+    }
+
+    public UpdateTrainingExerciseRequest setClearWeight(Boolean clearWeight) {
+        this.clearWeight = clearWeight;
+        return this;
+    }
+
+    public Boolean getClearDuration() {
+        return clearDuration;
+    }
+
+    public UpdateTrainingExerciseRequest setClearDuration(Boolean clearDuration) {
+        this.clearDuration = clearDuration;
+        return this;
+    }
+
     public List<TrainingExerciseFieldDto> getFields() {
         return fields;
     }

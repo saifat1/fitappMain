@@ -29,6 +29,9 @@ export type TrainingResponse = {
     /** Circuit trainings only. */
     title: string | null;
     description: string | null;
+    rounds: number | null;
+    /** Rest timer after each round; null — no rest. */
+    roundRestSeconds: number | null;
     trainerNote: string | null;
     clientNote: string | null;
     contractId: number | null;
@@ -47,6 +50,8 @@ export type CreateTrainingRequest = {
     focusMuscleGroups?: string[];
     title?: string;
     description?: string;
+    rounds?: number;
+    roundRestSeconds?: number;
 };
 
 export type UpdateTrainingRequest = {
@@ -55,6 +60,10 @@ export type UpdateTrainingRequest = {
     endTime?: string;
     status?: string;
     trainerNote?: string;
+    /** Circuit trainings only. */
+    rounds?: number;
+    /** 0 — no rest timer. */
+    roundRestSeconds?: number;
 };
 
 export const MUSCLE_GROUP_OPTIONS: { code: string; label: string }[] = [

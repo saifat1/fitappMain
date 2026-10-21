@@ -83,6 +83,9 @@ export type UpdateTrainingExerciseRequest = {
     setDetails?: TrainingExerciseSetPayload[];
     /** Replaces all station fields. */
     fields?: TrainingExerciseFieldPayload[];
+    /** Empty weight/duration are skipped by the API; these flags clear them explicitly. */
+    clearWeight?: boolean;
+    clearDuration?: boolean;
 };
 
 export type UpdateExerciseCompletionRequest = {

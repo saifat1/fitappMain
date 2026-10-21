@@ -1,8 +1,9 @@
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 
 import Avatar from "../shared/ui/Avatar";
+import FbTextField from "../shared/ui/FbTextField";
 import { useAuth } from "../features/auth/model/AuthContext";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import ExerciseDetailForm from "../features/training/ui/ExerciseDetailForm";
@@ -11,16 +12,20 @@ import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 import { setsBreakdown, summaryFromParts } from "../features/training/model/trainingDraft";
 import {
-    exerciseFields,
+    circuitRoundsError,
     formatTimer,
-    hasInvalidTimer,
     newStation,
-    stationFieldsPayload,
+    parseTimer,
+    stationCreatePayload,
+    stationDescription,
+    stationError as validateStation,
     stationFromExercise,
+    stationParams,
+    stationUpdatePayload,
     type CircuitStation,
 } from "../features/training/model/circuit";
 import CircuitStationEditor from "../features/training/ui/CircuitStationEditor";
-import CircuitTimer from "../features/training/ui/CircuitTimer";
+import CircuitRun from "../features/training/ui/CircuitRun";
 import {
     getInitials,
     avatarColor,
@@ -50,18 +55,20 @@ function time(value: string | null): string {
     return value ? value.slice(0, 5) : "—";
 }
 
-/** Circuit station fields in order: "<текст> · Секундомер 1:30 · …". */
+/** Circuit exercise row: "15 повт. · 12 кг · 0:45 · <описание>". */
 function circuitSummary(ex: TrainingExerciseResponse): string {
-    const parts = exerciseFields(ex).map((f) =>
-        f.type === "TIMER" ? `Секундомер ${formatTimer(f.seconds ?? 0)}` : (f.text ?? "")
-    );
+    const parts = [stationParams(ex), stationDescription(ex) ?? ""].filter(Boolean);
     return parts.length ? parts.join(" · ") : "Без параметров";
 }
 
-function circuitTimers(ex: TrainingExerciseResponse): number[] {
-    return exerciseFields(ex)
-        .filter((f) => f.type === "TIMER" && f.seconds != null && f.seconds > 0)
-        .map((f) => f.seconds as number);
+/** "3 круга · отдых 1:30" */
+function roundsSummary(t: TrainingResponse): string {
+    const rounds = t.rounds ?? 1;
+    const mod10 = rounds % 10;
+    const mod100 = rounds % 100;
+    const word = mod10 === 1 && mod100 !== 11 ? "круг" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "круга" : "кругов";
+    const rest = t.roundRestSeconds ? `отдых после круга ${formatTimer(t.roundRestSeconds)}` : "без отдыха между кругами";
+    return `${rounds} ${word} · ${rest}`;
 }
 
 function exerciseSummary(ex: TrainingExerciseResponse): string {
@@ -112,6 +119,8 @@ export default function TrainingDetailsPage() {
     const [start, setStart] = useState("");
     const [end, setEnd] = useState("");
     const [comment, setComment] = useState("");
+    const [rounds, setRounds] = useState("");
+    const [roundRest, setRoundRest] = useState("");
 
     const loadExercises = useCallback(async () => {
         const data = await trainingExerciseApi.getExercises(id);
@@ -127,6 +136,8 @@ export default function TrainingDetailsPage() {
             setStart(time(t.startTime));
             setEnd(time(t.endTime));
             setComment(t.trainerNote ?? "");
+            setRounds(String(t.rounds ?? 1));
+            setRoundRest(t.roundRestSeconds ? formatTimer(t.roundRestSeconds) : "");
             await loadExercises();
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось загрузить тренировку"));
@@ -144,6 +155,12 @@ export default function TrainingDetailsPage() {
             setErrorMessage("Время окончания должно быть позже начала");
             return;
         }
+        const circuit = training?.trainingType === "CIRCUIT";
+        const roundsError = circuit ? circuitRoundsError(rounds, roundRest) : null;
+        if (roundsError) {
+            setErrorMessage(roundsError);
+            return;
+        }
         setErrorMessage("");
         setIsSaving(true);
         try {
@@ -152,6 +169,8 @@ export default function TrainingDetailsPage() {
                 startTime: start,
                 endTime: end,
                 trainerNote: comment.trim() || undefined,
+                rounds: circuit ? Number(rounds.trim() || "1") : undefined,
+                roundRestSeconds: circuit ? (parseTimer(roundRest) ?? 0) : undefined,
             });
             setTraining(updated);
             setEditing(false);
@@ -234,28 +253,19 @@ export default function TrainingDetailsPage() {
     const saveStation = async () => {
         if (!stationDraft) return;
         const { exerciseId, station } = stationDraft;
-        if (!station.title.trim()) {
-            setStationError("Укажите название упражнения");
-            return;
-        }
-        if (hasInvalidTimer(station)) {
-            setStationError("Секундомер: укажите время в формате мм:сс, например 1:30");
+        const invalid = validateStation(station);
+        if (invalid) {
+            setStationError(invalid);
             return;
         }
         setStationError("");
         setIsSaving(true);
         try {
-            const fields = stationFieldsPayload(station);
             if (exerciseId == null) {
-                await trainingExerciseApi.createExercise(id, { title: station.title.trim(), repsMode: "NONE", fields });
+                await trainingExerciseApi.createExercise(id, stationCreatePayload(station));
                 await loadExercises();
             } else {
-                // Legacy stations kept text/timer in description/duration — clear them once fields are saved.
-                const updated = await trainingExerciseApi.updateExercise(id, exerciseId, {
-                    title: station.title.trim(),
-                    description: "",
-                    fields,
-                });
+                const updated = await trainingExerciseApi.updateExercise(id, exerciseId, stationUpdatePayload(station));
                 setExercises((prev) => prev.map((item) => (item.id === exerciseId ? updated : item)));
             }
             setStationDraft(null);
@@ -264,6 +274,18 @@ export default function TrainingDetailsPage() {
         } finally {
             setIsSaving(false);
         }
+    };
+
+    /** "Завершить тренировку" after the last round; throws so the run keeps its progress on failure. */
+    const completeCircuit = async () => {
+        setErrorMessage("");
+        try {
+            await trainingApi.completeTraining(id);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось завершить"));
+            throw error;
+        }
+        await load();
     };
 
     const toggleCompletion = async (ex: TrainingExerciseResponse) => {
@@ -375,6 +397,21 @@ export default function TrainingDetailsPage() {
                     <>
                         <ReadonlyRow label="Круговая тренировка" value={training.title ?? "—"} />
                         {training.description && <ReadonlyRow label="Описание" value={training.description} />}
+                        {editing ? (
+                            <div className="fb-field-pair">
+                                <FbTextField id="td-rounds" label="Количество кругов" inputMode="numeric" value={rounds} onChange={setRounds} />
+                                <FbTextField
+                                    id="td-round-rest"
+                                    label="Отдых после круга, мм:сс"
+                                    inputMode="numeric"
+                                    placeholder="без отдыха"
+                                    value={roundRest}
+                                    onChange={setRoundRest}
+                                />
+                            </div>
+                        ) : (
+                            <ReadonlyRow label="Круги" value={roundsSummary(training)} />
+                        )}
                     </>
                 )}
 
@@ -409,11 +446,19 @@ export default function TrainingDetailsPage() {
 
                 {exercises.length === 0 ? (
                     <div className="fb-empty">Упражнений пока нет</div>
+                ) : isCircuit && !editing && status === "PLANNED" ? (
+                    <CircuitRun
+                        trainingId={id}
+                        rounds={training.rounds ?? 1}
+                        restSeconds={training.roundRestSeconds}
+                        exercises={exercises}
+                        onEditExercise={canEditExercises ? openStation : undefined}
+                        onComplete={isClient ? undefined : completeCircuit}
+                    />
                 ) : (
                     <div className="fb-list">
                         {exercises.map((ex, index) => (
-                            <Fragment key={ex.id}>
-                            <div className="fb-row">
+                            <div key={ex.id} className="fb-row">
                                 {!editing && (
                                     <button
                                         type="button"
@@ -446,14 +491,6 @@ export default function TrainingDetailsPage() {
                                     </button>
                                 )}
                             </div>
-                            {isCircuit && !editing && status !== "CANCELLED" && circuitTimers(ex).length > 0 && (
-                                <div className="fb-timers">
-                                    {circuitTimers(ex).map((seconds, i) => (
-                                        <CircuitTimer key={`${ex.id}-${i}-${seconds}`} seconds={seconds} />
-                                    ))}
-                                </div>
-                            )}
-                            </Fragment>
                         ))}
                     </div>
                 )}

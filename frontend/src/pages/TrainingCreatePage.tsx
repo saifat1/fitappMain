@@ -7,7 +7,13 @@ import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import ClientPickerSheet from "../features/training/ui/ClientPickerSheet";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import CircuitExercisesEditor from "../features/training/ui/CircuitExercisesEditor";
-import { hasInvalidTimer, stationFieldsPayload, type CircuitStation } from "../features/training/model/circuit";
+import {
+    circuitRoundsError,
+    parseTimer,
+    stationCreatePayload,
+    stationError,
+    type CircuitStation,
+} from "../features/training/model/circuit";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
@@ -58,6 +64,8 @@ export default function TrainingCreatePage() {
     const [focusMuscleGroups, setFocusMuscleGroups] = useState<string[]>([]);
     const [circuitTitle, setCircuitTitle] = useState("");
     const [circuitDescription, setCircuitDescription] = useState("");
+    const [circuitRounds, setCircuitRounds] = useState("3");
+    const [circuitRest, setCircuitRest] = useState("");
     const [stations, setStations] = useState<CircuitStation[]>([]);
     const isCircuit = trainingType === "CIRCUIT";
 
@@ -106,12 +114,14 @@ export default function TrainingCreatePage() {
                 setErrorMessage("Укажите название тренировки");
                 return;
             }
-            if (stations.some((s) => !s.title.trim())) {
-                setErrorMessage("У каждого упражнения должно быть название");
+            const roundsError = circuitRoundsError(circuitRounds, circuitRest);
+            if (roundsError) {
+                setErrorMessage(roundsError);
                 return;
             }
-            if (stations.some(hasInvalidTimer)) {
-                setErrorMessage("Секундомер: укажите время в формате мм:сс, например 1:30");
+            const invalid = stations.map(stationError).find(Boolean);
+            if (invalid) {
+                setErrorMessage(invalid);
                 return;
             }
         }
@@ -130,16 +140,14 @@ export default function TrainingCreatePage() {
                 focusMuscleGroups: trainingType === "INDEPENDENT" ? focusMuscleGroups : undefined,
                 title: isCircuit ? circuitTitle.trim() : undefined,
                 description: isCircuit ? circuitDescription.trim() || undefined : undefined,
+                rounds: isCircuit ? Number(circuitRounds.trim() || "1") : undefined,
+                roundRestSeconds: isCircuit ? parseTimer(circuitRest) : undefined,
             });
 
             if (isCircuit) {
-                // Stations become regular training exercises, numbered by their order.
+                // Circuit exercises become regular training exercises, numbered by their order.
                 for (const station of stations) {
-                    await trainingExerciseApi.createExercise(training.id, {
-                        title: station.title.trim(),
-                        repsMode: "NONE",
-                        fields: stationFieldsPayload(station),
-                    });
+                    await trainingExerciseApi.createExercise(training.id, stationCreatePayload(station));
                 }
                 navigate("/me");
                 return;
@@ -224,6 +232,23 @@ export default function TrainingCreatePage() {
                             <span className="fb-textarea__label">Описание тренировки</span>
                             <textarea rows={3} value={circuitDescription} onChange={(e) => setCircuitDescription(e.target.value)} />
                         </label>
+                        <div className="fb-field-pair">
+                            <FbTextField
+                                id="tr-circuit-rounds"
+                                label="Количество кругов"
+                                inputMode="numeric"
+                                value={circuitRounds}
+                                onChange={setCircuitRounds}
+                            />
+                            <FbTextField
+                                id="tr-circuit-rest"
+                                label="Отдых после круга, мм:сс"
+                                inputMode="numeric"
+                                placeholder="без отдыха"
+                                value={circuitRest}
+                                onChange={setCircuitRest}
+                            />
+                        </div>
                     </>
                 ) : null}
 

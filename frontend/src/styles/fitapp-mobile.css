@@ -225,14 +225,33 @@
     border-bottom: 1px solid var(--fb-line);
 }
 
-.fb-circuit__head,
-.fb-circuit__field {
+.fb-circuit__head {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.fb-circuit__field { align-items: flex-start; padding-left: 36px; }
+.fb-circuit__body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 36px;
+}
+
+.fb-circuit__params {
+    display: flex;
+    gap: 6px;
+}
+
+.fb-circuit__param {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fb-circuit__param .fb-circuit__input { width: 100%; }
 
 .fb-circuit__num {
     flex: none;
@@ -249,11 +268,9 @@
 }
 
 .fb-circuit__label {
-    flex: none;
-    width: 86px;
-    padding-top: 7px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--fb-muted);
+    white-space: nowrap;
 }
 
 .fb-circuit__input {
@@ -272,30 +289,117 @@
 
 .fb-circuit__input:focus { border-color: var(--fb-green); }
 .fb-circuit__input--title { font-weight: 600; }
-.fb-circuit__input--timer { flex: 0 0 96px; }
 
-.fb-circuit__add-field,
-.fb-circuit__menu { margin-left: 36px; }
-
-.fb-circuit__add-field {
-    align-self: flex-start;
-    border: 1px dashed var(--fb-line);
-    background: transparent;
-    color: var(--fb-green-deep);
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: 999px;
-    padding: 5px 12px;
-    cursor: pointer;
+/* two fields side by side ("Количество кругов" / "Отдых после круга") */
+.fb-field-pair {
+    display: flex;
+    gap: 14px;
 }
 
-/* circuit station countdown (training details) */
-.fb-timers {
+.fb-field-pair > * { flex: 1; min-width: 0; }
+
+/* running a circuit training round by round (training details) */
+.fb-circuit-run { display: flex; flex-direction: column; }
+
+.fb-round {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--fb-surface-2);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin: 4px 0 6px;
+    font-size: 16px;
+}
+
+.fb-round__label { font-size: 12px; color: var(--fb-muted); }
+
+.fb-round__dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+
+.fb-round__dots i {
+    width: 22px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--fb-line-strong);
+}
+
+.fb-round__dots i.fb-round__dot--on { background: var(--fb-green); }
+
+.fb-round__next {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--fb-ink-2);
+    text-align: center;
+}
+
+.fb-row--top { align-items: flex-start; }
+.fb-row--top .fb-row__radio { margin-top: 1px; }
+
+.fb-row__title--link {
+    border: none;
+    background: transparent;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.fb-row__hint {
+    font-size: 12px;
+    color: var(--fb-muted);
+    white-space: pre-line;
+}
+
+.fb-row__main .fb-timer { margin-top: 6px; }
+
+.fb-rest {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 0 0 10px 34px;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0 4px;
 }
+
+.fb-rest__label {
+    font-size: 13px;
+    color: var(--fb-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.fb-rest__ring {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fb-rest__inner {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: var(--fb-surface);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.fb-rest__time {
+    font-size: 56px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--fb-green-deep);
+}
+
+.fb-rest__of { font-size: 13px; color: var(--fb-muted); }
+.fb-rest--done .fb-rest__time { color: #b1291d; }
+.fb-rest__actions { display: flex; gap: 8px; }
 
 .fb-timer {
     display: flex;

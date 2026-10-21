@@ -172,10 +172,14 @@ public class TrainingExerciseService {
 
             if (request.getWeight() != null) {
                 exercise.setWeight(normalizeWeight(request.getWeight()));
+            } else if (Boolean.TRUE.equals(request.getClearWeight())) {
+                exercise.setWeight(null);
             }
 
             if (request.getDurationSeconds() != null) {
                 exercise.setDurationSeconds(request.getDurationSeconds());
+            } else if (Boolean.TRUE.equals(request.getClearDuration())) {
+                exercise.setDurationSeconds(null);
             }
 
             if (request.getRestSeconds() != null) {

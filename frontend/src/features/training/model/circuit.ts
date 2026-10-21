@@ -1,35 +1,27 @@
 import type {
-    TrainingExerciseFieldPayload,
+    CreateTrainingExerciseRequest,
     TrainingExerciseResponse,
+    UpdateTrainingExerciseRequest,
 } from "../../training-exercise/model/trainingExercise.types";
 
-export type CircuitFieldType = "TEXT" | "TIMER";
-
-/** One "Текст" / "Секундомер" field of a station; `value` is the text or the mm:ss time. */
-export type CircuitField = {
-    key: string;
-    type: CircuitFieldType;
-    value: string;
-};
-
-/** One station of a circuit training: a name plus any number of fields added via "+". */
+/** One exercise of a circuit training; everything except the title is optional. Values are raw input strings. */
 export type CircuitStation = {
     key: string;
     title: string;
-    fields: CircuitField[];
+    description: string;
+    /** kg, "12" / "12,5". */
+    weight: string;
+    /** mm:ss or seconds — the exercise timer. */
+    time: string;
+    reps: string;
 };
 
 function newKey(prefix: string): string {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function newField(type: CircuitFieldType, value = ""): CircuitField {
-    return { key: newKey("f"), type, value };
-}
-
-/** A new station shows one field of each type by default; more are added via "+". */
 export function newStation(): CircuitStation {
-    return { key: newKey("st"), title: "", fields: [newField("TEXT"), newField("TIMER")] };
+    return { key: newKey("st"), title: "", description: "", weight: "", time: "", reps: "" };
 }
 
 /** "1:30" / "90" → 90 seconds; empty or invalid → undefined. */
@@ -49,45 +41,107 @@ export function formatTimer(seconds: number): string {
     return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/** A filled timer field with a time that can't be parsed. */
-export function hasInvalidTimer(station: CircuitStation): boolean {
-    return station.fields.some((f) => f.type === "TIMER" && f.value.trim() !== "" && parseTimer(f.value) === undefined);
+function parseWeight(value: string): number | undefined {
+    const v = value.trim().replace(",", ".");
+    if (!v) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : undefined;
 }
 
-/** Fields for the API; empty ones are skipped (the backend drops them too). */
-export function stationFieldsPayload(station: CircuitStation): TrainingExerciseFieldPayload[] {
-    const result: TrainingExerciseFieldPayload[] = [];
-    for (const field of station.fields) {
-        if (field.type === "TEXT" && field.value.trim()) {
-            result.push({ type: "TEXT", text: field.value.trim() });
-        }
-        if (field.type === "TIMER" && parseTimer(field.value) !== undefined) {
-            result.push({ type: "TIMER", seconds: parseTimer(field.value) });
-        }
+function parseReps(value: string): number | undefined {
+    const v = value.trim();
+    return /^\d+$/.test(v) && Number(v) > 0 ? Number(v) : undefined;
+}
+
+/** Validation of the training's "Количество кругов" / "Отдых после круга" inputs. */
+export function circuitRoundsError(rounds: string, rest: string): string | null {
+    const r = rounds.trim();
+    if (r && !(/^\d+$/.test(r) && Number(r) >= 1 && Number(r) <= 50)) {
+        return "Количество кругов: укажите число от 1 до 50";
     }
-    return result;
+    if (rest.trim() && (parseTimer(rest) === undefined || (parseTimer(rest) ?? 0) > 3600)) {
+        return "Отдых после круга: укажите время в формате мм:сс, не больше 60:00";
+    }
+    return null;
+}
+
+/** First validation problem of a station, or null. */
+export function stationError(station: CircuitStation): string | null {
+    if (!station.title.trim()) return "У каждого упражнения должно быть название";
+    if (station.time.trim() && parseTimer(station.time) === undefined) {
+        return "Время: укажите в формате мм:сс, например 0:45";
+    }
+    if (station.weight.trim() && parseWeight(station.weight) === undefined) {
+        return "Вес: укажите число больше 0, например 12,5";
+    }
+    if (station.reps.trim() && parseReps(station.reps) === undefined) {
+        return "Повторения: укажите целое число больше 0";
+    }
+    return null;
+}
+
+export function stationCreatePayload(station: CircuitStation): CreateTrainingExerciseRequest {
+    const reps = parseReps(station.reps);
+    return {
+        title: station.title.trim(),
+        description: station.description.trim() || undefined,
+        weight: parseWeight(station.weight),
+        durationSeconds: parseTimer(station.time),
+        repsMode: reps !== undefined ? "EXACT" : "NONE",
+        repsValue: reps,
+    };
+}
+
+/** Full overwrite of a saved station: empty inputs clear the values; legacy text/timer fields are dropped. */
+export function stationUpdatePayload(station: CircuitStation): UpdateTrainingExerciseRequest {
+    const create = stationCreatePayload(station);
+    return {
+        ...create,
+        description: create.description ?? "",
+        clearWeight: create.weight === undefined,
+        clearDuration: create.durationSeconds === undefined,
+        fields: [],
+    };
 }
 
 /**
- * Station fields of a saved exercise. Stations created before fields existed kept
- * the text in `description` and the timer in `durationSeconds`.
+ * Text and timer of a station saved in the earlier "+ поле" format (FIT-10, first iteration);
+ * used as a fallback when the exercise's own description/duration are empty.
  */
-export function exerciseFields(ex: TrainingExerciseResponse): { type: CircuitFieldType; text: string | null; seconds: number | null }[] {
-    if (ex.fields && ex.fields.length > 0) {
-        return ex.fields.map((f) => ({ type: f.type, text: f.text, seconds: f.seconds }));
-    }
-    const legacy: { type: CircuitFieldType; text: string | null; seconds: number | null }[] = [];
-    if (ex.description) legacy.push({ type: "TEXT", text: ex.description, seconds: null });
-    if (ex.durationSeconds != null) legacy.push({ type: "TIMER", text: null, seconds: ex.durationSeconds });
-    return legacy;
+function legacyFields(ex: TrainingExerciseResponse): { text: string | null; seconds: number | null } {
+    const fields = ex.fields ?? [];
+    const texts = fields.filter((f) => f.type === "TEXT" && f.text).map((f) => f.text as string);
+    const timer = fields.find((f) => f.type === "TIMER" && f.seconds != null);
+    return { text: texts.length ? texts.join("\n") : null, seconds: timer?.seconds ?? null };
+}
+
+export function stationDescription(ex: TrainingExerciseResponse): string | null {
+    return ex.description || legacyFields(ex).text;
+}
+
+export function stationSeconds(ex: TrainingExerciseResponse): number | null {
+    return ex.durationSeconds ?? legacyFields(ex).seconds;
+}
+
+/** "15 повт. · 12 кг · 0:45" — the exercise's parameters, empty string if none are set. */
+export function stationParams(ex: TrainingExerciseResponse): string {
+    const parts: string[] = [];
+    if (ex.repsMode === "EXACT" && ex.repsValue != null) parts.push(`${ex.repsValue} повт.`);
+    if (ex.repsMode === "RANGE" && ex.repsFrom != null && ex.repsTo != null) parts.push(`${ex.repsFrom}–${ex.repsTo} повт.`);
+    if (ex.weight != null) parts.push(`${String(ex.weight).replace(".", ",")} кг`);
+    const seconds = stationSeconds(ex);
+    if (seconds != null) parts.push(formatTimer(seconds));
+    return parts.join(" · ");
 }
 
 export function stationFromExercise(ex: TrainingExerciseResponse): CircuitStation {
+    const seconds = stationSeconds(ex);
     return {
         key: `ex-${ex.id}`,
         title: ex.title,
-        fields: exerciseFields(ex).map((f) =>
-            f.type === "TEXT" ? newField("TEXT", f.text ?? "") : newField("TIMER", f.seconds != null ? formatTimer(f.seconds) : "")
-        ),
+        description: stationDescription(ex) ?? "",
+        weight: ex.weight != null ? String(ex.weight).replace(".", ",") : "",
+        time: seconds != null ? formatTimer(seconds) : "",
+        reps: ex.repsMode === "EXACT" && ex.repsValue != null ? String(ex.repsValue) : "",
     };
 }

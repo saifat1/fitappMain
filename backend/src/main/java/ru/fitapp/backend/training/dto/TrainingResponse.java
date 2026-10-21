@@ -21,6 +21,8 @@ public class TrainingResponse {
     private String trainingType;
     private String title;
     private String description;
+    private Integer rounds;
+    private Integer roundRestSeconds;
     private List<String> focusMuscleGroups;
     private String trainerNote;
     private String clientNote;
@@ -134,6 +136,24 @@ public class TrainingResponse {
 
     public TrainingResponse setTitle(String title) {
         this.title = title;
+        return this;
+    }
+
+    public Integer getRounds() {
+        return rounds;
+    }
+
+    public TrainingResponse setRounds(Integer rounds) {
+        this.rounds = rounds;
+        return this;
+    }
+
+    public Integer getRoundRestSeconds() {
+        return roundRestSeconds;
+    }
+
+    public TrainingResponse setRoundRestSeconds(Integer roundRestSeconds) {
+        this.roundRestSeconds = roundRestSeconds;
         return this;
     }
 

@@ -74,6 +74,8 @@ public class TrainingService {
                 .setFocusMuscleGroups(trainingType == TrainingType.INDEPENDENT ? join(request.getFocusMuscleGroups()) : null)
                 .setTitle(title)
                 .setDescription(normalizeNote(request.getDescription()))
+                .setRounds(trainingType == TrainingType.CIRCUIT ? defaultRounds(request.getRounds()) : null)
+                .setRoundRestSeconds(trainingType == TrainingType.CIRCUIT ? normalizeRest(request.getRoundRestSeconds()) : null)
                 .setTrainerNote(normalizeNote(request.getTrainerNote()));
 
         Training saved = trainingRepository.save(training);
@@ -196,6 +198,16 @@ public class TrainingService {
 
         if (request.getTrainerNote() != null) {
             training.setTrainerNote(normalizeNote(request.getTrainerNote()));
+        }
+
+        if (training.getTrainingType() == TrainingType.CIRCUIT) {
+            if (request.getRounds() != null) {
+                training.setRounds(request.getRounds());
+            }
+
+            if (request.getRoundRestSeconds() != null) {
+                training.setRoundRestSeconds(normalizeRest(request.getRoundRestSeconds()));
+            }
         }
 
         Training saved = trainingRepository.save(training);
@@ -357,6 +369,8 @@ public class TrainingService {
                 .setFocusMuscleGroups(split(training.getFocusMuscleGroups()))
                 .setTitle(training.getTitle())
                 .setDescription(training.getDescription())
+                .setRounds(training.getRounds())
+                .setRoundRestSeconds(training.getRoundRestSeconds())
                 .setTrainerNote(training.getTrainerNote())
                 .setClientNote(training.getClientNote())
                 .setContractId(training.getContract() != null ? training.getContract().getId() : null)
@@ -372,6 +386,15 @@ public class TrainingService {
         if (to.isBefore(from)) {
             throw new ApiException("INVALID_DATE_RANGE", "Некорректный диапазон дат");
         }
+    }
+
+    private Integer defaultRounds(Integer rounds) {
+        return rounds != null ? rounds : 1;
+    }
+
+    /** 0 / empty rest means "no rest timer between rounds". */
+    private Integer normalizeRest(Integer seconds) {
+        return seconds == null || seconds == 0 ? null : seconds;
     }
 
     private void validateDate(LocalDate date) {

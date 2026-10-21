@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 039-add-rounds-to-training
+      author: claude
+      changes:
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: rounds
+                  type: int
+                  constraints:
+                    nullable: true
+              - column:
+                  name: round_rest_seconds
+                  type: int
+                  constraints:
+                    nullable: true

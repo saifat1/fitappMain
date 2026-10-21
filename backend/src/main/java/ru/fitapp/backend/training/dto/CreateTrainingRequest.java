@@ -1,5 +1,7 @@
 package ru.fitapp.backend.training.dto;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -34,6 +36,34 @@ public class CreateTrainingRequest {
 
     @Size(max = 2000, message = "Описание тренировки не должно быть длиннее 2000 символов")
     private String description;
+
+    /** CIRCUIT only; empty means 1 round. */
+    @Min(value = 1, message = "Кругов должно быть не меньше 1")
+    @Max(value = 50, message = "Кругов не может быть больше 50")
+    private Integer rounds;
+
+    /** CIRCUIT only: rest timer after each round, seconds; empty — no rest timer. */
+    @Min(value = 0, message = "Отдых не может быть отрицательным")
+    @Max(value = 3600, message = "Отдых не может быть больше часа")
+    private Integer roundRestSeconds;
+
+    public Integer getRounds() {
+        return rounds;
+    }
+
+    public CreateTrainingRequest setRounds(Integer rounds) {
+        this.rounds = rounds;
+        return this;
+    }
+
+    public Integer getRoundRestSeconds() {
+        return roundRestSeconds;
+    }
+
+    public CreateTrainingRequest setRoundRestSeconds(Integer roundRestSeconds) {
+        this.roundRestSeconds = roundRestSeconds;
+        return this;
+    }
 
     public String getTitle() {
         return title;
