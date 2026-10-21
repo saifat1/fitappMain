@@ -5,10 +5,11 @@ import axios from "axios";
 import Avatar from "../shared/ui/Avatar";
 import { useAuth } from "../features/auth/model/AuthContext";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
+import ExerciseDetailForm from "../features/training/ui/ExerciseDetailForm";
 import { trainingApi } from "../shared/api/trainingApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
-import { summaryFromParts } from "../features/training/model/trainingDraft";
+import { setsBreakdown, summaryFromParts } from "../features/training/model/trainingDraft";
 import {
     getInitials,
     avatarColor,
@@ -16,7 +17,10 @@ import {
 } from "../features/calendar/lib/calendarWeek";
 
 import type { TrainingResponse } from "../features/training/model/training.types";
-import type { TrainingExerciseResponse } from "../features/training-exercise/model/trainingExercise.types";
+import type {
+    TrainingExerciseResponse,
+    UpdateTrainingExerciseRequest,
+} from "../features/training-exercise/model/trainingExercise.types";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 
 function resolveApiError(error: unknown, fallback: string): string {
@@ -36,6 +40,13 @@ function time(value: string | null): string {
 }
 
 function exerciseSummary(ex: TrainingExerciseResponse): string {
+    const breakdown = setsBreakdown(ex.setDetails);
+    if (breakdown) {
+        const parts = [`${ex.setDetails.length} подх.: ${breakdown}`];
+        if (ex.durationSeconds != null) parts.push(`${ex.durationSeconds} сек`);
+        return parts.join(" · ");
+    }
+
     return summaryFromParts({
         repsDisplay: ex.repsMode !== "NONE" ? ex.repsDisplay : null,
         durationSeconds: ex.durationSeconds,
@@ -65,6 +76,7 @@ export default function TrainingDetailsPage() {
     const [editing, setEditing] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
     const [exerciseSheetOpen, setExerciseSheetOpen] = useState(false);
+    const [editingExercise, setEditingExercise] = useState<TrainingExerciseResponse | null>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     // edit fields
@@ -172,6 +184,17 @@ export default function TrainingDetailsPage() {
         }
     };
 
+    const saveExercise = async (exerciseId: number, payload: UpdateTrainingExerciseRequest) => {
+        try {
+            const updated = await trainingExerciseApi.updateExercise(id, exerciseId, payload);
+            setExercises((prev) => prev.map((item) => (item.id === exerciseId ? updated : item)));
+            setEditingExercise(null);
+        } catch (error) {
+            // Keep the sheet open so the trainer doesn't lose the input; the form shows the message.
+            throw new Error(resolveApiError(error, "Не удалось сохранить упражнение"));
+        }
+    };
+
     const toggleCompletion = async (ex: TrainingExerciseResponse) => {
         try {
             const updated = await trainingExerciseApi.updateCompletion(id, ex.id, {
@@ -209,6 +232,7 @@ export default function TrainingDetailsPage() {
 
     const status = training.status;
     const pill = STATUS_PILL[status] ?? null;
+    const canEditExercises = !isClient && status !== "CANCELLED";
 
     return (
         <div className="fb-screen">
@@ -314,10 +338,22 @@ export default function TrainingDetailsPage() {
                                         {ex.isCompleted ? "✓" : ""}
                                     </button>
                                 )}
-                                <span className="fb-row__main">
-                                    <span className="fb-row__title">{ex.title}</span>
-                                    <span className="fb-row__sub">{exerciseSummary(ex)}</span>
-                                </span>
+                                {canEditExercises && !editing ? (
+                                    <button
+                                        type="button"
+                                        className="fb-row__main fb-row__main--button"
+                                        aria-label={`Редактировать упражнение ${ex.title}`}
+                                        onClick={() => setEditingExercise(ex)}
+                                    >
+                                        <span className="fb-row__title">{ex.title}</span>
+                                        <span className="fb-row__sub">{exerciseSummary(ex)}</span>
+                                    </button>
+                                ) : (
+                                    <span className="fb-row__main">
+                                        <span className="fb-row__title">{ex.title}</span>
+                                        <span className="fb-row__sub">{exerciseSummary(ex)}</span>
+                                    </span>
+                                )}
                                 {editing && (
                                     <button type="button" className="fb-row__remove" aria-label="Убрать" onClick={() => void removeExercise(ex.id)}>
                                         ×
@@ -359,6 +395,19 @@ export default function TrainingDetailsPage() {
                     onPick={(draft) => void addExerciseFromPicker(draft.source)}
                     onClose={() => setExerciseSheetOpen(false)}
                 />
+            )}
+
+            {editingExercise && (
+                <>
+                    <button type="button" className="fb-sheet-backdrop" aria-label="Закрыть" onClick={() => setEditingExercise(null)} />
+                    <div className="fb-sheet fb-sheet--tall" role="dialog" aria-label="Редактирование упражнения">
+                        <ExerciseDetailForm
+                            key={editingExercise.id}
+                            exercise={editingExercise}
+                            onSave={(payload) => saveExercise(editingExercise.id, payload)}
+                        />
+                    </div>
+                </>
             )}
         </div>
     );

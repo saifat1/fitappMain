@@ -4,6 +4,7 @@ import ru.fitapp.backend.common.model.RepsMode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class TrainingExerciseResponse {
 
@@ -24,6 +25,7 @@ public class TrainingExerciseResponse {
     private Boolean isCompleted;
     private String trainerNote;
     private String clientNote;
+    private List<TrainingExerciseSetDto> setDetails;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -177,6 +179,15 @@ public class TrainingExerciseResponse {
 
     public TrainingExerciseResponse setClientNote(String clientNote) {
         this.clientNote = clientNote;
+        return this;
+    }
+
+    public List<TrainingExerciseSetDto> getSetDetails() {
+        return setDetails;
+    }
+
+    public TrainingExerciseResponse setSetDetails(List<TrainingExerciseSetDto> setDetails) {
+        this.setDetails = setDetails;
         return this;
     }
 

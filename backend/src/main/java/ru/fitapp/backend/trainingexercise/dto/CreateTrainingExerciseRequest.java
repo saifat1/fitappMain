@@ -1,5 +1,6 @@
 package ru.fitapp.backend.trainingexercise.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import ru.fitapp.backend.common.model.RepsMode;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class CreateTrainingExerciseRequest {
 
@@ -44,6 +46,10 @@ public class CreateTrainingExerciseRequest {
 
     @Size(max = 2000, message = "Заметка тренера не должна быть длиннее 2000 символов")
     private String trainerNote;
+
+    @Valid
+    @Size(max = 50, message = "Подходов не может быть больше 50")
+    private List<TrainingExerciseSetDto> setDetails;
 
     public String getTitle() {
         return title;
@@ -141,6 +147,15 @@ public class CreateTrainingExerciseRequest {
 
     public CreateTrainingExerciseRequest setTrainerNote(String trainerNote) {
         this.trainerNote = trainerNote;
+        return this;
+    }
+
+    public List<TrainingExerciseSetDto> getSetDetails() {
+        return setDetails;
+    }
+
+    public CreateTrainingExerciseRequest setSetDetails(List<TrainingExerciseSetDto> setDetails) {
+        this.setDetails = setDetails;
         return this;
     }
 }

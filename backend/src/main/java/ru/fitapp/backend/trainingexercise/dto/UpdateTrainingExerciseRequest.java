@@ -1,5 +1,6 @@
 package ru.fitapp.backend.trainingexercise.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Min;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import ru.fitapp.backend.common.model.RepsMode;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class UpdateTrainingExerciseRequest {
 
@@ -50,6 +52,10 @@ public class UpdateTrainingExerciseRequest {
 
     @Min(value = 1, message = "Порядковый номер должен быть не меньше 1")
     private Integer orderNum;
+
+    @Valid
+    @Size(max = 50, message = "Подходов не может быть больше 50")
+    private List<TrainingExerciseSetDto> setDetails;
 
     public String getTitle() {
         return title;
@@ -174,6 +180,15 @@ public class UpdateTrainingExerciseRequest {
 
     public UpdateTrainingExerciseRequest setOrderNum(Integer orderNum) {
         this.orderNum = orderNum;
+        return this;
+    }
+
+    public List<TrainingExerciseSetDto> getSetDetails() {
+        return setDetails;
+    }
+
+    public UpdateTrainingExerciseRequest setSetDetails(List<TrainingExerciseSetDto> setDetails) {
+        this.setDetails = setDetails;
         return this;
     }
 }

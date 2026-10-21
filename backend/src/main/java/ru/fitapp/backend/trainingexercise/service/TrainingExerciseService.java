@@ -12,20 +12,26 @@ import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.service.TrainingService;
 import ru.fitapp.backend.trainingexercise.dto.CreateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseResponse;
+import ru.fitapp.backend.trainingexercise.dto.TrainingExerciseSetDto;
 import ru.fitapp.backend.trainingexercise.dto.UpdateExerciseCompletionRequest;
 import ru.fitapp.backend.trainingexercise.dto.UpdateTrainingExerciseRequest;
 import ru.fitapp.backend.trainingexercise.entity.TrainingExercise;
+import ru.fitapp.backend.trainingexercise.entity.TrainingExerciseSet;
 import ru.fitapp.backend.trainingexercise.repository.TrainingExerciseRepository;
 import ru.fitapp.backend.user.entity.AppUser;
 import ru.fitapp.backend.user.model.UserRole;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
 @Transactional
 public class TrainingExerciseService {
+
+    private static final int MAX_SETS = 50;
 
     private final TrainingExerciseRepository trainingExerciseRepository;
     private final TrainingService trainingService;
@@ -77,6 +83,8 @@ public class TrainingExerciseService {
                 request.getRepsTo()
         );
 
+        applySetDetails(exercise, request.getSetDetails());
+
         TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
     }
@@ -107,6 +115,8 @@ public class TrainingExerciseService {
                 template.getRepsFrom(),
                 template.getRepsTo()
         );
+
+        syncSetDetails(exercise);
 
         TrainingExercise saved = trainingExerciseRepository.save(exercise);
         return mapToResponse(saved);
@@ -174,6 +184,12 @@ public class TrainingExerciseService {
 
             if (request.getOrderNum() != null) {
                 exercise.setOrderNum(request.getOrderNum());
+            }
+
+            if (request.getSetDetails() != null) {
+                applySetDetails(exercise, request.getSetDetails());
+            } else if (request.getSets() != null) {
+                syncSetDetails(exercise);
             }
         }
 
@@ -250,8 +266,94 @@ public class TrainingExerciseService {
                 .setIsCompleted(exercise.getIsCompleted())
                 .setTrainerNote(exercise.getTrainerNote())
                 .setClientNote(exercise.getClientNote())
+                .setSetDetails(exercise.getSetDetails()
+                        .stream()
+                        .map(item -> new TrainingExerciseSetDto()
+                                .setSetNumber(item.getSetNumber())
+                                .setReps(item.getReps())
+                                .setWeight(item.getWeight()))
+                        .toList())
                 .setCreatedAt(exercise.getCreatedAt())
                 .setUpdatedAt(exercise.getUpdatedAt());
+    }
+
+    /**
+     * Explicit per-set values from the trainer. The list defines the number of sets,
+     * so {@code sets} is overwritten with its size; sets are renumbered in list order.
+     * A null list falls back to {@link #syncSetDetails}.
+     */
+    private void applySetDetails(TrainingExercise exercise, List<TrainingExerciseSetDto> items) {
+        if (items == null) {
+            syncSetDetails(exercise);
+            return;
+        }
+
+        if (items.size() > MAX_SETS) {
+            throw new ApiException("VALIDATION_ERROR", "Подходов не может быть больше " + MAX_SETS);
+        }
+
+        List<SetValues> values = new ArrayList<>();
+        for (TrainingExerciseSetDto item : items) {
+            if (item == null) {
+                throw new ApiException("VALIDATION_ERROR", "Пустой подход");
+            }
+            values.add(new SetValues(item.getReps(), normalizeWeight(item.getWeight())));
+        }
+
+        exercise.setSets(values.isEmpty() ? null : values.size());
+        reconcileSetDetails(exercise, values, true);
+    }
+
+    /**
+     * Brings the number of per-set rows in line with {@code sets}: extra rows are dropped,
+     * missing ones are filled with the exercise's common reps and weight.
+     */
+    private void syncSetDetails(TrainingExercise exercise) {
+        int target = exercise.getSets() != null ? exercise.getSets() : 0;
+
+        if (target > MAX_SETS) {
+            throw new ApiException("VALIDATION_ERROR", "Подходов не может быть больше " + MAX_SETS);
+        }
+
+        SetValues defaults = new SetValues(defaultSetReps(exercise), exercise.getWeight());
+        reconcileSetDetails(exercise, Collections.nCopies(target, defaults), false);
+    }
+
+    /**
+     * Updates existing rows in place (instead of delete + insert) so the unique
+     * (exercise, set_number) key is never violated: Hibernate flushes inserts before deletes.
+     */
+    private void reconcileSetDetails(TrainingExercise exercise, List<SetValues> values, boolean overwriteExisting) {
+        List<TrainingExerciseSet> current = exercise.getSetDetails();
+
+        while (current.size() > values.size()) {
+            current.remove(current.size() - 1);
+        }
+
+        for (int i = 0; i < values.size(); i++) {
+            SetValues value = values.get(i);
+            if (i < current.size()) {
+                if (overwriteExisting) {
+                    current.get(i).setReps(value.reps()).setWeight(value.weight());
+                }
+            } else {
+                exercise.addSetDetail(new TrainingExerciseSet()
+                        .setSetNumber(i + 1)
+                        .setReps(value.reps())
+                        .setWeight(value.weight()));
+            }
+        }
+    }
+
+    private record SetValues(Integer reps, BigDecimal weight) {
+    }
+
+    private Integer defaultSetReps(TrainingExercise exercise) {
+        return switch (exercise.getRepsMode()) {
+            case EXACT -> exercise.getRepsValue();
+            case RANGE -> exercise.getRepsFrom();
+            case NONE -> null;
+        };
     }
 
     private boolean hasRepsPayload(UpdateTrainingExerciseRequest request) {

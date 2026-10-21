@@ -6,6 +6,8 @@ import ru.fitapp.backend.training.entity.Training;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -66,6 +68,10 @@ public class TrainingExercise {
 
     @Column(name = "client_note", length = 2000)
     private String clientNote;
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("setNumber ASC")
+    private List<TrainingExerciseSet> setDetails = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -217,6 +223,16 @@ public class TrainingExercise {
 
     public TrainingExercise setClientNote(String clientNote) {
         this.clientNote = clientNote;
+        return this;
+    }
+
+    public List<TrainingExerciseSet> getSetDetails() {
+        return setDetails;
+    }
+
+    public TrainingExercise addSetDetail(TrainingExerciseSet item) {
+        item.setExercise(this);
+        this.setDetails.add(item);
         return this;
     }
 

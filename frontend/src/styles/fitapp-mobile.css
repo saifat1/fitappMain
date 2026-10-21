@@ -136,6 +136,60 @@
     line-height: 1;
 }
 
+/* tappable row body (opens the exercise editor) */
+.fb-row__main--button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* per-set reps/weight grid in the exercise form */
+.fb-sets {
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-sets__head,
+.fb-sets__row {
+    display: grid;
+    grid-template-columns: 56px 1fr 1fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.fb-sets__head {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fb-muted);
+    padding-bottom: 4px;
+}
+
+.fb-sets__row { padding: 4px 0; }
+
+.fb-sets__num {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fb-muted);
+    text-align: center;
+}
+
+.fb-sets__input {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 8px;
+    border: 1px solid var(--fb-line);
+    border-radius: 8px;
+    background: var(--fb-surface-2);
+    font-size: 16px;        /* >=16px avoids iOS zoom-on-focus */
+    color: var(--fb-ink);
+    outline: none;
+}
+
+.fb-sets__input:focus { border-color: var(--fb-green); }
+
 /* selectable radio (client/exercise picker, mockups 7–8) */
 .fb-row__radio {
     flex: none;

@@ -25,6 +25,26 @@ export function summaryFromParts(parts: {
     return chunks.length ? chunks.join(" · ") : "Без параметров";
 }
 
+/**
+ * "12×40 · 10×45 · 8×50" when sets differ from each other; null when there are no
+ * per-set values or every set repeats the same reps/weight (the common summary is enough).
+ */
+export function setsBreakdown(
+    sets: { reps?: number | null; weight?: number | null }[] | null | undefined
+): string | null {
+    if (!sets || sets.length === 0) return null;
+    const first = sets[0];
+    const allSame = sets.every((s) => (s.reps ?? null) === (first.reps ?? null) && (s.weight ?? null) === (first.weight ?? null));
+    if (allSame) return null;
+
+    return sets
+        .map((s) => {
+            const reps = s.reps != null ? String(s.reps) : "—";
+            return s.weight != null ? `${reps}×${s.weight}` : reps;
+        })
+        .join(" · ");
+}
+
 export function draftFromTemplate(template: ExerciseTemplateResponse): DraftExercise {
     return {
         key: `tpl-${template.id}-${Date.now()}`,
