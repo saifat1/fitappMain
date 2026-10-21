@@ -752,6 +752,96 @@
 .fb-readonly__label { font-size: 12px; color: var(--fb-muted); }
 .fb-readonly__value { font-size: 16px; color: var(--fb-ink); }
 
+/* ---------- trainer working hours (availability) ---------- */
+.fb-avail-hint {
+    margin: 4px 0 8px;
+    font-size: 13px;
+    color: var(--fb-muted);
+}
+
+.fb-avail-day,
+.fb-avail-exc {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--fb-line);
+}
+
+.fb-avail-day__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.fb-avail-day__name { flex: 1; font-size: 15px; font-weight: 600; color: var(--fb-ink); }
+.fb-avail-day__state { font-size: 13px; color: var(--fb-muted); }
+
+.fb-avail-day__times,
+.fb-avail-exc__row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.fb-avail-day__dash { color: var(--fb-muted); }
+
+.fb-avail-input {
+    min-width: 0;
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid var(--fb-line);
+    border-radius: 8px;
+    background: var(--fb-surface-2);
+    font: inherit;
+    font-size: 16px;        /* >=16px avoids iOS zoom-on-focus */
+    color: var(--fb-ink);
+    outline: none;
+}
+
+.fb-avail-input:focus { border-color: var(--fb-green); }
+.fb-avail-input--slot { flex: 0 0 96px; }
+.fb-avail-input--wide { width: 100%; }
+
+/* iOS-style toggle built on a native checkbox */
+.fb-switch {
+    appearance: none;
+    flex: none;
+    position: relative;
+    width: 44px;
+    height: 26px;
+    margin: 0;
+    border-radius: 999px;
+    background: var(--fb-line);
+    cursor: pointer;
+    transition: background var(--fb-ease);
+}
+
+.fb-switch::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform var(--fb-ease);
+}
+
+.fb-switch:checked { background: var(--fb-green); }
+.fb-switch:checked::after { transform: translateX(18px); }
+.fb-switch:focus-visible { outline: 2px solid var(--fb-green); outline-offset: 2px; }
+
+/* drill-in link row on the profile screen */
+.fb-profile-link {
+    margin: 4px 16px 0;
+    padding: 14px 4px;
+    border-top: 1px solid var(--fb-line);
+}
+
 /* right-anchored topbar dropdown menu */
 .fb-menu {
     position: absolute;

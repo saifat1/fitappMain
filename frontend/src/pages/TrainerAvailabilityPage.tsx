@@ -1,506 +1,364 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import styles from "./BookingPages.module.css";
+import MobileShell from "../widgets/MobileShell";
+import BackArrowIcon from "../shared/ui/BackArrowIcon";
 import { availabilityApi } from "../shared/api/availabilityApi";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type {
-  TrainerAvailabilityException,
-  TrainerAvailabilityRule,
-  TrainerAvailabilityRulesResponse,
-  UpdateTrainerAvailabilityRequest,
+    TrainerAvailabilityException,
+    TrainerAvailabilityRule,
+    TrainerAvailabilityRulesResponse,
+    UpdateTrainerAvailabilityRequest,
 } from "../features/availability/model/availability.types";
 
+type Tab = "week" | "exceptions";
+
 const DAY_OPTIONS = [
-  { value: 1, label: "Понедельник" },
-  { value: 2, label: "Вторник" },
-  { value: 3, label: "Среда" },
-  { value: 4, label: "Четверг" },
-  { value: 5, label: "Пятница" },
-  { value: 6, label: "Суббота" },
-  { value: 7, label: "Воскресенье" },
+    { value: 1, label: "Понедельник" },
+    { value: 2, label: "Вторник" },
+    { value: 3, label: "Среда" },
+    { value: 4, label: "Четверг" },
+    { value: 5, label: "Пятница" },
+    { value: 6, label: "Суббота" },
+    { value: 7, label: "Воскресенье" },
 ];
 
+const SLOT_OPTIONS = [15, 30, 45, 60, 90, 120];
+
+function resolveApiError(error: unknown, fallback: string): string {
+    if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        return error.response?.data?.message ?? fallback;
+    }
+    return fallback;
+}
+
 function buildDefaultRules(): TrainerAvailabilityRule[] {
-  return DAY_OPTIONS.map((day) => ({
-    dayOfWeek: day.value,
-    startTime: "09:00:00",
-    endTime: "18:00:00",
-    slotDurationMinutes: 60,
-    active: true,
-  }));
+    return DAY_OPTIONS.map((day) => ({
+        dayOfWeek: day.value,
+        startTime: "09:00:00",
+        endTime: "18:00:00",
+        slotDurationMinutes: 60,
+        active: true,
+    }));
 }
 
-function normalizeRules(
-    response: TrainerAvailabilityRulesResponse | null
-): TrainerAvailabilityRule[] {
-  const defaults = buildDefaultRules();
-  const map = new Map<number, TrainerAvailabilityRule>();
-
-  for (const rule of response?.rules ?? []) {
-    map.set(rule.dayOfWeek, {
-      dayOfWeek: rule.dayOfWeek,
-      startTime: rule.startTime,
-      endTime: rule.endTime,
-      slotDurationMinutes: rule.slotDurationMinutes,
-      active: rule.active,
-    });
-  }
-
-  return defaults.map((item) => map.get(item.dayOfWeek) ?? item);
+function normalizeRules(response: TrainerAvailabilityRulesResponse | null): TrainerAvailabilityRule[] {
+    const map = new Map<number, TrainerAvailabilityRule>();
+    for (const rule of response?.rules ?? []) {
+        map.set(rule.dayOfWeek, { ...rule });
+    }
+    return buildDefaultRules().map((item) => map.get(item.dayOfWeek) ?? item);
 }
 
-function normalizeExceptions(
-    response: TrainerAvailabilityRulesResponse | null
-): TrainerAvailabilityException[] {
-  return [...(response?.exceptions ?? [])].sort((a, b) => {
-    const left = `${a.date} ${a.startTime}`;
-    const right = `${b.date} ${b.startTime}`;
-    return left.localeCompare(right);
-  });
+function sortExceptions(items: TrainerAvailabilityException[]): TrainerAvailabilityException[] {
+    return [...items].sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
 }
-
-function buildEmptyException(): TrainerAvailabilityException {
-  return {
-    date: "",
-    startTime: "09:00:00",
-    endTime: "10:00:00",
-    comment: "",
-  };
-}
-
 
 function toTimeInputValue(value: string): string {
-  return value ? value.slice(0, 5) : "";
+    return value ? value.slice(0, 5) : "";
 }
 
 function toTimeApiValue(value: string): string {
-  return value.length === 5 ? `${value}:00` : value;
+    return value.length === 5 ? `${value}:00` : value;
 }
 
-function formatExceptionLabel(item: TrainerAvailabilityException): string {
-  if (!item.date) {
-    return "Новая запись";
-  }
-
-  const date = new Date(item.date).toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-  return `${date} · ${toTimeInputValue(item.startTime)} — ${toTimeInputValue(
-      item.endTime
-  )}`;
+function todayIso(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export default function TrainerAvailabilityPage() {
-  const [rules, setRules] = useState<TrainerAvailabilityRule[]>(buildDefaultRules());
-  const [exceptions, setExceptions] = useState<TrainerAvailabilityException[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
-  const sortedRules = useMemo(
-      () => [...rules].sort((a, b) => a.dayOfWeek - b.dayOfWeek),
-      [rules]
-  );
-
-  const sortedExceptions = useMemo(
-      () =>
-          [...exceptions].sort((a, b) => {
-            const left = `${a.date} ${a.startTime}`;
-            const right = `${b.date} ${b.startTime}`;
-            return left.localeCompare(right);
-          }),
-      [exceptions]
-  );
-
-  async function loadRules() {
-    setIsLoading(true);
-    setErrorMessage("");
-
-    try {
-      const response = await availabilityApi.getMyAvailabilityRules();
-      setRules(normalizeRules(response));
-      setExceptions(normalizeExceptions(response));
-    } catch (error) {
-      if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        setErrorMessage(
-            error.response?.data?.message ?? "Не удалось загрузить доступность"
-        );
-      } else {
-        setErrorMessage("Не удалось загрузить доступность");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadRules();
-  }, []);
-
-  const updateRule = (
-      dayOfWeek: number,
-      patch: Partial<TrainerAvailabilityRule>
-  ) => {
-    setRules((current) =>
-        current.map((rule) =>
-            rule.dayOfWeek === dayOfWeek ? { ...rule, ...patch } : rule
-        )
-    );
-  };
-
-  const addException = () => {
-    setExceptions((current) => [...current, buildEmptyException()]);
-  };
-
-  const updateException = (
-      index: number,
-      patch: Partial<TrainerAvailabilityException>
-  ) => {
-    setExceptions((current) =>
-        current.map((item, idx) => (idx === index ? { ...item, ...patch } : item))
-    );
-  };
-
-  const removeException = (index: number) => {
-    setExceptions((current) => current.filter((_, idx) => idx !== index));
-  };
-
-  const validateBeforeSave = (): string | null => {
+function validate(rules: TrainerAvailabilityRule[], exceptions: TrainerAvailabilityException[]): string | null {
     for (const rule of rules) {
-      if (!rule.startTime || !rule.endTime) {
-        return "Во всех правилах должно быть заполнено время";
-      }
-      if (rule.active && rule.startTime >= rule.endTime) {
-        return "У активного правила время окончания должно быть больше времени начала";
-      }
-      if (rule.active && (!rule.slotDurationMinutes || rule.slotDurationMinutes < 15)) {
-        return "Длительность активного слота должна быть не меньше 15 минут";
-      }
+        if (!rule.active) continue;
+        const day = DAY_OPTIONS.find((d) => d.value === rule.dayOfWeek)?.label ?? `День ${rule.dayOfWeek}`;
+        if (!rule.startTime || !rule.endTime) return `${day}: заполните время`;
+        if (rule.startTime >= rule.endTime) return `${day}: конец должен быть позже начала`;
+        if (!rule.slotDurationMinutes || rule.slotDurationMinutes < 15) return `${day}: слот не меньше 15 минут`;
     }
 
     for (const item of exceptions) {
-      if (!item.date) {
-        return "У исключения не заполнена дата";
-      }
-      if (!item.startTime || !item.endTime) {
-        return "У исключения не заполнено время";
-      }
-      if (item.startTime >= item.endTime) {
-        return "У исключения время окончания должно быть больше времени начала";
-      }
+        if (!item.date) return "У исключения не заполнена дата";
+        if (!item.startTime || !item.endTime) return "У исключения не заполнено время";
+        if (item.startTime >= item.endTime) return "У исключения конец должен быть позже начала";
     }
 
     return null;
-  };
+}
 
-  const handleSave = async () => {
-    const validationError = validateBeforeSave();
-    if (validationError) {
-      setErrorMessage(validationError);
-      setSuccessMessage("");
-      return;
-    }
+export default function TrainerAvailabilityPage() {
+    const navigate = useNavigate();
 
-    setIsSaving(true);
-    setErrorMessage("");
-    setSuccessMessage("");
+    const [tab, setTab] = useState<Tab>("week");
+    const [rules, setRules] = useState<TrainerAvailabilityRule[]>(buildDefaultRules());
+    const [exceptions, setExceptions] = useState<TrainerAvailabilityException[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
-    const payload: UpdateTrainerAvailabilityRequest = {
-      rules: rules.map((rule) => ({
-        dayOfWeek: rule.dayOfWeek,
-        startTime: rule.startTime,
-        endTime: rule.endTime,
-        slotDurationMinutes: Number(rule.slotDurationMinutes),
-        active: Boolean(rule.active),
-      })),
-      exceptions: exceptions.map((item) => ({
-        date: item.date,
-        startTime: item.startTime,
-        endTime: item.endTime,
-        comment: item.comment?.trim() || undefined,
-      })),
+    const sortedRules = useMemo(() => [...rules].sort((a, b) => a.dayOfWeek - b.dayOfWeek), [rules]);
+
+    useEffect(() => {
+        let active = true;
+        (async () => {
+            try {
+                const response = await availabilityApi.getMyAvailabilityRules();
+                if (!active) return;
+                setRules(normalizeRules(response));
+                setExceptions(sortExceptions(response?.exceptions ?? []));
+            } catch (error) {
+                if (active) setErrorMessage(resolveApiError(error, "Не удалось загрузить рабочее время"));
+            } finally {
+                if (active) setIsLoading(false);
+            }
+        })();
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    const touch = () => {
+        setSuccessMessage("");
+        setErrorMessage("");
     };
 
-    try {
-      const response = await availabilityApi.updateMyAvailabilityRules(payload);
-      setRules(normalizeRules(response));
-      setExceptions(normalizeExceptions(response));
-      setSuccessMessage("Доступность и исключения сохранены");
-    } catch (error) {
-      if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        setErrorMessage(
-            error.response?.data?.message ?? "Не удалось сохранить доступность"
-        );
-      } else {
-        setErrorMessage("Не удалось сохранить доступность");
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    const updateRule = (dayOfWeek: number, patch: Partial<TrainerAvailabilityRule>) => {
+        touch();
+        setRules((current) => current.map((rule) => (rule.dayOfWeek === dayOfWeek ? { ...rule, ...patch } : rule)));
+    };
 
-  return (
-      <div className={styles.page}>
-        <div className={styles.header}>
-          <h1 className={styles.title}>Доступность тренера</h1>
-          <p className={styles.subtitle}>
-            Настрой рабочие интервалы по дням недели и добавляй исключения на
-            конкретные даты.
-          </p>
-        </div>
+    const addException = () => {
+        touch();
+        setExceptions((current) => [
+            ...current,
+            { date: todayIso(), startTime: "09:00:00", endTime: "18:00:00", comment: "" },
+        ]);
+    };
 
-        {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-        {successMessage && <div className={styles.success}>{successMessage}</div>}
+    const updateException = (index: number, patch: Partial<TrainerAvailabilityException>) => {
+        touch();
+        setExceptions((current) => current.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+    };
 
-        <section className={styles.card}>
-          <h2 className={styles.sectionTitle}>Правила по дням недели</h2>
+    const removeException = (index: number) => {
+        touch();
+        setExceptions((current) => current.filter((_, i) => i !== index));
+    };
 
-          {isLoading && <div className={styles.empty}>Загрузка...</div>}
+    const handleSave = async () => {
+        const validationError = validate(rules, exceptions);
+        if (validationError) {
+            setErrorMessage(validationError);
+            setSuccessMessage("");
+            return;
+        }
 
-          {!isLoading && (
-              <div className={styles.requestsList}>
-                {sortedRules.map((rule) => {
-                  const dayLabel =
-                      DAY_OPTIONS.find((item) => item.value === rule.dayOfWeek)?.label ??
-                      `День ${rule.dayOfWeek}`;
+        const payload: UpdateTrainerAvailabilityRequest = {
+            rules: rules.map((rule) => ({
+                dayOfWeek: rule.dayOfWeek,
+                startTime: rule.startTime,
+                endTime: rule.endTime,
+                slotDurationMinutes: Number(rule.slotDurationMinutes),
+                active: Boolean(rule.active),
+            })),
+            exceptions: exceptions.map((item) => ({
+                date: item.date,
+                startTime: item.startTime,
+                endTime: item.endTime,
+                comment: item.comment?.trim() || undefined,
+            })),
+        };
 
-                  return (
-                      <div key={rule.dayOfWeek} className={styles.requestCard}>
-                        <div className={styles.requestHeader}>
-                          <div>
-                            <strong>{dayLabel}</strong>
-                            <div className={styles.subtitle}>
-                              {rule.active
-                                  ? `Активно · ${toTimeInputValue(rule.startTime)} — ${toTimeInputValue(
-                                      rule.endTime
-                                  )} · слот ${rule.slotDurationMinutes} мин`
-                                  : "Выключено"}
-                            </div>
-                          </div>
+        setIsSaving(true);
+        setErrorMessage("");
+        setSuccessMessage("");
+        try {
+            const response = await availabilityApi.updateMyAvailabilityRules(payload);
+            setRules(normalizeRules(response));
+            setExceptions(sortExceptions(response?.exceptions ?? []));
+            setSuccessMessage("Рабочее время сохранено");
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось сохранить рабочее время"));
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
-                          <select
-                              className={styles.select}
-                              value={rule.active ? "true" : "false"}
-                              onChange={(event) =>
-                                  updateRule(rule.dayOfWeek, {
-                                    active: event.target.value === "true",
-                                  })
-                              }
-                          >
-                            <option value="true">Активно</option>
-                            <option value="false">Выключено</option>
-                          </select>
-                        </div>
+    const handleBack = () => {
+        if (window.history.length > 1) {
+            navigate(-1);
+        } else {
+            navigate("/trainer/profile", { replace: true });
+        }
+    };
 
-                        <div className={styles.controls}>
-                          <div className={styles.field}>
-                            <label className={styles.label}>Начало</label>
-                            <input
-                                className={styles.input}
-                                type="time"
-                                step={60}
-                                value={toTimeInputValue(rule.startTime)}
-                                onChange={(event) =>
-                                    updateRule(rule.dayOfWeek, {
-                                      startTime: toTimeApiValue(event.target.value),
-                                    })
-                                }
-                            />
-                          </div>
-
-                          <div className={styles.field}>
-                            <label className={styles.label}>Конец</label>
-                            <input
-                                className={styles.input}
-                                type="time"
-                                step={60}
-                                value={toTimeInputValue(rule.endTime)}
-                                onChange={(event) =>
-                                    updateRule(rule.dayOfWeek, {
-                                      endTime: toTimeApiValue(event.target.value),
-                                    })
-                                }
-                            />
-                          </div>
-
-                          <div className={styles.field}>
-                            <label className={styles.label}>Слот, минут</label>
-                            <input
-                                className={styles.input}
-                                type="number"
-                                min={15}
-                                step={15}
-                                value={rule.slotDurationMinutes}
-                                onChange={(event) =>
-                                    updateRule(rule.dayOfWeek, {
-                                      slotDurationMinutes: Number(event.target.value),
-                                    })
-                                }
-                            />
-                          </div>
-                        </div>
-
-                        <div className={styles.inlineActions}>
-                          <button
-                              type="button"
-                              className={styles.buttonSecondary}
-                              onClick={() =>
-                                  updateRule(rule.dayOfWeek, {
-                                    startTime: "09:00:00",
-                                    endTime: "18:00:00",
-                                    slotDurationMinutes: 60,
-                                  })
-                              }
-                          >
-                            Сбросить день
-                          </button>
-                        </div>
-                      </div>
-                  );
-                })}
-              </div>
-          )}
-        </section>
-
-        <section className={styles.card}>
-          <div className={styles.requestHeader}>
-            <div>
-              <h2 className={styles.sectionTitle}>Исключения по датам</h2>
-              <p className={styles.subtitle}>
-                Закрой конкретный интервал на определённую дату.
-              </p>
+    return (
+        <MobileShell
+            title="Рабочее время"
+            left={
+                <button type="button" className="fb-topbar__back" onClick={handleBack} aria-label="Назад">
+                    <BackArrowIcon />
+                </button>
+            }
+            showTabBar={false}
+        >
+            <div className="fb-segment">
+                <button
+                    type="button"
+                    className={`fb-segment__item ${tab === "week" ? "fb-segment__item--active" : ""}`}
+                    onClick={() => setTab("week")}
+                >
+                    Неделя
+                </button>
+                <button
+                    type="button"
+                    className={`fb-segment__item ${tab === "exceptions" ? "fb-segment__item--active" : ""}`}
+                    onClick={() => setTab("exceptions")}
+                >
+                    Исключения{exceptions.length ? ` · ${exceptions.length}` : ""}
+                </button>
             </div>
 
-            <button
-                type="button"
-                className={styles.buttonSecondary}
-                onClick={addException}
-            >
-              Добавить исключение
-            </button>
-          </div>
+            <div className="fb-tab-panel">
+                {isLoading ? (
+                    <div className="fb-empty">Загрузка…</div>
+                ) : tab === "week" ? (
+                    <>
+                        <p className="fb-avail-hint">
+                            В эти часы клиенты видят свободные слоты для записи.
+                        </p>
+                        {sortedRules.map((rule) => {
+                            const label = DAY_OPTIONS.find((d) => d.value === rule.dayOfWeek)?.label ?? `День ${rule.dayOfWeek}`;
+                            const slotOptions = SLOT_OPTIONS.includes(rule.slotDurationMinutes)
+                                ? SLOT_OPTIONS
+                                : [...SLOT_OPTIONS, rule.slotDurationMinutes].sort((a, b) => a - b);
 
-          {sortedExceptions.length === 0 && (
-              <div className={styles.empty}>Исключений пока нет.</div>
-          )}
+                            return (
+                                <div key={rule.dayOfWeek} className="fb-avail-day">
+                                    <label className="fb-avail-day__head">
+                                        <span className="fb-avail-day__name">{label}</span>
+                                        <span className="fb-avail-day__state">{rule.active ? "Рабочий" : "Выходной"}</span>
+                                        <input
+                                            type="checkbox"
+                                            className="fb-switch"
+                                            checked={rule.active}
+                                            onChange={(e) => updateRule(rule.dayOfWeek, { active: e.target.checked })}
+                                        />
+                                    </label>
 
-          {sortedExceptions.length > 0 && (
-              <div className={styles.requestsList}>
-                {sortedExceptions.map((item, index) => (
-                    <div
-                        key={`${item.date}-${item.startTime}-${item.endTime}-${index}`}
-                        className={styles.requestCard}
-                    >
-                      <div className={styles.requestHeader}>
-                        <div>
-                          <strong>{formatExceptionLabel(item)}</strong>
-                          <div className={styles.subtitle}>
-                            Заблокированный интервал
-                          </div>
-                        </div>
+                                    {rule.active && (
+                                        <div className="fb-avail-day__times">
+                                            <input
+                                                className="fb-avail-input"
+                                                type="time"
+                                                step={60}
+                                                aria-label={`${label}, начало`}
+                                                value={toTimeInputValue(rule.startTime)}
+                                                onChange={(e) => updateRule(rule.dayOfWeek, { startTime: toTimeApiValue(e.target.value) })}
+                                            />
+                                            <span className="fb-avail-day__dash">—</span>
+                                            <input
+                                                className="fb-avail-input"
+                                                type="time"
+                                                step={60}
+                                                aria-label={`${label}, конец`}
+                                                value={toTimeInputValue(rule.endTime)}
+                                                onChange={(e) => updateRule(rule.dayOfWeek, { endTime: toTimeApiValue(e.target.value) })}
+                                            />
+                                            <select
+                                                className="fb-avail-input fb-avail-input--slot"
+                                                aria-label={`${label}, длительность слота`}
+                                                value={rule.slotDurationMinutes}
+                                                onChange={(e) => updateRule(rule.dayOfWeek, { slotDurationMinutes: Number(e.target.value) })}
+                                            >
+                                                {slotOptions.map((m) => (
+                                                    <option key={m} value={m}>
+                                                        {m} мин
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </>
+                ) : (
+                    <>
+                        <p className="fb-avail-hint">
+                            Закройте интервал на конкретную дату — в это время запись будет недоступна.
+                        </p>
 
-                        <button
-                            type="button"
-                            className={styles.buttonDanger}
-                            onClick={() => removeException(index)}
-                        >
-                          Удалить
+                        {exceptions.length === 0 && <div className="fb-empty">Исключений пока нет</div>}
+
+                        {exceptions.map((item, index) => (
+                            <div key={item.id ?? `new-${index}`} className="fb-avail-exc">
+                                <div className="fb-avail-exc__row">
+                                    <input
+                                        className="fb-avail-input fb-avail-input--date"
+                                        type="date"
+                                        aria-label="Дата"
+                                        value={item.date}
+                                        onChange={(e) => updateException(index, { date: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="fb-row__remove"
+                                        aria-label="Удалить исключение"
+                                        onClick={() => removeException(index)}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <div className="fb-avail-day__times">
+                                    <input
+                                        className="fb-avail-input"
+                                        type="time"
+                                        step={60}
+                                        aria-label="Начало"
+                                        value={toTimeInputValue(item.startTime)}
+                                        onChange={(e) => updateException(index, { startTime: toTimeApiValue(e.target.value) })}
+                                    />
+                                    <span className="fb-avail-day__dash">—</span>
+                                    <input
+                                        className="fb-avail-input"
+                                        type="time"
+                                        step={60}
+                                        aria-label="Конец"
+                                        value={toTimeInputValue(item.endTime)}
+                                        onChange={(e) => updateException(index, { endTime: toTimeApiValue(e.target.value) })}
+                                    />
+                                </div>
+                                <input
+                                    className="fb-avail-input fb-avail-input--wide"
+                                    placeholder="Комментарий: отпуск, совещание…"
+                                    aria-label="Комментарий"
+                                    value={item.comment ?? ""}
+                                    onChange={(e) => updateException(index, { comment: e.target.value })}
+                                />
+                            </div>
+                        ))}
+
+                        <button type="button" className="fb-add-link" onClick={addException}>
+                            + Добавить исключение
                         </button>
-                      </div>
+                    </>
+                )}
 
-                      <div className={styles.controls}>
-                        <div className={styles.field}>
-                          <label className={styles.label}>Дата</label>
-                          <input
-                              className={styles.input}
-                              type="date"
-                              value={item.date}
-                              onChange={(event) =>
-                                  updateException(index, {
-                                    date: event.target.value,
-                                  })
-                              }
-                          />
-                        </div>
+                {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
+                {successMessage ? <div className="fb-success-note">{successMessage}</div> : null}
 
-                        <div className={styles.field}>
-                          <label className={styles.label}>Начало</label>
-                          <input
-                              className={styles.input}
-                              type="time"
-                              step={60}
-                              value={toTimeInputValue(item.startTime)}
-                              onChange={(event) =>
-                                  updateException(index, {
-                                    startTime: toTimeApiValue(event.target.value),
-                                  })
-                              }
-                          />
-                        </div>
-
-                        <div className={styles.field}>
-                          <label className={styles.label}>Конец</label>
-                          <input
-                              className={styles.input}
-                              type="time"
-                              step={60}
-                              value={toTimeInputValue(item.endTime)}
-                              onChange={(event) =>
-                                  updateException(index, {
-                                    endTime: toTimeApiValue(event.target.value),
-                                  })
-                              }
-                          />
-                        </div>
-                      </div>
-
-                      <div className={styles.fieldWide}>
-                        <label className={styles.label}>Комментарий</label>
-                        <textarea
-                            className={styles.textarea}
-                            value={item.comment ?? ""}
-                            onChange={(event) =>
-                                updateException(index, {
-                                  comment: event.target.value,
-                                })
-                            }
-                            placeholder="Например: отпуск, совещание, личные дела"
-                        />
-                      </div>
-                    </div>
-                ))}
-              </div>
-          )}
-
-          <div className={styles.inlineActions}>
-            <button
-                type="button"
-                className={styles.button}
-                onClick={handleSave}
-                disabled={isSaving || isLoading}
-            >
-              {isSaving ? "Сохраняем..." : "Сохранить доступность"}
-            </button>
-
-            <button
-                type="button"
-                className={styles.buttonSecondary}
-                onClick={() => {
-                  setRules(buildDefaultRules());
-                  setExceptions([]);
-                  setErrorMessage("");
-                  setSuccessMessage("");
-                }}
-                disabled={isSaving}
-            >
-              Очистить форму
-            </button>
-          </div>
-        </section>
-      </div>
-  );
+                <button
+                    type="button"
+                    className="fb-btn fb-btn--primary fb-form-submit"
+                    onClick={() => void handleSave()}
+                    disabled={isSaving || isLoading}
+                >
+                    {isSaving ? "Сохраняем…" : "Сохранить"}
+                </button>
+            </div>
+        </MobileShell>
+    );
 }

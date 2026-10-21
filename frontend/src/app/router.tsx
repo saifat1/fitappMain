@@ -334,9 +334,7 @@ export const router = createBrowserRouter([
         path: "/trainer/availability",
         element: (
             <TrainerRoute>
-                <AppLayout>
-                    <TrainerAvailabilityPage />
-                </AppLayout>
+                <TrainerAvailabilityPage />
             </TrainerRoute>
         ),
     },
