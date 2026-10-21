@@ -7,6 +7,7 @@ public class TrainerAvailabilityExceptionResponse {
 
     private Long id;
     private LocalDate date;
+    private LocalDate endDate;
     private LocalTime startTime;
     private LocalTime endTime;
     private String comment;
@@ -26,6 +27,15 @@ public class TrainerAvailabilityExceptionResponse {
 
     public TrainerAvailabilityExceptionResponse setDate(LocalDate date) {
         this.date = date;
+        return this;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public TrainerAvailabilityExceptionResponse setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
         return this;
     }
 

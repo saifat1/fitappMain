@@ -42,6 +42,7 @@ public class TrainerAvailabilityService {
 
     private static final int MAX_RULES_PER_TRAINER = 7;
     private static final int MAX_SLOTS_PER_RESPONSE = 1000;
+    private static final int MAX_EXCEPTION_DAYS = 366;
 
     private final TrainerAvailabilityRuleRepository trainerAvailabilityRuleRepository;
     private final TrainerAvailabilityExceptionRepository trainerAvailabilityExceptionRepository;
@@ -129,12 +130,7 @@ public class TrainerAvailabilityService {
                 .toList();
 
         List<TrainerAvailabilityException> exceptionsToSave = requestedExceptions.stream()
-                .map(item -> new TrainerAvailabilityException()
-                        .setTrainer(trainer)
-                        .setExceptionDate(item.getDate())
-                        .setStartTime(item.getStartTime())
-                        .setEndTime(item.getEndTime())
-                        .setComment(item.getComment()))
+                .map(item -> toExceptionEntity(trainer, item))
                 .toList();
 
         List<TrainerAvailabilityExceptionResponse> savedExceptions = trainerAvailabilityExceptionRepository
@@ -149,6 +145,36 @@ public class TrainerAvailabilityService {
         return new TrainerAvailabilityRulesResponse()
                 .setRules(savedRules)
                 .setExceptions(savedExceptions);
+    }
+
+    /** Closes one interval (or a whole day / range of days) straight from the trainer's calendar. */
+    public TrainerAvailabilityExceptionResponse addExceptionForCurrentTrainer(TrainerAvailabilityExceptionRequest request) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        validateExceptions(List.of(request));
+        return toExceptionResponse(trainerAvailabilityExceptionRepository.save(toExceptionEntity(trainer, request)));
+    }
+
+    public void deleteExceptionForCurrentTrainer(Long exceptionId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        TrainerAvailabilityException exception = trainerAvailabilityExceptionRepository
+                .findByIdAndTrainerId(exceptionId, trainer.getId())
+                .orElseThrow(() -> new ApiException("AVAILABILITY_EXCEPTION_NOT_FOUND", "Закрытое время не найдено"));
+        trainerAvailabilityExceptionRepository.delete(exception);
+    }
+
+    private TrainerAvailabilityException toExceptionEntity(AppUser trainer, TrainerAvailabilityExceptionRequest item) {
+        LocalDate endDate = item.getEndDate() != null && item.getEndDate().isAfter(item.getDate())
+                ? item.getEndDate()
+                : null;
+        String comment = item.getComment() == null || item.getComment().isBlank() ? null : item.getComment().trim();
+
+        return new TrainerAvailabilityException()
+                .setTrainer(trainer)
+                .setExceptionDate(item.getDate())
+                .setEndDate(endDate)
+                .setStartTime(item.getStartTime())
+                .setEndTime(item.getEndTime())
+                .setComment(comment);
     }
 
     @Transactional(readOnly = true)
@@ -173,11 +199,7 @@ public class TrainerAvailabilityService {
         validateLoadedRules(rules);
 
         List<TrainerAvailabilityException> exceptions = trainerAvailabilityExceptionRepository
-                .findAllByTrainerIdAndExceptionDateBetweenOrderByExceptionDateAscStartTimeAsc(
-                        trainerId,
-                        from,
-                        to
-                );
+                .findOverlapping(trainerId, from, to);
 
         List<Training> trainings = trainingRepository
                 .findAllByTrainerIdAndTrainingDateBetweenOrderByTrainingDateAscStartTimeAsc(trainerId, from, to);
@@ -269,11 +291,7 @@ public class TrainerAvailabilityService {
                 );
 
         List<TrainerAvailabilityException> exceptions = trainerAvailabilityExceptionRepository
-                .findAllByTrainerIdAndExceptionDateBetweenOrderByExceptionDateAscStartTimeAsc(
-                        trainerId,
-                        requestedStart.toLocalDate(),
-                        requestedStart.toLocalDate()
-                );
+                .findOverlapping(trainerId, requestedStart.toLocalDate(), requestedStart.toLocalDate());
 
         int dayOfWeek = requestedStart.getDayOfWeek().getValue();
         LocalDate date = requestedStart.toLocalDate();
@@ -398,6 +416,14 @@ public class TrainerAvailabilityService {
                         "У исключения время окончания должно быть больше времени начала"
                 );
             }
+            if (exception.getEndDate() != null) {
+                if (exception.getEndDate().isBefore(exception.getDate())) {
+                    throw new ApiException("VALIDATION_ERROR", "Дата окончания не может быть раньше даты начала");
+                }
+                if (exception.getDate().plusDays(MAX_EXCEPTION_DAYS).isBefore(exception.getEndDate())) {
+                    throw new ApiException("VALIDATION_ERROR", "Закрыть время можно не больше чем на год");
+                }
+            }
         }
     }
 
@@ -443,7 +469,7 @@ public class TrainerAvailabilityService {
             LocalTime slotEnd
     ) {
         return exceptions.stream()
-                .filter(item -> date.equals(item.getExceptionDate()))
+                .filter(item -> item.coversDate(date))
                 .anyMatch(item ->
                         item.getStartTime() != null
                                 && item.getEndTime() != null
@@ -478,6 +504,7 @@ public class TrainerAvailabilityService {
         return new TrainerAvailabilityExceptionResponse()
                 .setId(exception.getId())
                 .setDate(exception.getExceptionDate())
+                .setEndDate(exception.getEndDate())
                 .setStartTime(exception.getStartTime())
                 .setEndTime(exception.getEndTime())
                 .setComment(exception.getComment());

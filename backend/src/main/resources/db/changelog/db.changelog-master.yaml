@@ -69,3 +69,5 @@ databaseChangeLog:
       file: db/changelog/034-add-original-training-to-booking-request.yaml
   - include:
       file: db/changelog/035-create-training-exercise-set.yaml
+  - include:
+      file: db/changelog/036-add-end-date-to-trainer-availability-exception.yaml

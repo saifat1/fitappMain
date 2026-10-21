@@ -4,6 +4,9 @@ import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
 import { trainingApi } from "../shared/api/trainingApi";
 import { dutySlotApi } from "../shared/api/dutySlotApi";
+import { availabilityApi } from "../shared/api/availabilityApi";
+import { closedTimeLabel } from "../features/availability/lib/closedTime";
+import type { TrainerAvailabilityException } from "../features/availability/model/availability.types";
 import TrainerCalendarScreen from "../features/calendar/ui/TrainerCalendarScreen";
 import ClientHomeScreen from "../features/client-home/ui/ClientHomeScreen";
 import {
@@ -38,6 +41,9 @@ export default function MePage() {
     const [errorMessage, setErrorMessage] = useState("");
     const [isSavingDuty, setIsSavingDuty] = useState(false);
     const [processingDutyKey, setProcessingDutyKey] = useState<string | null>(null);
+    const [closedTimes, setClosedTimes] = useState<TrainerAvailabilityException[]>([]);
+    const [isSavingClosed, setIsSavingClosed] = useState(false);
+    const [reopeningClosedId, setReopeningClosedId] = useState<number | null>(null);
 
     const isTrainer = currentUser?.role === "TRAINER";
 
@@ -66,6 +72,16 @@ export default function MePage() {
         setDutySlots(data);
     }, [currentMonth]);
 
+    // Closed intervals come with the availability rules; a failure here must not break the calendar.
+    const loadClosedTimes = useCallback(async () => {
+        try {
+            const data = await availabilityApi.getMyAvailabilityRules();
+            setClosedTimes(data.exceptions ?? []);
+        } catch {
+            setClosedTimes([]);
+        }
+    }, []);
+
     useEffect(() => {
         if (!isTrainer) {
             return;
@@ -73,6 +89,12 @@ export default function MePage() {
 
         void loadTrainings();
     }, [isTrainer, loadTrainings]);
+
+    useEffect(() => {
+        if (isTrainer) {
+            void loadClosedTimes();
+        }
+    }, [isTrainer, loadClosedTimes]);
 
     if (!currentUser) {
         return <div>Пользователь не загружен</div>;
@@ -177,6 +199,41 @@ export default function MePage() {
         }
     };
 
+    const handleCloseTime = async (payload: TrainerAvailabilityException): Promise<boolean> => {
+        setIsSavingClosed(true);
+        setErrorMessage("");
+        try {
+            await availabilityApi.addMyException(payload);
+            await loadClosedTimes();
+            return true;
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось закрыть время"));
+            return false;
+        } finally {
+            setIsSavingClosed(false);
+        }
+    };
+
+    const handleReopenTime = async (item: TrainerAvailabilityException) => {
+        if (item.id == null) return;
+        const isRange = item.endDate != null && item.endDate > item.date;
+        const question = isRange
+            ? `Открыть запись на весь период ${closedTimeLabel(item)}?`
+            : `Открыть запись (${closedTimeLabel(item)})?`;
+        if (!window.confirm(question)) return;
+
+        setReopeningClosedId(item.id);
+        setErrorMessage("");
+        try {
+            await availabilityApi.deleteMyException(item.id);
+            await loadClosedTimes();
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось открыть время"));
+        } finally {
+            setReopeningClosedId(null);
+        }
+    };
+
     const handleHideTraining = async (trainingId: number) => {
         setErrorMessage("");
         try {
@@ -213,6 +270,11 @@ export default function MePage() {
             onCompleteTraining={handleCompleteTraining}
             onCancelTraining={handleCancelTraining}
             onHideTraining={handleHideTraining}
+            closedTimes={closedTimes}
+            isSavingClosed={isSavingClosed}
+            reopeningClosedId={reopeningClosedId}
+            onCloseTime={handleCloseTime}
+            onReopenTime={handleReopenTime}
         />
     );
 }

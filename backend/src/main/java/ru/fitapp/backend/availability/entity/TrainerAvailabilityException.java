@@ -27,6 +27,10 @@ public class TrainerAvailabilityException {
     @Column(name = "exception_date", nullable = false)
     private LocalDate exceptionDate;
 
+    /** Last day of a multi-day closure (vacation); null means a single day. The start/end time applies to every day. */
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
     @Column(name = "start_time", nullable = false)
     private LocalTime startTime;
 
@@ -67,6 +71,24 @@ public class TrainerAvailabilityException {
     public TrainerAvailabilityException setExceptionDate(LocalDate exceptionDate) {
         this.exceptionDate = exceptionDate;
         return this;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public TrainerAvailabilityException setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+        return this;
+    }
+
+    /** endDate, or exceptionDate for a single-day exception. */
+    public LocalDate getLastDate() {
+        return endDate != null ? endDate : exceptionDate;
+    }
+
+    public boolean coversDate(LocalDate date) {
+        return !date.isBefore(exceptionDate) && !date.isAfter(getLastDate());
     }
 
     public LocalTime getStartTime() {

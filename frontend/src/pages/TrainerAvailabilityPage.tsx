@@ -4,6 +4,7 @@ import axios from "axios";
 import MobileShell from "../widgets/MobileShell";
 import BackArrowIcon from "../shared/ui/BackArrowIcon";
 import { availabilityApi } from "../shared/api/availabilityApi";
+import { isWholeDay, WHOLE_DAY_END, WHOLE_DAY_START } from "../features/availability/lib/closedTime";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type {
     TrainerAvailabilityException,
@@ -80,6 +81,7 @@ function validate(rules: TrainerAvailabilityRule[], exceptions: TrainerAvailabil
 
     for (const item of exceptions) {
         if (!item.date) return "У исключения не заполнена дата";
+        if (item.endDate && item.endDate < item.date) return "У исключения дата «по» раньше даты начала";
         if (!item.startTime || !item.endTime) return "У исключения не заполнено время";
         if (item.startTime >= item.endTime) return "У исключения конец должен быть позже начала";
     }
@@ -165,6 +167,7 @@ export default function TrainerAvailabilityPage() {
             })),
             exceptions: exceptions.map((item) => ({
                 date: item.date,
+                endDate: item.endDate && item.endDate > item.date ? item.endDate : null,
                 startTime: item.startTime,
                 endTime: item.endTime,
                 comment: item.comment?.trim() || undefined,
@@ -288,7 +291,8 @@ export default function TrainerAvailabilityPage() {
                 ) : (
                     <>
                         <p className="fb-avail-hint">
-                            Закройте интервал на конкретную дату — в это время запись будет недоступна.
+                            Закройте интервал, целый день или период (отпуск) — в это время запись будет недоступна.
+                            Закрыть время можно и прямо из календаря: «+» → «Закрыть время».
                         </p>
 
                         {exceptions.length === 0 && <div className="fb-empty">Исключений пока нет</div>}
@@ -299,9 +303,18 @@ export default function TrainerAvailabilityPage() {
                                     <input
                                         className="fb-avail-input fb-avail-input--date"
                                         type="date"
-                                        aria-label="Дата"
+                                        aria-label="С даты"
                                         value={item.date}
                                         onChange={(e) => updateException(index, { date: e.target.value })}
+                                    />
+                                    <span className="fb-avail-day__dash">по</span>
+                                    <input
+                                        className="fb-avail-input fb-avail-input--date"
+                                        type="date"
+                                        aria-label="По дату (необязательно)"
+                                        min={item.date}
+                                        value={item.endDate ?? ""}
+                                        onChange={(e) => updateException(index, { endDate: e.target.value || null })}
                                     />
                                     <button
                                         type="button"
@@ -312,6 +325,20 @@ export default function TrainerAvailabilityPage() {
                                         ×
                                     </button>
                                 </div>
+                                <label className="fb-avail-day__head">
+                                    <span className="fb-avail-day__name">Весь день</span>
+                                    <input
+                                        type="checkbox"
+                                        className="fb-switch"
+                                        checked={isWholeDay(item)}
+                                        onChange={(e) =>
+                                            updateException(index, e.target.checked
+                                                ? { startTime: WHOLE_DAY_START, endTime: WHOLE_DAY_END }
+                                                : { startTime: "09:00:00", endTime: "18:00:00" })
+                                        }
+                                    />
+                                </label>
+                                {!isWholeDay(item) && (
                                 <div className="fb-avail-day__times">
                                     <input
                                         className="fb-avail-input"
@@ -331,6 +358,7 @@ export default function TrainerAvailabilityPage() {
                                         onChange={(e) => updateException(index, { endTime: toTimeApiValue(e.target.value) })}
                                     />
                                 </div>
+                                )}
                                 <input
                                     className="fb-avail-input fb-avail-input--wide"
                                     placeholder="Комментарий: отпуск, совещание…"

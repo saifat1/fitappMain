@@ -24,6 +24,8 @@ export type TrainerAvailabilityRule = {
 export type TrainerAvailabilityException = {
   id?: number;
   date: string;
+  /** Last day of a multi-day closure; null/absent — single day. */
+  endDate?: string | null;
   startTime: string;
   endTime: string;
   comment?: string | null;

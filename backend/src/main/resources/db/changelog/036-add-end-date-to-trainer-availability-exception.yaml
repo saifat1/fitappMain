@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 036-add-end-date-to-trainer-availability-exception
+      author: claude
+      changes:
+        - addColumn:
+            tableName: trainer_availability_exception
+            columns:
+              - column:
+                  name: end_date
+                  type: date
+                  constraints:
+                    nullable: true
