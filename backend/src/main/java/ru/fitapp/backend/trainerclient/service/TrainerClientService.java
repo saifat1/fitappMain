@@ -156,6 +156,22 @@ public class TrainerClientService {
         userRepository.save(client);
     }
 
+    /**
+     * Permanent removal, allowed only from the archive: the trainer–client link is deleted, so the
+     * client disappears from all of the trainer's lists for good. Trainings and contracts stay in the
+     * database (history and salary reports must not change); the account stays deactivated.
+     */
+    public void deleteArchivedClientOfTrainer(Long trainerId, Long clientId) {
+        TrainerClient link = trainerClientRepository.findByTrainerIdAndClientId(trainerId, clientId)
+                .orElseThrow(() -> new ApiException("CLIENT_NOT_FOUND", "Клиент не найден"));
+
+        if (link.getClient().getStatus() != UserStatus.INACTIVE) {
+            throw new ApiException("CLIENT_NOT_ARCHIVED", "Удалить можно только клиента из архива");
+        }
+
+        trainerClientRepository.delete(link);
+    }
+
     /** Brings an archived client back to the active list. */
     public AppUser restoreClientOfTrainer(Long trainerId, Long clientId) {
         AppUser client = getClientOfTrainer(trainerId, clientId);

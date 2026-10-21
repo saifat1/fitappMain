@@ -150,6 +150,11 @@ public class TrainerClientFacadeService {
         return mapToResponse(trainerClientService.getClientOfTrainer(trainer.getId(), clientId), trainer.getId());
     }
 
+    public void deleteArchivedCurrentTrainerClient(Long clientId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        trainerClientService.deleteArchivedClientOfTrainer(trainer.getId(), clientId);
+    }
+
     public TrainerClientResponse restoreCurrentTrainerClient(Long clientId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         return mapToResponse(trainerClientService.restoreClientOfTrainer(trainer.getId(), clientId), trainer.getId());

@@ -67,6 +67,12 @@ public class TrainerClientController {
         return trainerClientFacadeService.archiveCurrentTrainerClient(clientId);
     }
 
+    /** Permanent removal of an archived client (see TrainerClientService.deleteArchivedClientOfTrainer). */
+    @DeleteMapping("/{clientId}/permanent")
+    public void deleteArchivedCurrentTrainerClient(@PathVariable Long clientId) {
+        trainerClientFacadeService.deleteArchivedCurrentTrainerClient(clientId);
+    }
+
     @PostMapping("/{clientId}/restore")
     public TrainerClientResponse restoreCurrentTrainerClient(@PathVariable Long clientId) {
         return trainerClientFacadeService.restoreCurrentTrainerClient(clientId);

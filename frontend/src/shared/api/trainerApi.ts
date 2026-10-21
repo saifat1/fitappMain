@@ -34,13 +34,14 @@ export const trainerApi = {
         return response.data;
     },
 
-    deactivateClient: async (clientId: number): Promise<void> => {
-        await apiClient.delete(`/trainer/clients/${clientId}`);
-    },
-
     archiveClient: async (clientId: number): Promise<TrainerClientResponse> => {
         const response = await apiClient.post(`/trainer/clients/${clientId}/archive`);
         return response.data;
+    },
+
+    /** Permanent removal; only for archived clients. */
+    deleteClientPermanently: async (clientId: number): Promise<void> => {
+        await apiClient.delete(`/trainer/clients/${clientId}/permanent`);
     },
 
     restoreClient: async (clientId: number): Promise<TrainerClientResponse> => {

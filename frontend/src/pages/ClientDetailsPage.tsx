@@ -138,11 +138,13 @@ export default function ClientDetailsPage() {
 
     const handleDelete = () => {
         setMenuOpen(false);
-        if (!window.confirm("Удалить клиента?")) return;
+        if (!window.confirm(
+            "Клиент будет удалён безвозвратно — восстановить его не получится. Проведённые тренировки останутся в отчётах. Удалить?"
+        )) return;
         (async () => {
             try {
-                await trainerApi.deactivateClient(id);
-                navigate("/trainer/clients");
+                await trainerApi.deleteClientPermanently(id);
+                navigate("/trainer/clients?tab=archive");
             } catch (error) {
                 setErrorMessage(resolveApiError(error, "Не удалось удалить клиента"));
             }
@@ -191,17 +193,20 @@ export default function ClientDetailsPage() {
                                 Редактировать
                             </button>
                             {isArchivedClient(client) ? (
-                                <button type="button" className="fb-menu__item" onClick={handleRestore}>
-                                    Восстановить из архива
-                                </button>
+                                <>
+                                    <button type="button" className="fb-menu__item" onClick={handleRestore}>
+                                        Восстановить из архива
+                                    </button>
+                                    {/* Permanent deletion is available only from the archive. */}
+                                    <button type="button" className="fb-menu__item fb-menu__item--danger" onClick={handleDelete}>
+                                        Удалить навсегда
+                                    </button>
+                                </>
                             ) : (
                                 <button type="button" className="fb-menu__item" onClick={handleArchive}>
                                     Архив
                                 </button>
                             )}
-                            <button type="button" className="fb-menu__item fb-menu__item--danger" onClick={handleDelete}>
-                                Удалить
-                            </button>
                         </div>
                     </>
                 )}
