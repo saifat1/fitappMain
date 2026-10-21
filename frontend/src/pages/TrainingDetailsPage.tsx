@@ -322,6 +322,10 @@ export default function TrainingDetailsPage() {
                     Упражнения {exercises.length > 0 ? `· ${exercises.length}` : ""}
                 </div>
 
+                {canEditExercises && exercises.length > 0 && (
+                    <div className="fb-hint">Нажмите на упражнение, чтобы изменить его поля</div>
+                )}
+
                 {exercises.length === 0 ? (
                     <div className="fb-empty">Упражнений пока нет</div>
                 ) : (
@@ -338,7 +342,7 @@ export default function TrainingDetailsPage() {
                                         {ex.isCompleted ? "✓" : ""}
                                     </button>
                                 )}
-                                {canEditExercises && !editing ? (
+                                {canEditExercises ? (
                                     <button
                                         type="button"
                                         className="fb-row__main fb-row__main--button"
