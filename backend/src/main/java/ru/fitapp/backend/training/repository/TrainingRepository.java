@@ -11,6 +11,7 @@ import ru.fitapp.backend.training.model.TrainingStatus;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 
 public interface TrainingRepository extends JpaRepository<Training, Long> {
@@ -61,6 +62,12 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
             Long trainerId,
             LocalDate from,
             LocalDate to,
+            TrainingStatus status
+    );
+
+    /** All trainings drawn from the given contracts, in the order they happened (for per-training balance). */
+    List<Training> findAllByContractIdInAndStatusOrderByTrainingDateAscStartTimeAscIdAsc(
+            Collection<Long> contractIds,
             TrainingStatus status
     );
 

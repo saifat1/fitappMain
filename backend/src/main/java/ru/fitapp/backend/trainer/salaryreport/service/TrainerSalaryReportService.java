@@ -20,8 +20,11 @@ import ru.fitapp.backend.user.entity.AppUser;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,8 +69,10 @@ public class TrainerSalaryReportService {
                         to
                 );
 
+        Map<Long, Integer> remainingAfterTraining = computeRemainingAfterTraining(completedTrainings);
+
         List<TrainerSalaryReportTrainingRowResponse> trainingRows = completedTrainings.stream()
-                .map(this::toTrainingRow)
+                .map(training -> toTrainingRow(training, remainingAfterTraining.get(training.getId())))
                 .toList();
 
         List<TrainerSalaryReportDutyRowResponse> dutyRows = dutySlots.stream()
@@ -89,7 +94,38 @@ public class TrainerSalaryReportService {
                 .setDutyRows(dutyRows);
     }
 
-    private TrainerSalaryReportTrainingRowResponse toTrainingRow(Training training) {
+    /**
+     * Contract balance right after each training: the k-th completed training of a contract
+     * (by date/time, across all months) leaves total - k. The contract only stores the current
+     * balance, so the history is rebuilt from the trainings linked to it.
+     */
+    private Map<Long, Integer> computeRemainingAfterTraining(List<Training> trainings) {
+        Set<Long> contractIds = trainings.stream()
+                .map(Training::getContract)
+                .filter(Objects::nonNull)
+                .map(ClientContract::getId)
+                .collect(Collectors.toSet());
+
+        if (contractIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Integer> usedByContract = new HashMap<>();
+        Map<Long, Integer> result = new HashMap<>();
+
+        for (Training training : trainingRepository.findAllByContractIdInAndStatusOrderByTrainingDateAscStartTimeAscIdAsc(
+                contractIds,
+                TrainingStatus.COMPLETED
+        )) {
+            ClientContract contract = training.getContract();
+            int used = usedByContract.merge(contract.getId(), 1, Integer::sum);
+            result.put(training.getId(), Math.max(contract.getTotalTrainings() - used, 0));
+        }
+
+        return result;
+    }
+
+    private TrainerSalaryReportTrainingRowResponse toTrainingRow(Training training, Integer remainingAfter) {
         AppUser client = training.getClient();
         ClientContract contract = training.getContract();
 
@@ -104,7 +140,7 @@ public class TrainerSalaryReportService {
                 .setContractNumber(contract != null ? contract.getContractNumber() : null)
                 .setContractEndDate(contract != null ? contract.getEndDate() : null)
                 .setContractTotalTrainings(contract != null ? contract.getTotalTrainings() : null)
-                .setContractRemainingTrainings(contract != null ? contract.getRemainingTrainings() : null);
+                .setContractRemainingTrainings(contract != null ? remainingAfter : null);
     }
 
     private TrainerSalaryReportDutyRowResponse toDutyRow(TrainerDutySlot dutySlot) {

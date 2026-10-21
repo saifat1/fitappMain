@@ -181,6 +181,9 @@ export default function TrainerSalaryReportSection() {
                                         </span>
                                         <span className="fb-row__sub">
                                             {formatTime(row.startTime)}–{formatTime(row.endTime)} · {row.trainingTypeLabel}
+                                            {row.contractTotalTrainings != null && row.contractRemainingTrainings != null
+                                                ? ` ${row.contractTotalTrainings}/${row.contractRemainingTrainings}`
+                                                : ""}
                                             {row.contractNumber ? ` · Договор ${row.contractNumber}` : ""}
                                             {row.contractEndDate ? ` до ${formatDate(row.contractEndDate)}` : ""}
                                         </span>

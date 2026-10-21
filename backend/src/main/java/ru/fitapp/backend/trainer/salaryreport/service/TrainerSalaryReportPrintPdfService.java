@@ -62,7 +62,7 @@ public class TrainerSalaryReportPrintPdfService {
     private static final String[] COLUMN_HEADERS = {
             "Время",
             "ФИО",
-            "Вид",
+            "ПТ",
             "Договор",
             "Дата окончания",
             "Подпись",
@@ -202,7 +202,7 @@ public class TrainerSalaryReportPrintPdfService {
                     : new String[]{
                     formatTime(row.startTime()),
                     safe(row.clientName()),
-                    safe(row.typeLabel()),
+                    safe(row.ptLabel()),
                     safe(row.contractNumber()),
                     formatDate(row.contractEndDate()),
                     "",
@@ -345,7 +345,11 @@ public class TrainerSalaryReportPrintPdfService {
                             row.getTrainingTypeLabel(),
                             row.getContractNumber(),
                             row.getContractEndDate(),
-                            formatTrainingsCount(row.getContractRemainingTrainings(), row.getContractTotalTrainings())
+                            formatPtLabel(
+                                    row.getTrainingTypeLabel(),
+                                    row.getContractTotalTrainings(),
+                                    row.getContractRemainingTrainings()
+                            )
                     ));
         }
 
@@ -360,7 +364,7 @@ public class TrainerSalaryReportPrintPdfService {
                             row.getTypeLabel(),
                             "",
                             null,
-                            "-"
+                            row.getTypeLabel()
                     ));
         }
 
@@ -482,9 +486,14 @@ public class TrainerSalaryReportPrintPdfService {
         return value == null ? "" : value.trim();
     }
 
-    private String formatTrainingsCount(Integer remaining, Integer total) {
-        if (remaining == null || total == null) return "-";
-        return remaining + "/" + total;
+    /**
+     * "ПТ" column: contract size / balance after this training (10/9 … 10/0);
+     * "СТ" for independent trainings; "—" for a personal training outside any contract.
+     */
+    private String formatPtLabel(String typeLabel, Integer total, Integer remaining) {
+        if (total != null && remaining != null) return total + "/" + remaining;
+        if ("СТ".equals(typeLabel)) return typeLabel;
+        return "—";
     }
 
     private record PrintRow(
@@ -495,7 +504,7 @@ public class TrainerSalaryReportPrintPdfService {
             String typeLabel,
             String contractNumber,
             LocalDate contractEndDate,
-            String trainingsCount
+            String ptLabel
     ) {
     }
 

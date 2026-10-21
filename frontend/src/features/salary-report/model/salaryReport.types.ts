@@ -14,6 +14,10 @@ export type TrainerSalaryReportTrainingRowResponse = {
     trainingTypeLabel: string;
     contractNumber: string | null;
     contractEndDate: string | null;
+    /** Contract size (null when the training is not drawn from a contract). */
+    contractTotalTrainings: number | null;
+    /** Contract balance right after this training. */
+    contractRemainingTrainings: number | null;
 };
 
 export type TrainerSalaryReportDutyRowResponse = {
