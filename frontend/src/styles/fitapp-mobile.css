@@ -1732,3 +1732,15 @@
 .fb-analytics__apply { width: auto; min-height: 40px; font-size: 14px; flex: none; }
 .fb-analytics__event { word-break: break-all; font-size: 14px; }
 .fb-clients__invites { margin: 4px 16px 16px; }
+
+/* exercise template: restore from archive (FIT-28) */
+.fb-topbar__restore {
+    position: absolute;
+    right: 8px;
+    border: none;
+    background: transparent;
+    color: var(--fb-green);
+    font-size: 15px;
+    font-weight: 600;
+    padding: 8px 10px;
+}

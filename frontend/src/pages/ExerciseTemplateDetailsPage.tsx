@@ -81,6 +81,17 @@ export default function ExerciseTemplateDetailsPage() {
         }
     };
 
+    const handleRestore = async () => {
+        setErrorMessage("");
+
+        try {
+            await exerciseTemplateApi.restoreTemplate(id);
+            navigate("/exercise-templates");
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось вернуть упражнение из архива"));
+        }
+    };
+
     return (
         <div className="fb-screen">
             <header className="fb-topbar">
@@ -93,16 +104,22 @@ export default function ExerciseTemplateDetailsPage() {
                     ‹
                 </button>
                 <h1 className="fb-topbar__title">Упражнение</h1>
-                <button
-                    type="button"
-                    className="fb-topbar__action"
-                    aria-label="Удалить"
-                    onClick={handleArchive}
-                >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
-                    </svg>
-                </button>
+                {template?.isArchived ? (
+                    <button type="button" className="fb-topbar__restore" onClick={handleRestore}>
+                        Вернуть
+                    </button>
+                ) : (
+                    <button
+                        type="button"
+                        className="fb-topbar__action"
+                        aria-label="Удалить"
+                        onClick={handleArchive}
+                    >
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+                        </svg>
+                    </button>
+                )}
             </header>
 
             {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}

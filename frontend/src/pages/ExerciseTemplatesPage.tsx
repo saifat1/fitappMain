@@ -66,6 +66,12 @@ export default function ExerciseTemplatesPage() {
         const normalized = search.trim().toLowerCase();
 
         return templates.filter((item) => {
+            // «Архив» shows only archived templates, the default view only active ones (FIT-28):
+            // the API with includeArchived=true returns both.
+            if (Boolean(item.isArchived) !== includeArchived) {
+                return false;
+            }
+
             if (category !== "ALL" && item.muscleGroup !== category) {
                 return false;
             }
@@ -80,7 +86,7 @@ export default function ExerciseTemplatesPage() {
 
             return haystack.includes(normalized);
         });
-    }, [templates, search, category]);
+    }, [templates, search, category, includeArchived]);
 
     return (
         <MobileShell
@@ -138,7 +144,7 @@ export default function ExerciseTemplatesPage() {
             {isLoading ? (
                 <div className="fb-empty">Загрузка…</div>
             ) : filteredTemplates.length === 0 ? (
-                <div className="fb-empty">Упражнений пока нет</div>
+                <div className="fb-empty">{includeArchived ? "В архиве упражнений нет" : "Упражнений пока нет"}</div>
             ) : (
                 <div className="fb-list">
                     {filteredTemplates.map((item) => (
