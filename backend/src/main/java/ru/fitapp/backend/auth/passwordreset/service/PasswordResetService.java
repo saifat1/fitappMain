@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HexFormat;
 
 @Service
@@ -94,7 +95,10 @@ public class PasswordResetService {
                 .setExpiresAt(expiresAt)
                 .setCreatedAt(now));
 
-        return new PasswordResetLinkResponse(publicBaseUrl + "/reset-password?token=" + rawToken, expiresAt);
+        return new PasswordResetLinkResponse(
+                publicBaseUrl + "/reset-password?token=" + rawToken,
+                expiresAt.atZone(ZoneId.systemDefault()).toInstant()
+        );
     }
 
     public void resetPassword(String rawToken, String newPassword) {
