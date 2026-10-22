@@ -84,8 +84,10 @@ $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory |
 
 https://195-208-61-184.swtest.ru — VPS `fit_app_dev`, вход по SSH-ключу `~/.ssh/fitapp_dev` (пароль не использовать).
 Код в `/opt/fitappMain` (checkout `main`), `.env` только на сервере (почта и пуш выключены — в базе копия реальных клиентов).
-Выкладка: `git pull --ff-only && docker compose -f compose.yaml -f docker-compose.prod.yml up -d --build`,
-затем проверить в `docker logs fitapp-backend` миграции Liquibase и `Started BackendApplication`.
+Выкладка (и на деве, и на бою): `cd /opt/fitappMain && git pull --ff-only && sh deploy/release.sh` — бэкап базы и `.env`
+в `/root/fitapp-release-<дата>/`, обновление, пересборка, проверка старта и миграций; там же описан откат.
+Бэкап базы — `deploy/backup.sh` по cron в 03:20, дампы в `/var/backups/fitapp` (14 дней).
+Бой: https://80-93-63-169.swtest.ru (VPS 80.93.63.169, тоже `/opt/fitappMain`). На бой — только по команде пользователя.
 
 Уточнения — в чат задачи (вкладка «Чат»), **всегда с упоминанием @Иван Сысоев**; ответы приходят позже, пока
 работать дальше. Сообщения в чате не начинать с `>>>` (бот исполняет такие как JavaScript).
