@@ -15,6 +15,7 @@ COMPOSE="docker compose -f compose.yaml -f docker-compose.prod.yml"
 cd "$APP_DIR"
 
 TS=$(date +%Y%m%d-%H%M)
+RELEASE_START=$(date +%s)
 B=/root/fitapp-release-$TS
 mkdir -p "$B"
 chmod 700 "$B"
@@ -45,11 +46,18 @@ $COMPOSE up -d --build
 
 echo "== wait for backend"
 BACKEND=$($COMPOSE ps -q backend)
-i=0
-while [ $i -lt 60 ]; do
-  if docker logs --since 10m "$BACKEND" 2>&1 | grep -qE "Started .*Application|APPLICATION FAILED"; then break; fi
-  i=$((i + 1)); sleep 4
-done
-docker logs --since 10m "$BACKEND" 2>&1 | grep -E "ChangeSet .* ran successfully|Started .*Application|APPLICATION FAILED|ERROR" | tail -20
-docker logs --since 10m "$BACKEND" 2>&1 | grep -q "Started .*Application" || { echo "ERROR: backend did not start — see rollback above"; exit 1; }
+STARTED=$(docker inspect -f '{{.State.StartedAt}}' "$BACKEND")
+if [ "$(date -d "$STARTED" +%s)" -lt "$RELEASE_START" ]; then
+  # Only the frontend (or nothing) changed — the backend container wasn't recreated.
+  [ "$(docker inspect -f '{{.State.Running}}' "$BACKEND")" = "true" ] || { echo "ERROR: backend is not running"; exit 1; }
+  echo "backend unchanged, running since $STARTED"
+else
+  i=0
+  while [ $i -lt 60 ]; do
+    if docker logs "$BACKEND" 2>&1 | grep -qE "Started .*Application|APPLICATION FAILED"; then break; fi
+    i=$((i + 1)); sleep 4
+  done
+  docker logs "$BACKEND" 2>&1 | grep -E "ChangeSet .* ran successfully|Started .*Application|APPLICATION FAILED|ERROR" | tail -20
+  docker logs "$BACKEND" 2>&1 | grep -q "Started .*Application" || { echo "ERROR: backend did not start — see rollback above"; exit 1; }
+fi
 echo "== release ok, backup in $B"
