@@ -34,6 +34,9 @@ export const exerciseTemplateApi = {
     restoreTemplate: (templateId: number): Promise<void> =>
         apiClient.patch(`/exercise-templates/${templateId}/restore`).then(() => undefined),
 
+    deleteTemplate: (templateId: number): Promise<void> =>
+        apiClient.delete(`/exercise-templates/${templateId}`).then(() => undefined),
+
     addTemplateToTraining: (
         trainingId: number,
         payload: ApplyExerciseTemplateRequest

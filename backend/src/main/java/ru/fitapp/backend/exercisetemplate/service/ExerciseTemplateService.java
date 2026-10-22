@@ -124,6 +124,21 @@ public class ExerciseTemplateService {
         exerciseTemplateRepository.save(template);
     }
 
+    /** Permanent deletion, only from the archive (FIT-28). Trainings keep their own copy of the exercise fields. */
+    public void deleteTemplate(Long templateId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        ExerciseTemplate template = getTrainerOwnedTemplateOrThrow(templateId, trainer.getId());
+
+        if (!Boolean.TRUE.equals(template.getIsArchived())) {
+            throw new ApiException(
+                    "EXERCISE_TEMPLATE_NOT_ARCHIVED",
+                    "Удалить навсегда можно только упражнение из архива"
+            );
+        }
+
+        exerciseTemplateRepository.delete(template);
+    }
+
     @Transactional(readOnly = true)
     public ExerciseTemplate getActiveTemplateEntity(Long templateId) {
         AppUser trainer = currentUserService.getCurrentTrainer();

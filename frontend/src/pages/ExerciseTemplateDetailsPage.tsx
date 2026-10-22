@@ -92,6 +92,21 @@ export default function ExerciseTemplateDetailsPage() {
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm("Удалить упражнение навсегда? Восстановить его не получится. В уже созданных тренировках оно останется.")) {
+            return;
+        }
+
+        setErrorMessage("");
+
+        try {
+            await exerciseTemplateApi.deleteTemplate(id);
+            navigate("/exercise-templates");
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось удалить упражнение"));
+        }
+    };
+
     return (
         <div className="fb-screen">
             <header className="fb-topbar">
@@ -134,6 +149,12 @@ export default function ExerciseTemplateDetailsPage() {
                     onSubmit={handleSubmit}
                 />
             )}
+
+            {template?.isArchived ? (
+                <button type="button" className="fb-btn fb-btn--ghost fb-btn--danger-text fb-template-delete" onClick={handleDelete}>
+                    Удалить навсегда
+                </button>
+            ) : null}
         </div>
     );
 }

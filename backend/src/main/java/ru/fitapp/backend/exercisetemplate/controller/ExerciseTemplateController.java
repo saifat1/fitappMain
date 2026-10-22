@@ -55,4 +55,9 @@ public class ExerciseTemplateController {
     public void restoreTemplate(@PathVariable Long templateId) {
         exerciseTemplateService.restoreTemplate(templateId);
     }
+
+    @DeleteMapping("/{templateId}")
+    public void deleteTemplate(@PathVariable Long templateId) {
+        exerciseTemplateService.deleteTemplate(templateId);
+    }
 }
