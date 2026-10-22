@@ -1590,6 +1590,17 @@
 
 .fb-welcome__legal a { color: rgba(255, 255, 255, 0.85); }
 
+.fb-welcome__seller {
+    flex: none;
+    padding: 6px 12px calc(8px + env(safe-area-inset-bottom));
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.fb-welcome__seller a { color: inherit; }
+
 /* client booking (FIT-63) */
 .fb-book-cta { width: 100%; margin: 4px 0 8px; }
 .fb-book { gap: 12px; padding-top: 12px; }

@@ -23,13 +23,15 @@ public class PublicPricingController {
             @Value("${app.seller.name:}") String name,
             @Value("${app.seller.inn:}") String inn,
             @Value("${app.seller.email:}") String email,
-            @Value("${app.seller.phone:}") String phone
+            @Value("${app.seller.phone:}") String phone,
+            @Value("${app.seller.city:}") String city
     ) {
         this.seller = new PublicPricingResponse.Seller(
                 name.trim(),
                 inn.trim(),
                 email.trim(),
                 phone.trim(),
+                city.trim(),
                 "Плательщик налога на профессиональный доход (самозанятый)"
         );
     }

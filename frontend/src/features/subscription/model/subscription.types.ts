@@ -78,6 +78,7 @@ export type SellerInfo = {
     inn: string;
     email: string;
     phone: string;
+    city: string;
     taxStatus: string;
 };
 

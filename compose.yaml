@@ -53,6 +53,7 @@ services:
       SELLER_INN: ${SELLER_INN:-}
       SELLER_EMAIL: ${SELLER_EMAIL:-}
       SELLER_PHONE: ${SELLER_PHONE:-}
+      SELLER_CITY: ${SELLER_CITY:-}
     expose:
       - "8080"
 

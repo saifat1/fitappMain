@@ -38,6 +38,7 @@ app:
     inn: ${SELLER_INN:}
     email: ${SELLER_EMAIL:}
     phone: ${SELLER_PHONE:}
+    city: ${SELLER_CITY:}
 spring:
   application:
     name: fitapp-backend

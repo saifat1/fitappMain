@@ -88,6 +88,7 @@ export default function PricingPage() {
                     <div className="fb-sub-status__usage">ИНН: {dash(seller?.inn)}</div>
                     <div className="fb-sub-status__usage">Эл. почта: {dash(seller?.email)}</div>
                     <div className="fb-sub-status__usage">Телефон: {dash(seller?.phone)}</div>
+                    <div className="fb-sub-status__usage">Город: {dash(seller?.city)}</div>
                 </div>
             </div>
         </div>

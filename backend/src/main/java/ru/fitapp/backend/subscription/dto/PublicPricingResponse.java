@@ -13,7 +13,7 @@ public record PublicPricingResponse(
         int graceDays
 ) {
 
-    /** Empty strings mean "not configured yet" — the page shows a dash. */
-    public record Seller(String name, String inn, String email, String phone, String taxStatus) {
+    /** Empty strings mean "not configured yet" — the page shows a dash. City stands in for the address of a самозанятый. */
+    public record Seller(String name, String inn, String email, String phone, String city, String taxStatus) {
     }
 }
