@@ -20,8 +20,11 @@ function resolveApiError(error: unknown, fallback: string): string {
     return fallback;
 }
 
+/** "17 декабря 2026" — without the trailing " г." so a sentence ending in a date gets one dot. */
 function date(value: string | null): string {
-    return value ? new Date(value).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }) : "—";
+    return value
+        ? new Date(value).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }).replace(/\s*г\.$/, "")
+        : "—";
 }
 
 const PLAN_FEATURES: Record<PlanCode, string[]> = {

@@ -45,6 +45,8 @@ export default function UpcomingTrainingRow({ training, onClick, title, showStat
             <span className="fb-row__main">
                 <span className="fb-row__title">{title ?? trainingTitle(training)}</span>
                 <span className="fb-row__sub">
+                    {/* With the client name as the title (trainer's list) a circuit still shows what it is. */}
+                    {title && training.trainingType === "CIRCUIT" ? `${trainingTitle(training)} · ` : ""}
                     {formatTrainingDay(training.trainingDate)}
                     {isPersonal
                         ? training.startTime
