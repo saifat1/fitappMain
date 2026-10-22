@@ -375,9 +375,7 @@ export const router = createBrowserRouter([
         path: "/trainer/booking-requests",
         element: (
             <TrainerRoute>
-                <AppLayout>
-                    <TrainerBookingRequestsPage />
-                </AppLayout>
+                <TrainerBookingRequestsPage />
             </TrainerRoute>
         ),
     },

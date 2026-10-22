@@ -1660,3 +1660,26 @@
 .fb-book__req-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
 .fb-book__cancel { border: none; background: transparent; font-size: 13px; font-weight: 600; padding: 0; cursor: pointer; }
 .fb-book__sheet-when { font-size: 16px; font-weight: 700; color: var(--fb-ink); margin: 4px 0; }
+
+/* trainer: booking requests (FIT-66) */
+.fb-breq { gap: 10px; padding-top: 4px; }
+
+.fb-breq__card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid var(--fb-line);
+    border-radius: var(--fb-radius-card);
+    background: var(--fb-surface);
+}
+
+.fb-breq__head { display: flex; align-items: center; gap: 10px; }
+.fb-breq__main { flex: 1; min-width: 0; }
+.fb-breq__client { font-size: 15px; font-weight: 700; color: var(--fb-ink); }
+.fb-breq__when { font-size: 13px; color: var(--fb-ink-2); margin-top: 2px; }
+.fb-breq__comment { font-size: 14px; color: var(--fb-ink-2); background: var(--fb-surface-2); border-radius: 10px; padding: 8px 10px; }
+.fb-breq__comment--trainer { background: transparent; padding: 0; color: var(--fb-muted); font-size: 13px; }
+.fb-breq__reply { padding-top: 4px; }
+.fb-breq__actions { display: flex; gap: 8px; }
+.fb-breq__actions .fb-btn { flex: 1; }

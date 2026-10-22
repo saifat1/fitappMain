@@ -13,6 +13,7 @@ import {
 import type { TrainingResponse } from "../../training/model/training.types";
 import type { CurrentUserResponse } from "../../auth/model/auth.types";
 import PendingReschedulesBanner from "../../reschedule/ui/PendingReschedulesBanner";
+import PendingBookingsBanner from "../../booking/ui/PendingBookingsBanner";
 import type { TrainerDutySlotResponse } from "../../duty-slot/model/dutySlot.types";
 import type { TrainerAvailabilityException } from "../../availability/model/availability.types";
 import { closedTimeLabel, coversDate } from "../../availability/lib/closedTime";
@@ -167,6 +168,7 @@ export default function TrainerCalendarScreen({
 
             <div className="fb-divider" />
 
+            <PendingBookingsBanner />
             <PendingReschedulesBanner />
 
             {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
