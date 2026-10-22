@@ -42,6 +42,7 @@ import NotificationsPage from "../pages/NotificationsPage";
 import ClientProfilePage from "../pages/ClientProfilePage";
 import SubscriptionPage from "../pages/SubscriptionPage";
 import TestPaymentPage from "../pages/TestPaymentPage";
+import PricingPage from "../pages/PricingPage";
 
 export const router = createBrowserRouter([
     {
@@ -71,6 +72,18 @@ export const router = createBrowserRouter([
     {
         path: "/legal/health-data",
         element: <LegalDocumentPage />,
+    },
+    {
+        path: "/legal/offer",
+        element: <LegalDocumentPage />,
+    },
+    {
+        path: "/legal/refund",
+        element: <LegalDocumentPage />,
+    },
+    {
+        path: "/pricing",
+        element: <PricingPage />,
     },
 
 

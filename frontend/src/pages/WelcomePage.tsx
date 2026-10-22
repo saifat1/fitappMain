@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BrandWordmark from "../shared/ui/BrandWordmark";
 
 /**
@@ -50,6 +50,13 @@ export default function WelcomePage() {
                     Войти
                 </button>
             </div>
+
+            <nav className="fb-welcome__legal" aria-label="Информация">
+                <Link to="/pricing">Тарифы и оплата</Link>
+                <Link to="/legal/offer">Оферта</Link>
+                <Link to="/legal/refund">Возврат</Link>
+                <Link to="/pricing">Контакты</Link>
+            </nav>
         </div>
     );
 }

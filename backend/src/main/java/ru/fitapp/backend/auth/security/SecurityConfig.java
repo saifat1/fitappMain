@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/auth/reset-password",
                                 "/api/auth/invites/**",
                                 "/api/payments/notifications/**",
+                                "/api/public/**",
                                 "/uploads/**"
                         ).permitAll()
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")

@@ -1573,3 +1573,19 @@
     font-size: 13px;
     color: var(--fb-ink-2);
 }
+
+/* public «Тарифы и оплата» page + offer links */
+.fb-doc-links { display: flex; flex-direction: column; gap: 8px; }
+.fb-doc-link { color: var(--fb-green-deep); font-weight: 600; font-size: 14px; }
+
+.fb-welcome__legal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 14px;
+    flex: none;
+    padding: 0 8px calc(4px + env(safe-area-inset-bottom));
+    font-size: 12px;
+}
+
+.fb-welcome__legal a { color: rgba(255, 255, 255, 0.85); }

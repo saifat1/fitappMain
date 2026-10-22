@@ -43,6 +43,10 @@ services:
       PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:no-reply@fitapp.com.ru}
       BILLING_ENABLED: ${BILLING_ENABLED:-false}
       BILLING_PROVIDER: ${BILLING_PROVIDER:-test}
+      SELLER_NAME: ${SELLER_NAME:-}
+      SELLER_INN: ${SELLER_INN:-}
+      SELLER_EMAIL: ${SELLER_EMAIL:-}
+      SELLER_PHONE: ${SELLER_PHONE:-}
     expose:
       - "8080"
 

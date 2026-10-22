@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
 import MobileShell from "../widgets/MobileShell";
@@ -235,6 +235,12 @@ export default function SubscriptionPage() {
                 <div className="fb-sub__note">
                     Платит только тренер — клиенты пользуются приложением бесплатно. Оплата картой, чек придёт на почту.
                     При смене тарифа неиспользованные дни пересчитываются в новый тариф. Автопродление можно отключить в любой момент.
+                    {data.enabled && (
+                        <>
+                            {" "}Переходя к оплате, вы принимаете <Link to="/legal/offer">договор-оферту</Link> и соглашаетесь на
+                            автоматическое продление подписки. <Link to="/legal/refund">Политика возврата</Link>.
+                        </>
+                    )}
                 </div>
 
                 {data.enabled && data.payments.length > 0 && (

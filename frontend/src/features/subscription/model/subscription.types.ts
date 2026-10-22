@@ -72,3 +72,19 @@ export type TestPaymentOutcome = "PAY" | "PAY_FAILING_CARD" | "DECLINE";
 export function formatRub(kopecks: number): string {
     return `${Math.round(kopecks / 100).toLocaleString("ru-RU")} ₽`;
 }
+
+export type SellerInfo = {
+    name: string;
+    inn: string;
+    email: string;
+    phone: string;
+    taxStatus: string;
+};
+
+/** Public «Тарифы» page and the offer; seller details come from the server's settings. */
+export type PublicPricingResponse = {
+    seller: SellerInfo;
+    plans: PlanResponse[];
+    trialDays: number;
+    graceDays: number;
+};

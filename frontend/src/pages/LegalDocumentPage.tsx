@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { publicApi } from "../shared/api/publicApi";
+import type { PublicPricingResponse } from "../features/subscription/model/subscription.types";
 
 type LegalDocument = {
     title: string;
@@ -151,12 +154,152 @@ const DOCUMENTS: Record<string, LegalDocument> = {
             },
         ],
     },
+
+    // {seller…} / {site} placeholders are filled from /api/public/pricing (seller details live in the server's .env).
+    "/legal/offer": {
+        title: "Договор-оферта на подписку",
+        version: "1.0",
+        updatedAt: "22.10.2026",
+        sections: [
+            {
+                title: "1. Общие положения",
+                paragraphs: [
+                    "Настоящий документ является публичной офертой (ст. 437 ГК РФ) {sellerName}, {sellerTaxStatus}, ИНН {sellerInn} (далее — Исполнитель), и адресован тренерам — пользователям сервиса «ФитАпп» (далее — Заказчик).",
+                    "Акцептом оферты является оплата подписки в разделе «Подписка» (п. 3 ст. 438 ГК РФ). С момента оплаты договор считается заключённым на условиях оферты.",
+                ],
+            },
+            {
+                title: "2. Предмет",
+                paragraphs: [
+                    "Исполнитель предоставляет Заказчику доступ к функциям онлайн-сервиса «ФитАпп» ({site}) по выбранному тарифу на оплаченный период: календарь тренировок, учёт клиентов и договоров, онлайн-запись на свободные слоты, упражнения и подходы, круговые тренировки, зарплатный отчёт.",
+                    "Тарифы различаются количеством активных клиентов, которых можно вести одновременно. Клиенты Заказчика пользуются сервисом бесплатно.",
+                ],
+            },
+            {
+                title: "3. Стоимость и пробный период",
+                paragraphs: [
+                    "Актуальные тарифы и цены опубликованы на странице «Тарифы» ({site}/pricing). Цены указаны в рублях, НДС не облагается (налог на профессиональный доход).",
+                    "Новому тренеру предоставляется бесплатный пробный период {trialDays} дней на тарифе Pro без привязки карты. Тариф «Старт» бесплатный и не ограничен по сроку.",
+                ],
+            },
+            {
+                title: "4. Порядок оплаты",
+                paragraphs: [
+                    "Оплата производится банковской картой через платёжный сервис. Данные карты вводятся на странице платёжного сервиса; Исполнитель их не получает и не хранит.",
+                    "После оплаты Заказчику на электронную почту направляется чек, сформированный в приложении «Мой налог».",
+                    "Доступ по оплаченному тарифу предоставляется сразу после поступления оплаты.",
+                ],
+            },
+            {
+                title: "5. Автопродление",
+                paragraphs: [
+                    "Оплачивая подписку, Заказчик соглашается на автоматическое списание стоимости того же тарифа и периода с сохранённой карты в дату окончания оплаченного периода.",
+                    "Если списание не прошло, Исполнитель повторяет попытку в течение {graceDays} дней; всё это время доступ сохраняется. После этого действует бесплатный тариф «Старт»: данные не удаляются, сверх лимита тарифа клиенты доступны только для просмотра.",
+                    "Отключить автопродление можно в любой момент в разделе «Подписка». Оплаченный период при этом сохраняется до конца.",
+                ],
+            },
+            {
+                title: "6. Смена тарифа",
+                paragraphs: [
+                    "При переходе на другой тариф или период неиспользованные дни текущей оплаты пересчитываются в дни нового тарифа пропорционально стоимости.",
+                ],
+            },
+            {
+                title: "7. Отказ от услуги и возврат",
+                paragraphs: [
+                    "Порядок отказа и возврата денежных средств описан в Политике возврата ({site}/legal/refund), которая является частью настоящей оферты.",
+                ],
+            },
+            {
+                title: "8. Ответственность",
+                paragraphs: [
+                    "Сервис предоставляется по принципу «как есть». Исполнитель принимает разумные меры для бесперебойной работы сервиса и сохранности данных.",
+                    "Ответственность Исполнителя ограничена суммой, уплаченной Заказчиком за текущий оплаченный период.",
+                ],
+            },
+            {
+                title: "9. Персональные данные",
+                paragraphs: [
+                    "Обработка персональных данных осуществляется в соответствии с Политикой обработки персональных данных ({site}/legal/privacy).",
+                ],
+            },
+            {
+                title: "10. Реквизиты и контакты Исполнителя",
+                paragraphs: [
+                    "{sellerName}, {sellerTaxStatus}",
+                    "ИНН: {sellerInn}",
+                    "Электронная почта: {sellerEmail}",
+                    "Телефон: {sellerPhone}",
+                ],
+            },
+        ],
+    },
+
+    "/legal/refund": {
+        title: "Политика возврата и отказа от подписки",
+        version: "1.0",
+        updatedAt: "22.10.2026",
+        sections: [
+            {
+                title: "1. Отказ от автопродления",
+                paragraphs: [
+                    "Заказчик может в любой момент отключить автопродление в разделе «Подписка». Следующих списаний не будет, оплаченный период сохраняется до конца.",
+                ],
+            },
+            {
+                title: "2. Отказ от услуги и возврат",
+                paragraphs: [
+                    "Заказчик вправе отказаться от подписки в любой момент. В этом случае возвращается стоимость неиспользованных полных дней оплаченного периода (пропорционально), доступ к платному тарифу прекращается.",
+                    "Ошибочное или повторное списание возвращается полностью.",
+                ],
+            },
+            {
+                title: "3. Как оформить возврат",
+                paragraphs: [
+                    "Напишите на {sellerEmail} с адреса, на который зарегистрирован аккаунт тренера, и укажите дату и сумму платежа.",
+                    "Обращение рассматривается в течение 10 рабочих дней. Деньги возвращаются на карту, с которой была оплата; срок зачисления зависит от банка (обычно до 30 дней).",
+                    "Чек на возвращённую сумму аннулируется в приложении «Мой налог».",
+                ],
+            },
+            {
+                title: "4. Контакты",
+                paragraphs: [
+                    "{sellerName}, {sellerTaxStatus}, ИНН {sellerInn}",
+                    "Электронная почта: {sellerEmail}, телефон: {sellerPhone}",
+                ],
+            },
+        ],
+    },
 };
+
+/** Fills {seller…}/{site}/{trialDays}/{graceDays}; unknown values become "—" until the server is configured. */
+function fillPlaceholders(text: string, pricing: PublicPricingResponse | null): string {
+    if (!text.includes("{")) return text;
+    const s = pricing?.seller;
+    const values: Record<string, string> = {
+        sellerName: s?.name || "—",
+        sellerInn: s?.inn || "—",
+        sellerEmail: s?.email || "—",
+        sellerPhone: s?.phone || "—",
+        sellerTaxStatus: s?.taxStatus ? s.taxStatus.charAt(0).toLowerCase() + s.taxStatus.slice(1) : "плательщик налога на профессиональный доход",
+        site: window.location.origin,
+        trialDays: String(pricing?.trialDays ?? 14),
+        graceDays: String(pricing?.graceDays ?? 3),
+    };
+    return text.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
+}
 
 export default function LegalDocumentPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const document = DOCUMENTS[location.pathname];
+    const needsPricing = Boolean(document?.sections.some((s) => s.paragraphs.some((p) => p.includes("{"))));
+    const [pricing, setPricing] = useState<PublicPricingResponse | null>(null);
+
+    useEffect(() => {
+        if (!needsPricing) return;
+        publicApi.getPricing().then(setPricing).catch(() => setPricing(null));
+    }, [needsPricing]);
 
     const handleBack = () => {
         if (window.history.length > 1) {
@@ -204,7 +347,7 @@ export default function LegalDocumentPage() {
                         <div className="fb-doc-heading">{section.title}</div>
                         {section.paragraphs.map((paragraph) => (
                             <p className="fb-doc-paragraph" key={paragraph}>
-                                {paragraph}
+                                {fillPlaceholders(paragraph, pricing)}
                             </p>
                         ))}
                     </div>

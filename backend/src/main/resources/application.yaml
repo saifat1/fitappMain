@@ -21,6 +21,13 @@ app:
     enabled: ${BILLING_ENABLED:false}
     # "test" — our own fake payment page (dev stand only); real providers get their own codes.
     provider: ${BILLING_PROVIDER:test}
+  # Seller details for the public «Тарифы» page and the offer (required by the payment provider).
+  # Set on the server only — they are not kept in the repository.
+  seller:
+    name: ${SELLER_NAME:}
+    inn: ${SELLER_INN:}
+    email: ${SELLER_EMAIL:}
+    phone: ${SELLER_PHONE:}
 spring:
   application:
     name: fitapp-backend
