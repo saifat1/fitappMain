@@ -5,3 +5,6 @@
 
 # IDE
 .idea/
+
+# Store app builds (APK / AAB) — not kept in git
+builds/

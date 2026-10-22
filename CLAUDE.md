@@ -60,6 +60,18 @@ $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory |
 - Git: `C:\Program Files\Git\cmd\git.exe`. Сообщение коммита с кавычками передавать файлом
   (`git commit -F file.txt`) — PowerShell 5.1 ломает кавычки в here-string. Автор коммитов — как в истории репозитория.
 
+## Мобильное приложение (Capacitor, `frontend/android`)
+
+- Та же веб-сборка, упакованная в Android (FIT-68). `appId` — `ru.com.fitapp` (не менять: сторы привязаны к нему).
+  Внутри приложения страница открыта с `https://localhost`: API и ссылки идут на `https://fitapp.com.ru`
+  (`src/shared/lib/platform.ts`), CORS бэкенда пропускает `https://localhost` и `capacitor://localhost`.
+- Android SDK: `%LOCALAPPDATA%\Android\Sdk` (`$env:ANDROID_HOME`), путь — в `android/local.properties` (не в git).
+- Сборка: `cd frontend; npm run android:sync` (build + cap sync), затем `cd android; .\gradlew.bat assembleDebug`
+  или `bundleRelease assembleRelease`. Для дев-стенда перед sync задать `$env:VITE_API_BASE_URL="https://195-208-61-184.swtest.ru/api"`.
+- Ключ подписи релиза — только на машине: `%USERPROFILE%\.fitapp\fitapp-release.jks` + `keystore.properties`.
+  Потеря ключа = нельзя обновить приложение в RuStore. Готовые файлы складываются в `builds/` (не в git).
+- Перед каждым релизом в стор увеличить `versionCode`/`versionName` в `android/app/build.gradle`.
+
 ## Процесс работы с задачами (YouGile)
 
 Доска: https://ru.yougile.com/team/00b1689b8043/Fit-app (вход — под аккаунтом пользователя во встроенном браузере).

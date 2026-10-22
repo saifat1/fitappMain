@@ -1,0 +1,3 @@
+# gradlew is a shell script: keep LF so it runs on Linux / CI even after a Windows checkout
+gradlew text eol=lf
+*.bat text eol=crlf
