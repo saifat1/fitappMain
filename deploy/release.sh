@@ -1,10 +1,10 @@
 #!/bin/sh
 # Release of the current `main` on a server (dev or prod):  sh /opt/fitappMain/deploy/release.sh
 #
-# 4. old Docker build cache (older than a week) is pruned so the disk does not fill up
 # 1. backup: DB dump, .env, Caddyfile, local code changes and the previous commit → /root/fitapp-release-<ts>/
 # 2. update: local code edits are stashed (Caddyfile and .env stay server-local), git pull --ff-only
 # 3. rebuild and restart, wait for the backend, print the Liquibase changesets that ran
+# 4. old Docker build cache (older than a week) is pruned so the disk does not fill up
 #
 # Rollback (migrations are forward-only, so the DB is restored too):
 #   git checkout <previous-commit>; docker compose -f compose.yaml -f docker-compose.prod.yml up -d --build
