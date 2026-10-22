@@ -45,4 +45,9 @@ export const authApi = {
     resetPassword: async (token: string, newPassword: string): Promise<void> => {
         await apiClient.post("/auth/reset-password", { token, newPassword });
     },
+
+    /** FIT-70: the signed-in user deletes their own account (personal data is wiped, history stays anonymous). */
+    deleteAccount: async (password: string): Promise<void> => {
+        await apiClient.post("/auth/delete-account", { password });
+    },
 };

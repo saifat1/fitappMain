@@ -329,6 +329,10 @@ export default function TrainerProfilePage() {
             <button type="button" className="fb-btn fb-btn--ghost fb-logout" onClick={handleLogout}>
                 Выйти
             </button>
+
+            <button type="button" className="fb-delete-link" onClick={() => navigate("/account/delete")}>
+                Удалить аккаунт
+            </button>
         </MobileShell>
     );
 }

@@ -15,6 +15,7 @@ import {
     clientColor,
     clientStatusPill,
     isArchivedClient,
+    isDeletedClient,
 } from "../features/trainer/lib/clientDisplay";
 import { formatDateKey } from "../features/calendar/lib/trainerCalendar";
 import type { TrainerClientResponse } from "../features/trainer/model/trainer.types";
@@ -189,14 +190,18 @@ export default function ClientDetailsPage() {
                     <>
                         <button type="button" className="fb-overlay" aria-label="Закрыть" onClick={() => setMenuOpen(false)} />
                         <div className="fb-menu" role="menu">
-                            <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); setEditing(true); }}>
-                                Редактировать
-                            </button>
+                            {!isDeletedClient(client) && (
+                                <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); setEditing(true); }}>
+                                    Редактировать
+                                </button>
+                            )}
                             {isArchivedClient(client) ? (
                                 <>
-                                    <button type="button" className="fb-menu__item" onClick={handleRestore}>
-                                        Восстановить из архива
-                                    </button>
+                                    {!isDeletedClient(client) && (
+                                        <button type="button" className="fb-menu__item" onClick={handleRestore}>
+                                            Восстановить из архива
+                                        </button>
+                                    )}
                                     {/* Permanent deletion is available only from the archive. */}
                                     <button type="button" className="fb-menu__item fb-menu__item--danger" onClick={handleDelete}>
                                         Удалить навсегда

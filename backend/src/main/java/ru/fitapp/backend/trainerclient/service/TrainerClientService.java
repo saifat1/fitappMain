@@ -123,6 +123,7 @@ public class TrainerClientService {
             LocalDate contractEndDate
     ) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
+        assertNotDeleted(client);
 
         if (phone != null) {
             String normalizedPhone = phone.trim();
@@ -152,6 +153,7 @@ public class TrainerClientService {
     /** Archive ("заморозка"): the client can't sign in and is listed in the trainer's «Архив» tab. */
     public void deactivateClientOfTrainer(Long trainerId, Long clientId) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
+        assertNotDeleted(client);
         client.setStatus(UserStatus.INACTIVE);
         userRepository.save(client);
     }
@@ -165,7 +167,7 @@ public class TrainerClientService {
         TrainerClient link = trainerClientRepository.findByTrainerIdAndClientId(trainerId, clientId)
                 .orElseThrow(() -> new ApiException("CLIENT_NOT_FOUND", "Клиент не найден"));
 
-        if (link.getClient().getStatus() != UserStatus.INACTIVE) {
+        if (link.getClient().getStatus() == UserStatus.ACTIVE) {
             throw new ApiException("CLIENT_NOT_ARCHIVED", "Удалить можно только клиента из архива");
         }
 
@@ -175,8 +177,16 @@ public class TrainerClientService {
     /** Brings an archived client back to the active list. */
     public AppUser restoreClientOfTrainer(Long trainerId, Long clientId) {
         AppUser client = getClientOfTrainer(trainerId, clientId);
+        assertNotDeleted(client);
         client.setStatus(UserStatus.ACTIVE);
         return userRepository.save(client);
+    }
+
+    /** A client who deleted their own account (FIT-70) stays in the archive for history only. */
+    private void assertNotDeleted(AppUser client) {
+        if (client.getStatus() == UserStatus.DELETED) {
+            throw new ApiException("CLIENT_DELETED", "Клиент удалил свой аккаунт — его можно только убрать из архива");
+        }
     }
 
     private void validateTrainer(AppUser trainer) {

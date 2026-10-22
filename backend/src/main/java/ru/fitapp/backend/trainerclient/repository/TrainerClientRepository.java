@@ -22,13 +22,13 @@ public interface TrainerClientRepository extends JpaRepository<TrainerClient, Lo
 
     Optional<TrainerClient> findByTrainerIdAndClientId(Long trainerId, Long clientId);
 
-    /** Active (not archived) clients, chosen-for-plan first, then in the order they were added. */
+    /** Active (not archived, not deleted) clients, chosen-for-plan first, then in the order they were added. */
     @Query("""
             select tc
             from TrainerClient tc
             join fetch tc.client c
             where tc.trainer.id = :trainerId
-              and c.status <> ru.fitapp.backend.user.model.UserStatus.INACTIVE
+              and c.status = ru.fitapp.backend.user.model.UserStatus.ACTIVE
             order by tc.planSelected desc, tc.id asc
             """)
     List<TrainerClient> findActiveByTrainerIdForPlan(Long trainerId);

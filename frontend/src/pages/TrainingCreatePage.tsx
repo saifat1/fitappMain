@@ -81,7 +81,7 @@ export default function TrainingCreatePage() {
             try {
                 const data = await trainerApi.getClients();
                 // Archived (deactivated) clients can't get new trainings.
-                if (active) setClients(data.filter((c) => c.status !== "INACTIVE"));
+                if (active) setClients(data.filter((c) => c.status === "ACTIVE"));
             } catch (error) {
                 if (active) setErrorMessage(resolveApiError(error, "Не удалось загрузить клиентов"));
             }

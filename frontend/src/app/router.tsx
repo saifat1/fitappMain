@@ -40,6 +40,7 @@ import ClientProfilePage from "../pages/ClientProfilePage";
 import SubscriptionPage from "../pages/SubscriptionPage";
 import TestPaymentPage from "../pages/TestPaymentPage";
 import PricingPage from "../pages/PricingPage";
+import DeleteAccountPage from "../pages/DeleteAccountPage";
 
 export const router = createBrowserRouter([
     {
@@ -81,6 +82,11 @@ export const router = createBrowserRouter([
     {
         path: "/pricing",
         element: <PricingPage />,
+    },
+    {
+        // Public on purpose: the app stores link here (FIT-70); the page asks to sign in first.
+        path: "/account/delete",
+        element: <DeleteAccountPage />,
     },
 
 

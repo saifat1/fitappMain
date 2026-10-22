@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import ru.fitapp.backend.auth.dto.AuthResponse;
 import ru.fitapp.backend.auth.dto.CurrentUserResponse;
+import ru.fitapp.backend.auth.dto.DeleteAccountRequest;
 import ru.fitapp.backend.auth.dto.InviteDetailsResponse;
 import ru.fitapp.backend.auth.dto.LoginRequest;
 import ru.fitapp.backend.auth.dto.RegisterByInviteRequest;
@@ -12,6 +13,7 @@ import ru.fitapp.backend.auth.passwordreset.dto.ForgotPasswordRequest;
 import ru.fitapp.backend.auth.passwordreset.dto.MessageResponse;
 import ru.fitapp.backend.auth.passwordreset.dto.ResetPasswordRequest;
 import ru.fitapp.backend.auth.passwordreset.service.PasswordResetService;
+import ru.fitapp.backend.auth.service.AccountDeletionService;
 import ru.fitapp.backend.auth.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -21,10 +23,16 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final AccountDeletionService accountDeletionService;
 
-    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
+    public AuthController(
+            AuthService authService,
+            PasswordResetService passwordResetService,
+            AccountDeletionService accountDeletionService
+    ) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
+        this.accountDeletionService = accountDeletionService;
     }
 
     @PostMapping("/login")
@@ -65,5 +73,12 @@ public class AuthController {
     @GetMapping("/me")
     public CurrentUserResponse me() {
         return authService.me();
+    }
+
+    /** The signed-in user deletes their own account (FIT-70); requires the current password. */
+    @PostMapping("/delete-account")
+    public MessageResponse deleteAccount(@Valid @RequestBody DeleteAccountRequest request) {
+        accountDeletionService.deleteCurrentAccount(request.getPassword());
+        return new MessageResponse("Аккаунт удалён");
     }
 }
