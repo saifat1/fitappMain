@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import FbTextField from "./FbTextField";
 
 type Props = {
@@ -50,8 +50,21 @@ export default function FbPasswordField({
 }: Props) {
     const [visible, setVisible] = useState(false);
 
+    // FIT-61: a password the browser generated/autofilled ("Strong password" on iOS) stays masked
+    // when only `type` changes — the browser keeps its lock on that input. So on toggle we take the
+    // value straight from the DOM (autofill may not have fired onChange yet) and re-mount the input
+    // via `key`, which gives a fresh element without the lock.
+    const toggle = (event: MouseEvent<HTMLButtonElement>) => {
+        const input = event.currentTarget.parentElement?.querySelector("input");
+        if (input && input.value !== value) {
+            onChange(input.value);
+        }
+        setVisible((prev) => !prev);
+    };
+
     return (
         <FbTextField
+            key={visible ? "visible" : "hidden"}
             id={id}
             label={label}
             value={value}
@@ -66,7 +79,7 @@ export default function FbPasswordField({
                 <button
                     type="button"
                     className="fb-field__toggle"
-                    onClick={() => setVisible((prev) => !prev)}
+                    onClick={toggle}
                     aria-label={visible ? "Скрыть пароль" : "Показать пароль"}
                     title={visible ? "Скрыть пароль" : "Показать пароль"}
                 >
