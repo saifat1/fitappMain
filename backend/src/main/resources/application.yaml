@@ -15,6 +15,9 @@ app:
       public-key: ${PUSH_VAPID_PUBLIC_KEY:}
       private-key: ${PUSH_VAPID_PRIVATE_KEY:}
       subject: ${PUSH_VAPID_SUBJECT:mailto:no-reply@fitapp.com.ru}
+    fcm:
+      # Firebase service-account JSON, base64 — store app push (FIT-69). Empty = off.
+      credentials-base64: ${FCM_CREDENTIALS_BASE64:}
   password-reset:
     expiration-minutes: ${PASSWORD_RESET_EXP_MIN:60}
   billing:

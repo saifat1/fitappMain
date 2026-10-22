@@ -68,6 +68,13 @@
 			<version>1.78.1</version>
 		</dependency>
 
+		<!-- Google OAuth2 for Firebase Cloud Messaging HTTP v1 (store app push, FIT-69) -->
+		<dependency>
+			<groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+			<version>1.40.0</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.apache.pdfbox</groupId>
 			<artifactId>pdfbox</artifactId>

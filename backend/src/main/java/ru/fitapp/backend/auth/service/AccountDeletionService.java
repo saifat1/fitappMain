@@ -53,6 +53,7 @@ public class AccountDeletionService {
         Long id = user.getId();
 
         deleteWhere("push_subscription", "user_id", id);
+        deleteWhere("device_push_token", "user_id", id);
         deleteWhere("password_reset_token", "user_id", id);
         deleteWhere("notification", "recipient_id", id);
         deleteWhere("user_consent", "user_id", id);

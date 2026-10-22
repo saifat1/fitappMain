@@ -15,6 +15,7 @@ import {
     removeAccessToken,
     setAccessToken,
 } from "../../../shared/lib/tokenStorage";
+import { registerNativePush, unregisterNativePush } from "../../push/lib/nativePush";
 import type {
     CurrentUserResponse,
     LoginRequest,
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [requiresConsent, setRequiresConsent] = useState(false);
 
     const logout = useCallback(() => {
+        unregisterNativePush();
         removeAccessToken();
         setTokenState(null);
         setCurrentUser(null);
@@ -145,6 +147,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         void bootstrap();
     }, [loadMe, refreshConsentStatus, logout]);
+
+    // Store app (FIT-69): once someone is signed in, register this device for push notifications.
+    const signedInUserId = currentUser?.id;
+    useEffect(() => {
+        if (signedInUserId != null) {
+            void registerNativePush();
+        }
+    }, [signedInUserId]);
 
     const value = useMemo(
         () => ({

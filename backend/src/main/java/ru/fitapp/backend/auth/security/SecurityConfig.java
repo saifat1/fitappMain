@@ -48,6 +48,8 @@ public class SecurityConfig {
                                 "/api/auth/reset-password",
                                 "/api/auth/invites/**",
                                 "/api/payments/notifications/**",
+                                // logout in the store app: the device token alone identifies what to forget (FIT-69)
+                                "/api/push/devices/remove",
                                 "/api/public/**",
                                 "/uploads/**"
                         ).permitAll()

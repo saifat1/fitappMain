@@ -1,2 +1,5 @@
 /build/*
 !/build/.npmkeep
+
+# Firebase config — copied from ~/.fitapp at build time (FIT-69), not kept in git
+google-services.json

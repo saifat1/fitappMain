@@ -20,4 +20,13 @@ export const pushApi = {
     async unsubscribe(endpoint: string): Promise<void> {
         await apiClient.post("/push/unsubscribe", { endpoint });
     },
+
+    /** Store app (FIT-69): Firebase token of this device. */
+    async registerDevice(token: string, platform: "ANDROID" | "IOS"): Promise<void> {
+        await apiClient.post("/push/devices", { token, platform });
+    },
+
+    async removeDevice(token: string, platform: "ANDROID" | "IOS"): Promise<void> {
+        await apiClient.post("/push/devices/remove", { token, platform });
+    },
 };

@@ -11,6 +11,7 @@ import ru.fitapp.backend.notification.dto.NotificationResponse;
 import ru.fitapp.backend.notification.entity.Notification;
 import ru.fitapp.backend.notification.model.NotificationType;
 import ru.fitapp.backend.notification.repository.NotificationRepository;
+import ru.fitapp.backend.pushsubscription.service.FcmPushService;
 import ru.fitapp.backend.pushsubscription.service.WebPushService;
 import ru.fitapp.backend.reschedule.entity.RescheduleRequest;
 import ru.fitapp.backend.training.entity.Training;
@@ -31,15 +32,18 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final WebPushService webPushService;
+    private final FcmPushService fcmPushService;
     private final CurrentUserService currentUserService;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             WebPushService webPushService,
+            FcmPushService fcmPushService,
             CurrentUserService currentUserService
     ) {
         this.notificationRepository = notificationRepository;
         this.webPushService = webPushService;
+        this.fcmPushService = fcmPushService;
         this.currentUserService = currentUserService;
     }
 
@@ -287,16 +291,14 @@ public class NotificationService {
         notificationRepository.save(notification);
 
         String pushBody = actorLabel(actor) + (body != null && !body.isBlank() ? ", " + body : "");
-        webPushService.sendToUser(
-                recipient,
-                title,
-                pushBody,
-                Map.of(
-                        "type", type.name(),
-                        "relatedEntityType", relatedEntityType != null ? relatedEntityType : "",
-                        "relatedEntityId", relatedEntityId != null ? relatedEntityId : ""
-                )
+        Map<String, Object> pushData = Map.of(
+                "type", type.name(),
+                "relatedEntityType", relatedEntityType != null ? relatedEntityType : "",
+                "relatedEntityId", relatedEntityId != null ? relatedEntityId : ""
         );
+        // Browser / PWA and the store app (FIT-69) get the same notification.
+        webPushService.sendToUser(recipient, title, pushBody, pushData);
+        fcmPushService.sendToUser(recipient, title, pushBody, pushData);
     }
 
     private String trainingSlotBody(java.time.LocalDate date, java.time.LocalTime time) {
