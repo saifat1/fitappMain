@@ -157,13 +157,17 @@ export default function ClientBookingPage() {
         return result;
     }, [calendar, weekStart]);
 
+    // Default day = the first one with free time, picked once the week's slots have loaded
+    // (picking earlier landed on today even when today was closed). A day the client tapped stays.
+    const [dayPicked, setDayPicked] = useState(false);
     useEffect(() => {
+        if (isCalendarLoading || calendar == null) return;
         if (days.length === 0) {
             setSelectedDate("");
-        } else if (!days.some((d) => d.date === selectedDate)) {
+        } else if (!dayPicked || !days.some((d) => d.date === selectedDate)) {
             setSelectedDate((days.find((d) => d.slots.some(isFree)) ?? days[0]).date);
         }
-    }, [days, selectedDate, isFree]);
+    }, [days, selectedDate, isFree, isCalendarLoading, calendar, dayPicked]);
 
     const selectedDay = days.find((d) => d.date === selectedDate) ?? null;
     const trainer = trainers.find((t) => t.trainerId === trainerId) ?? null;
@@ -246,12 +250,12 @@ export default function ClientBookingPage() {
                                 className="fb-timer__btn"
                                 aria-label="Предыдущая неделя"
                                 disabled={isCurrentWeek}
-                                onClick={() => setWeekStart((w) => addDays(w, -7))}
+                                onClick={() => { setDayPicked(false); setWeekStart((w) => addDays(w, -7)); }}
                             >
                                 ‹
                             </button>
                             <span className="fb-book__week-label">{weekLabel(weekStart, weekEnd)}</span>
-                            <button type="button" className="fb-timer__btn" aria-label="Следующая неделя" onClick={() => setWeekStart((w) => addDays(w, 7))}>
+                            <button type="button" className="fb-timer__btn" aria-label="Следующая неделя" onClick={() => { setDayPicked(false); setWeekStart((w) => addDays(w, 7)); }}>
                                 ›
                             </button>
                         </div>
@@ -271,7 +275,7 @@ export default function ClientBookingPage() {
                                                 key={d.date}
                                                 type="button"
                                                 className={`fb-book__day ${d.date === selectedDate ? "fb-book__day--active" : ""} ${free === 0 ? "fb-book__day--empty" : ""}`}
-                                                onClick={() => setSelectedDate(d.date)}
+                                                onClick={() => { setDayPicked(true); setSelectedDate(d.date); }}
                                             >
                                                 <span className="fb-book__day-wd">{date.toLocaleDateString("ru-RU", { weekday: "short" })}</span>
                                                 <span className="fb-book__day-num">{date.getDate()}</span>
