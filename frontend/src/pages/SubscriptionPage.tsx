@@ -190,7 +190,7 @@ export default function SubscriptionPage() {
                         Помесячно
                     </button>
                     <button type="button" className={`fb-segment__item ${period === "YEAR" ? "fb-segment__item--active" : ""}`} onClick={() => setPeriod("YEAR")}>
-                        На год{data.plans[1] ? ` · −${yearSavingPercent(data.plans[1])}%` : ""}
+                        На год{data.plans[1] ? ` −${yearSavingPercent(data.plans[1])}%` : ""}
                     </button>
                 </div>
 
