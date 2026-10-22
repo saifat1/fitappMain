@@ -1,0 +1,163 @@
+databaseChangeLog:
+  - changeSet:
+      id: 040-create-subscription
+      author: claude
+      changes:
+        - createTable:
+            tableName: trainer_subscription
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_trainer_subscription
+                    nullable: false
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_trainer_subscription_trainer
+              - column:
+                  name: plan
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: billing_period
+                  type: varchar(8)
+              - column:
+                  name: trial_ends_at
+                  type: timestamp
+              - column:
+                  name: paid_until
+                  type: timestamp
+              - column:
+                  name: auto_renew
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payment_method_token
+                  type: varchar(255)
+              - column:
+                  name: payment_method_title
+                  type: varchar(64)
+              - column:
+                  name: last_renewal_attempt_at
+                  type: timestamp
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: trainer_subscription
+            baseColumnNames: trainer_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_trainer_subscription_trainer
+            onDelete: CASCADE
+
+        - createTable:
+            tableName: subscription_payment
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_subscription_payment
+                    nullable: false
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: billing_period
+                  type: varchar(8)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount_kopecks
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: purpose
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: provider
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: provider_payment_id
+                  type: varchar(128)
+              - column:
+                  name: failure_reason
+                  type: varchar(255)
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: paid_at
+                  type: timestamp
+
+        - addForeignKeyConstraint:
+            baseTableName: subscription_payment
+            baseColumnNames: trainer_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_subscription_payment_trainer
+            onDelete: CASCADE
+
+        - createIndex:
+            tableName: subscription_payment
+            indexName: idx_subscription_payment_trainer
+            columns:
+              - column:
+                  name: trainer_id
+
+        - createIndex:
+            tableName: subscription_payment
+            indexName: idx_subscription_payment_provider_id
+            columns:
+              - column:
+                  name: provider_payment_id
+
+        - addColumn:
+            tableName: trainer_client
+            columns:
+              - column:
+                  name: plan_selected
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

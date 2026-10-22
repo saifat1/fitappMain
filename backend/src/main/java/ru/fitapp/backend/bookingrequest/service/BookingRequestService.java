@@ -12,6 +12,7 @@ import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
+import ru.fitapp.backend.subscription.service.SubscriptionAccessService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.CancelledBy;
 import ru.fitapp.backend.training.model.TrainingStatus;
@@ -36,6 +37,7 @@ public class BookingRequestService {
     private final UserService userService;
     private final NotificationService notificationService;
     private final ClientContractService clientContractService;
+    private final SubscriptionAccessService subscriptionAccessService;
 
     public BookingRequestService(
             BookingRequestRepository bookingRequestRepository,
@@ -45,8 +47,10 @@ public class BookingRequestService {
             TrainingRepository trainingRepository,
             UserService userService,
             NotificationService notificationService,
-            ClientContractService clientContractService
+            ClientContractService clientContractService,
+            SubscriptionAccessService subscriptionAccessService
     ) {
+        this.subscriptionAccessService = subscriptionAccessService;
         this.bookingRequestRepository = bookingRequestRepository;
         this.trainerClientRepository = trainerClientRepository;
         this.currentUserService = currentUserService;
@@ -204,6 +208,8 @@ public class BookingRequestService {
         if (overlappingTrainings > 0) {
             throw new ApiException("SLOT_ALREADY_TAKEN", "Слот уже занят");
         }
+
+        subscriptionAccessService.assertClientWorkable(trainer, bookingRequest.getClient().getId());
 
         Training training = new Training()
                 .setTrainer(bookingRequest.getTrainer())

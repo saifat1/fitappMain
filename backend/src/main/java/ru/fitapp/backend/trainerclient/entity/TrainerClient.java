@@ -41,7 +41,23 @@ public class TrainerClient {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Chosen by the trainer as one of the clients that stay workable when there are more active
+     * clients than the subscription plan allows (see SubscriptionService.getWorkableClientIds).
+     */
+    @Column(name = "plan_selected", nullable = false)
+    private Boolean planSelected = false;
+
     public TrainerClient() {
+    }
+
+    public Boolean getPlanSelected() {
+        return planSelected;
+    }
+
+    public TrainerClient setPlanSelected(Boolean planSelected) {
+        this.planSelected = planSelected;
+        return this;
     }
 
     public Long getId() {

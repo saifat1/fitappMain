@@ -3,6 +3,7 @@ package ru.fitapp.backend.trainer.invite.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.subscription.service.SubscriptionAccessService;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.invite.entity.Invite;
@@ -28,11 +29,15 @@ public class TrainerInviteService {
     @Value("${app.public-base-url}")
     private String publicBaseUrl;
 
+    private final SubscriptionAccessService subscriptionAccessService;
+
     public TrainerInviteService(
             InviteRepository inviteRepository,
             CurrentUserService currentUserService,
-            TrainerClientService trainerClientService
+            TrainerClientService trainerClientService,
+            SubscriptionAccessService subscriptionAccessService
     ) {
+        this.subscriptionAccessService = subscriptionAccessService;
         this.inviteRepository = inviteRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
@@ -40,6 +45,8 @@ public class TrainerInviteService {
 
     public InviteResponse createInvite(CreateInviteRequest request) {
         AppUser trainer = currentUserService.getCurrentTrainer();
+        // An invite brings a new active client — check the plan's limit up front, not at sign-up.
+        subscriptionAccessService.assertCanAddClient(trainer);
         int expiresInDays = request.getExpiresInDays() == null ? 7 : request.getExpiresInDays();
         String normalizedEmail = normalizeEmail(request.getEmail());
 

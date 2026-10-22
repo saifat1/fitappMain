@@ -9,6 +9,7 @@ import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
+import ru.fitapp.backend.subscription.service.SubscriptionAccessService;
 import ru.fitapp.backend.training.entity.Training;
 import ru.fitapp.backend.training.model.CancelledBy;
 import ru.fitapp.backend.training.model.TrainingStatus;
@@ -36,19 +37,22 @@ public class TrainingService {
     private final AnalyticsService analyticsService;
     private final NotificationService notificationService;
     private final ClientContractService clientContractService;
+    private final SubscriptionAccessService subscriptionAccessService;
 
     public TrainingService(TrainingRepository trainingRepository,
                            CurrentUserService currentUserService,
                            TrainerClientService trainerClientService,
                            AnalyticsService analyticsService,
                            NotificationService notificationService,
-                           ClientContractService clientContractService) {
+                           ClientContractService clientContractService,
+                           SubscriptionAccessService subscriptionAccessService) {
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.analyticsService = analyticsService;
         this.notificationService = notificationService;
         this.clientContractService = clientContractService;
+        this.subscriptionAccessService = subscriptionAccessService;
     }
 
     public TrainingResponse createTraining(CreateTrainingRequest request) {
@@ -56,6 +60,7 @@ public class TrainingService {
         validateTimeRange(request.getStartTime(), request.getEndTime());
 
         AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), request.getClientId());
+        subscriptionAccessService.assertClientWorkable(trainer, client.getId());
         TrainingType trainingType = parseTrainingType(request.getTrainingType());
 
         String title = normalizeNote(request.getTitle());

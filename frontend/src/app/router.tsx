@@ -40,6 +40,8 @@ import LegalDocumentPage from "../pages/LegalDocumentPage";
 import LegalConsentsPage from "../pages/LegalConsentsPage";
 import NotificationsPage from "../pages/NotificationsPage";
 import ClientProfilePage from "../pages/ClientProfilePage";
+import SubscriptionPage from "../pages/SubscriptionPage";
+import TestPaymentPage from "../pages/TestPaymentPage";
 
 export const router = createBrowserRouter([
     {
@@ -132,6 +134,26 @@ export const router = createBrowserRouter([
             <ProtectedRoute>
                 <TrainerRoute>
                     <TrainerProfilePage />
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/subscription",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <SubscriptionPage />
+                </TrainerRoute>
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/subscription/test-pay/:paymentId",
+        element: (
+            <ProtectedRoute>
+                <TrainerRoute>
+                    <TestPaymentPage />
                 </TrainerRoute>
             </ProtectedRoute>
         ),

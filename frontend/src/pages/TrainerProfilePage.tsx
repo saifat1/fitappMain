@@ -239,6 +239,18 @@ export default function TrainerProfilePage() {
                 <span className="fb-row__chevron">›</span>
             </button>
 
+            <button
+                type="button"
+                className="fb-row fb-row--button fb-profile-link"
+                onClick={() => navigate("/subscription")}
+            >
+                <span className="fb-row__main">
+                    <span className="fb-row__title">Подписка</span>
+                    <span className="fb-row__sub">Тариф, оплата и автопродление</span>
+                </span>
+                <span className="fb-row__chevron">›</span>
+            </button>
+
             <div className="fb-segment">
                 <button type="button" className={tabItemClass(activeTab === "info")} onClick={() => setActiveTab("info")}>
                     О себе

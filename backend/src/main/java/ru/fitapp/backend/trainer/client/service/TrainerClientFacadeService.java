@@ -2,6 +2,7 @@ package ru.fitapp.backend.trainer.client.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.subscription.service.SubscriptionAccessService;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.dto.ClientContractSummary;
 import ru.fitapp.backend.contract.dto.CreateClientContractRequest;
@@ -28,14 +29,17 @@ public class TrainerClientFacadeService {
     private final TrainerInviteService trainerInviteService;
     private final TrainerClientHistoryService trainerClientHistoryService;
     private final ClientContractService clientContractService;
+    private final SubscriptionAccessService subscriptionAccessService;
 
     public TrainerClientFacadeService(
             CurrentUserService currentUserService,
             TrainerClientService trainerClientService,
             TrainerInviteService trainerInviteService,
             TrainerClientHistoryService trainerClientHistoryService,
-            ClientContractService clientContractService
+            ClientContractService clientContractService,
+            SubscriptionAccessService subscriptionAccessService
     ) {
+        this.subscriptionAccessService = subscriptionAccessService;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.trainerInviteService = trainerInviteService;
@@ -68,6 +72,7 @@ public class TrainerClientFacadeService {
 
     public TrainerClientResponse createCurrentTrainerClient(CreateManualTrainerClientRequest request) {
         AppUser trainer = currentUserService.getCurrentTrainer();
+        subscriptionAccessService.assertCanAddClient(trainer);
 
         String email = request.getEmail() == null ? "" : request.getEmail().trim();
         String firstName = request.getFirstName() == null ? "" : request.getFirstName().trim();
@@ -157,6 +162,7 @@ public class TrainerClientFacadeService {
 
     public TrainerClientResponse restoreCurrentTrainerClient(Long clientId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
+        subscriptionAccessService.assertCanAddClient(trainer);
         return mapToResponse(trainerClientService.restoreClientOfTrainer(trainer.getId(), clientId), trainer.getId());
     }
 

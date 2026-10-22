@@ -1479,3 +1479,97 @@
     font-weight: 700;
 }
 .fb-reschedule-banner__text { flex: 1; font-size: 14px; font-weight: 500; }
+
+/* «Подписка» screen */
+.fb-sub { gap: 12px; padding-top: 12px; }
+
+.fb-sub__test {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fff8d6;
+    color: var(--fb-ink-2);
+    font-size: 13px;
+}
+
+.fb-sub__test-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.fb-sub__period { margin: 0; }
+
+.fb-sub__note {
+    font-size: 12px;
+    color: var(--fb-muted);
+    line-height: 1.45;
+}
+
+.fb-sub-status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border-radius: var(--fb-radius-card);
+    background: var(--fb-surface-2);
+}
+
+.fb-sub-status--warn { background: rgba(224, 57, 43, 0.1); }
+.fb-sub-status__title { font-size: 17px; font-weight: 700; color: var(--fb-ink); }
+.fb-sub-status__sub { font-size: 13px; color: var(--fb-ink-2); }
+.fb-sub-status__usage { font-size: 13px; color: var(--fb-muted); }
+
+.fb-sub-status__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--fb-ink);
+}
+
+.fb-sub-limit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    border: 1px solid var(--fb-line);
+    border-radius: var(--fb-radius-card);
+}
+
+.fb-sub-limit__title { font-size: 15px; font-weight: 700; color: var(--fb-ink); }
+.fb-sub-limit__sub { font-size: 13px; color: var(--fb-ink-2); }
+
+.fb-sub-limit__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 15px;
+    color: var(--fb-ink);
+}
+
+.fb-sub-limit__row input { width: 20px; height: 20px; accent-color: var(--fb-green); }
+.fb-sub-limit__row .fb-pill { margin-left: auto; }
+.fb-sub-limit__row--disabled { color: var(--fb-muted); }
+
+.fb-plan {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 16px;
+    border: 1px solid var(--fb-line);
+    border-radius: var(--fb-radius-card);
+    background: var(--fb-surface);
+}
+
+.fb-plan--accent { border: 2px solid var(--fb-green); }
+.fb-plan__head { display: flex; align-items: center; gap: 8px; }
+.fb-plan__title { font-size: 17px; font-weight: 700; color: var(--fb-ink); }
+.fb-plan__price { font-size: 26px; font-weight: 800; color: var(--fb-ink); }
+.fb-plan__per { font-size: 14px; font-weight: 500; color: var(--fb-muted); }
+.fb-plan__hint { font-size: 12px; color: var(--fb-muted); }
+.fb-plan__limit { font-size: 14px; font-weight: 600; color: var(--fb-green-deep); }
+
+.fb-plan__features {
+    margin: 0 0 4px;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--fb-ink-2);
+}

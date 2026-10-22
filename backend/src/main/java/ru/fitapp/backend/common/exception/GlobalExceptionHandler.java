@@ -119,6 +119,7 @@ public class GlobalExceptionHandler {
             case "RESCHEDULE_REQUEST_ALREADY_PROCESSED" -> HttpStatus.BAD_REQUEST;
             case "INVALID_RESCHEDULE_DECISION" -> HttpStatus.BAD_REQUEST;
             case "TRAINING_ALREADY_CANCELLED" -> HttpStatus.BAD_REQUEST;
+            case "SUBSCRIPTION_LIMIT" -> HttpStatus.PAYMENT_REQUIRED;
             default -> HttpStatus.BAD_REQUEST;
         };
     }

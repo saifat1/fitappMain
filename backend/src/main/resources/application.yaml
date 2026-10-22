@@ -15,6 +15,12 @@ app:
       subject: ${PUSH_VAPID_SUBJECT:mailto:no-reply@fitapp.com.ru}
   password-reset:
     expiration-minutes: ${PASSWORD_RESET_EXP_MIN:60}
+  billing:
+    # Off: no limits, «Подписка» shows "скоро". Turn on together with a real provider —
+    # every trainer then gets a 14-day Pro trial from their first visit.
+    enabled: ${BILLING_ENABLED:false}
+    # "test" — our own fake payment page (dev stand only); real providers get their own codes.
+    provider: ${BILLING_PROVIDER:test}
 spring:
   application:
     name: fitapp-backend
