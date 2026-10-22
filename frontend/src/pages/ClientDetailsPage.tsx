@@ -40,6 +40,8 @@ export default function ClientDetailsPage() {
     const [errorMessage, setErrorMessage] = useState("");
 
     const [menuOpen, setMenuOpen] = useState(false);
+    const [resetLink, setResetLink] = useState<{ link: string; expiresAt: string } | null>(null);
+    const [resetCopied, setResetCopied] = useState(false);
     const [editing, setEditing] = useState(false);
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
@@ -90,6 +92,37 @@ export default function ClientDetailsPage() {
             }
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось создать приглашение"));
+        }
+    };
+
+    // FIT-71: the client can't sign in and the email doesn't arrive — the trainer passes a one-time link instead.
+    const handleResetLink = async () => {
+        setMenuOpen(false);
+        setErrorMessage("");
+        try {
+            setResetLink(await trainerApi.createPasswordResetLink(id));
+            setResetCopied(false);
+        } catch (error) {
+            setErrorMessage(resolveApiError(error, "Не удалось создать ссылку"));
+        }
+    };
+
+    const handleCopyResetLink = async () => {
+        if (!resetLink) return;
+        try {
+            await navigator.clipboard.writeText(resetLink.link);
+            setResetCopied(true);
+        } catch {
+            setErrorMessage("Не удалось скопировать ссылку");
+        }
+    };
+
+    const handleShareResetLink = async () => {
+        if (!resetLink) return;
+        try {
+            await navigator.share({ title: "Новый пароль FitApp", text: "Ссылка, чтобы задать новый пароль в FitApp:", url: resetLink.link });
+        } catch {
+            /* the share sheet was closed */
         }
     };
 
@@ -195,6 +228,11 @@ export default function ClientDetailsPage() {
                                     Редактировать
                                 </button>
                             )}
+                            {!isArchivedClient(client) && client.claimedByClient && (
+                                <button type="button" className="fb-menu__item" onClick={handleResetLink}>
+                                    Ссылка для нового пароля
+                                </button>
+                            )}
                             {isArchivedClient(client) ? (
                                 <>
                                     {!isDeletedClient(client) && (
@@ -259,6 +297,33 @@ export default function ClientDetailsPage() {
                             )}
                             {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
                         </div>
+
+                        {resetLink && (
+                            <div className="fb-reset-link">
+                                <div className="fb-reset-link__title">Ссылка для нового пароля</div>
+                                <div className="fb-hint">
+                                    Отправьте её клиенту в мессенджер. Сработает один раз, действует до{" "}
+                                    {new Date(resetLink.expiresAt).toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.
+                                    Прежние такие ссылки больше не работают.
+                                </div>
+                                <div className="fb-linkbox">
+                                    <span className="fb-linkbox__url">{resetLink.link}</span>
+                                    <button type="button" className="fb-linkbox__copy" onClick={handleCopyResetLink} aria-label="Скопировать">
+                                        {resetCopied ? "✓" : "⧉"}
+                                    </button>
+                                </div>
+                                <div className="fb-reset-link__actions">
+                                    {"share" in navigator && (
+                                        <button type="button" className="fb-btn fb-btn--primary" onClick={handleShareResetLink}>
+                                            Поделиться
+                                        </button>
+                                    )}
+                                    <button type="button" className="fb-btn fb-btn--ghost" onClick={() => setResetLink(null)}>
+                                        Готово
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 

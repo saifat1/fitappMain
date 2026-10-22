@@ -49,6 +49,12 @@ export const trainerApi = {
         return response.data;
     },
 
+    /** FIT-71: one-time link (24 h) for a registered client to set a new password — the trainer sends it in a messenger. */
+    createPasswordResetLink: async (clientId: number): Promise<{ link: string; expiresAt: string }> => {
+        const response = await apiClient.post(`/trainer/clients/${clientId}/password-reset-link`);
+        return response.data;
+    },
+
     createInviteForClient: async (
         clientId: number,
         payload?: CreateTrainerClientInviteRequest

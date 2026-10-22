@@ -2,6 +2,8 @@ package ru.fitapp.backend.trainer.client.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.auth.passwordreset.dto.PasswordResetLinkResponse;
+import ru.fitapp.backend.auth.passwordreset.service.PasswordResetService;
 import ru.fitapp.backend.subscription.service.SubscriptionAccessService;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.dto.ClientContractSummary;
@@ -30,6 +32,7 @@ public class TrainerClientFacadeService {
     private final TrainerClientHistoryService trainerClientHistoryService;
     private final ClientContractService clientContractService;
     private final SubscriptionAccessService subscriptionAccessService;
+    private final PasswordResetService passwordResetService;
 
     public TrainerClientFacadeService(
             CurrentUserService currentUserService,
@@ -37,9 +40,11 @@ public class TrainerClientFacadeService {
             TrainerInviteService trainerInviteService,
             TrainerClientHistoryService trainerClientHistoryService,
             ClientContractService clientContractService,
-            SubscriptionAccessService subscriptionAccessService
+            SubscriptionAccessService subscriptionAccessService,
+            PasswordResetService passwordResetService
     ) {
         this.subscriptionAccessService = subscriptionAccessService;
+        this.passwordResetService = passwordResetService;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
         this.trainerInviteService = trainerInviteService;
@@ -142,6 +147,13 @@ public class TrainerClientFacadeService {
         AppUser trainer = currentUserService.getCurrentTrainer();
         Integer expiresInDays = request == null ? null : request.getExpiresInDays();
         return trainerInviteService.createInviteForClient(trainer, clientId, expiresInDays);
+    }
+
+    /** FIT-71: a «set a new password» link for the trainer's client, to send without email. */
+    public PasswordResetLinkResponse createPasswordResetLinkForCurrentTrainerClient(Long clientId) {
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        AppUser client = trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
+        return passwordResetService.createLinkForClient(client);
     }
 
     public void deactivateCurrentTrainerClient(Long clientId) {

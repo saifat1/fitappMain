@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.fitapp.backend.auth.passwordreset.dto.PasswordResetLinkResponse;
 import ru.fitapp.backend.auth.passwordreset.entity.PasswordResetToken;
 import ru.fitapp.backend.auth.passwordreset.repository.PasswordResetTokenRepository;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.mail.MailService;
 import ru.fitapp.backend.user.entity.AppUser;
+import ru.fitapp.backend.user.model.UserStatus;
 import ru.fitapp.backend.user.service.UserService;
 
 import java.nio.charset.StandardCharsets;
@@ -25,6 +27,9 @@ public class PasswordResetService {
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+
+    /** The trainer sends the link in a messenger and the client may open it later than an email link. */
+    private static final long TRAINER_LINK_HOURS = 24;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -64,6 +69,32 @@ public class PasswordResetService {
             String link = publicBaseUrl + "/reset-password?token=" + rawToken;
             mailService.sendPasswordReset(user.getEmail(), link);
         });
+    }
+
+    /**
+     * The trainer issues a one-time link for a registered client who can't sign in and can't get the email
+     * (FIT-71). Earlier unused links of the client stop working.
+     */
+    public PasswordResetLinkResponse createLinkForClient(AppUser client) {
+        if (client.getStatus() != UserStatus.ACTIVE) {
+            throw new ApiException("CLIENT_NOT_ACTIVE", "Клиент в архиве или удалил аккаунт — ссылку выдать нельзя");
+        }
+        if (!client.isClaimedByClient()) {
+            throw new ApiException("CLIENT_NOT_REGISTERED", "Клиент ещё не зарегистрировался — отправьте ему приглашение");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        tokenRepository.invalidateUnused(client.getId(), now);
+
+        String rawToken = generateRawToken();
+        LocalDateTime expiresAt = now.plusHours(TRAINER_LINK_HOURS);
+        tokenRepository.save(new PasswordResetToken()
+                .setUserId(client.getId())
+                .setTokenHash(hash(rawToken))
+                .setExpiresAt(expiresAt)
+                .setCreatedAt(now));
+
+        return new PasswordResetLinkResponse(publicBaseUrl + "/reset-password?token=" + rawToken, expiresAt);
     }
 
     public void resetPassword(String rawToken, String newPassword) {

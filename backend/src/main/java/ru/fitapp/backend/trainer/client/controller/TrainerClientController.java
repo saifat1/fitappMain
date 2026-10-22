@@ -3,6 +3,7 @@ package ru.fitapp.backend.trainer.client.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.fitapp.backend.auth.passwordreset.dto.PasswordResetLinkResponse;
 import ru.fitapp.backend.trainer.client.dto.CreateManualTrainerClientRequest;
 import ru.fitapp.backend.trainer.client.dto.CreateTrainerClientInviteRequest;
 import ru.fitapp.backend.trainer.client.dto.TrainerClientResponse;
@@ -47,6 +48,12 @@ public class TrainerClientController {
             @Valid @RequestBody(required = false) CreateTrainerClientInviteRequest request
     ) {
         return trainerClientFacadeService.createInviteForCurrentTrainerClient(clientId, request);
+    }
+
+    /** FIT-71: one-time link to set a new password, for a client who can't sign in. */
+    @PostMapping("/{clientId}/password-reset-link")
+    public PasswordResetLinkResponse createPasswordResetLinkForCurrentTrainerClient(@PathVariable Long clientId) {
+        return trainerClientFacadeService.createPasswordResetLinkForCurrentTrainerClient(clientId);
     }
 
     @PutMapping("/{clientId}")
