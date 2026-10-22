@@ -36,8 +36,13 @@
 - Сверх лимита: рабочими остаются N клиентов (выбор тренера, `trainer_client.plan_selected`), остальные — только просмотр;
   ничего не удаляется. Проверки — `SubscriptionAccessService.assertCanAddClient / assertClientWorkable`.
 - `BILLING_ENABLED` (по умолчанию false — лимитов нет, экран «скоро»). Включать на бою только вместе с реальным провайдером.
-- Платёжка — через адаптер `PaymentProvider`, `BILLING_PROVIDER`; сейчас только `test` (своя страница `/subscription/test-pay/:id`,
-  деньги не списываются — только для дев-стенда). Владелец — самозанятый: нужен провайдер с автосписаниями и авточеками в «Мой налог».
+- Платёжка — через адаптер `PaymentProvider`, `BILLING_PROVIDER`: `test` (своя страница `/subscription/test-pay/:id`,
+  деньги не списываются — только для дев-стенда) или `robokassa` (`RobokassaPaymentProvider`, магазин `fit_app`).
+  Владелец — самозанятый; чеки в «Мой налог» — «Робочеки СМЗ» в Robokassa.
+- Robokassa: `ROBOKASSA_LOGIN/PASSWORD1/PASSWORD2/TEST/HASH` только в `.env` сервера (при `ROBOKASSA_TEST=true` — тестовые пароли).
+  Result URL `https://<сайт>/api/payments/notifications/robokassa` (POST), Success/Fail URL `https://<сайт>/subscription`.
+  InvId = `subscription_payment.id`; автопродление — `Merchant/Recurring` с PreviousInvoiceID первого платежа (подключает поддержка).
+- Публичные страницы для модерации платёжки: `/pricing`, `/legal/offer`, `/legal/refund`; реквизиты — `SELLER_*` в `.env` сервера.
 
 ## Сборка и проверка (Windows, PowerShell 5.1)
 

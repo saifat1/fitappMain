@@ -28,4 +28,9 @@ public interface PaymentProvider {
      * provider's job). Empty — not a notification this provider understands / signature mismatch.
      */
     Optional<PaymentNotification> parseNotification(Map<String, String> headers, String body);
+
+    /** Body of the reply to an accepted notification (Robokassa expects "OK{InvId}"). */
+    default String acknowledge(PaymentNotification notification) {
+        return "OK";
+    }
 }

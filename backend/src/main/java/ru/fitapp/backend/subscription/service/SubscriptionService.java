@@ -204,8 +204,8 @@ public class SubscriptionService {
         return new CheckoutResponse(payment.getId(), created.confirmationUrl());
     }
 
-    /** Server-to-server notification from the real provider (webhook). */
-    public void handleProviderNotification(String code, Map<String, String> headers, String body) {
+    /** Server-to-server notification from the real provider (webhook); returns the reply body. */
+    public String handleProviderNotification(String code, Map<String, String> headers, String body) {
         PaymentProvider provider = providers.stream()
                 .filter(p -> p.code().equals(code))
                 .findFirst()
@@ -216,6 +216,7 @@ public class SubscriptionService {
                 .findByProviderAndProviderPaymentId(code, notification.providerPaymentId())
                 .orElseThrow(() -> new ApiException("NOT_FOUND", "Платёж не найден"));
         apply(payment, notification);
+        return provider.acknowledge(notification);
     }
 
     /**
@@ -224,7 +225,10 @@ public class SubscriptionService {
      * with the unused paid days converted at the price ratio; a running trial is kept on top.
      */
     void apply(SubscriptionPayment payment, PaymentNotification n) {
-        if (payment.getStatus() != PaymentStatus.PENDING) {
+        // A confirmed charge always counts, even one we already gave up on as "no confirmation"
+        // (Robokassa doesn't report declines, so a renewal is marked failed when the next attempt starts).
+        boolean lateSuccess = payment.getStatus() == PaymentStatus.FAILED && n.status() == PaymentStatus.SUCCEEDED;
+        if (payment.getStatus() != PaymentStatus.PENDING && !lateSuccess) {
             return;
         }
         LocalDateTime now = LocalDateTime.now();
@@ -238,7 +242,7 @@ public class SubscriptionService {
             return;
         }
 
-        payment.setStatus(PaymentStatus.SUCCEEDED).setPaidAt(now);
+        payment.setStatus(PaymentStatus.SUCCEEDED).setPaidAt(now).setFailureReason(null);
         SubscriptionAccessService.Resolved resolved = accessService.resolve(s, now);
         BillingPeriod period = payment.getBillingPeriod();
 
@@ -259,11 +263,13 @@ public class SubscriptionService {
                 .setTrialEndsAt(null)
                 .setAutoRenew(true)
                 .setLastRenewalAttemptAt(null);
-        if (n.paymentMethodToken() != null) {
+        // Only a trainer-confirmed payment sets the saved card: for Robokassa the token is the first
+        // payment of the series, and renewals must keep pointing at it.
+        if (payment.getPurpose() == PaymentPurpose.PURCHASE && n.paymentMethodToken() != null) {
             s.setPaymentMethodToken(n.paymentMethodToken());
-        }
-        if (n.paymentMethodTitle() != null) {
-            s.setPaymentMethodTitle(n.paymentMethodTitle());
+            if (n.paymentMethodTitle() != null) {
+                s.setPaymentMethodTitle(n.paymentMethodTitle());
+            }
         }
     }
 
@@ -301,6 +307,9 @@ public class SubscriptionService {
             return;
         }
         s.setLastRenewalAttemptAt(now);
+        // Robokassa reports only successful charges: a renewal still pending since the last attempt was declined.
+        paymentRepository.findAllByTrainerIdAndPurposeAndStatus(s.getTrainer().getId(), PaymentPurpose.RENEWAL, PaymentStatus.PENDING)
+                .forEach(p -> p.setStatus(PaymentStatus.FAILED).setFailureReason("Нет подтверждения оплаты от платёжного сервиса"));
         PaymentProvider provider = provider();
         SubscriptionPayment payment = paymentRepository.save(new SubscriptionPayment()
                 .setTrainer(s.getTrainer())
@@ -370,7 +379,8 @@ public class SubscriptionService {
     // ---------------------------------------------------------------- helpers
 
     private PaymentRequest paymentRequest(SubscriptionPayment payment, AppUser trainer) {
-        String description = "Подписка FitApp «" + payment.getPlan().getTitle() + "» на "
+        // Plain text: Robokassa rejects special characters in Description.
+        String description = "Подписка FitApp " + payment.getPlan().getTitle() + " на "
                 + (payment.getBillingPeriod() == BillingPeriod.YEAR ? "год" : "месяц");
         return new PaymentRequest(payment.getId(), payment.getAmountKopecks(), description,
                 publicBaseUrl + "/subscription?payment=" + payment.getId(), trainer.getEmail());

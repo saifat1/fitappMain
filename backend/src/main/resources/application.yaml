@@ -21,6 +21,16 @@ app:
     enabled: ${BILLING_ENABLED:false}
     # "test" — our own fake payment page (dev stand only); real providers get their own codes.
     provider: ${BILLING_PROVIDER:test}
+  # BILLING_PROVIDER=robokassa. Passwords #1/#2 from the shop's technical settings; with ROBOKASSA_TEST=true
+  # put the *test* passwords here. Hash must match the algorithm chosen in the shop settings.
+  robokassa:
+    login: ${ROBOKASSA_LOGIN:}
+    password1: ${ROBOKASSA_PASSWORD1:}
+    password2: ${ROBOKASSA_PASSWORD2:}
+    test: ${ROBOKASSA_TEST:true}
+    hash: ${ROBOKASSA_HASH:md5}
+    # Send the Receipt line item (fiscalization); off until checked against the shop's receipt settings.
+    receipt: ${ROBOKASSA_RECEIPT:false}
   # Seller details for the public «Тарифы» page and the offer (required by the payment provider).
   # Set on the server only — they are not kept in the repository.
   seller:

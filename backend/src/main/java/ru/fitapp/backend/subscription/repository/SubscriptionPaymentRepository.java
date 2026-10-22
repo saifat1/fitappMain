@@ -2,6 +2,8 @@ package ru.fitapp.backend.subscription.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.fitapp.backend.subscription.entity.SubscriptionPayment;
+import ru.fitapp.backend.subscription.model.PaymentPurpose;
+import ru.fitapp.backend.subscription.model.PaymentStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,4 +15,6 @@ public interface SubscriptionPaymentRepository extends JpaRepository<Subscriptio
     Optional<SubscriptionPayment> findByProviderAndProviderPaymentId(String provider, String providerPaymentId);
 
     Optional<SubscriptionPayment> findByIdAndTrainerId(Long id, Long trainerId);
+
+    List<SubscriptionPayment> findAllByTrainerIdAndPurposeAndStatus(Long trainerId, PaymentPurpose purpose, PaymentStatus status);
 }
