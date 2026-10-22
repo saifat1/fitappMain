@@ -20,10 +20,10 @@ type Props = {
     endHour?: number;
 };
 
-function trainingHour(training: TrainingResponse, startHour: number): number | null {
+function trainingHour(training: TrainingResponse): number | null {
     if (!training.startTime) return null;
     const hour = Number(training.startTime.slice(0, 2));
-    return Number.isFinite(hour) ? Math.max(hour, startHour) : null;
+    return Number.isFinite(hour) ? hour : null;
 }
 
 export default function DayTimeline({
@@ -33,15 +33,35 @@ export default function DayTimeline({
     onQuickAdd,
     onDeleteDutyBlock,
     processingDutyKey,
-    startHour = 8,
-    endHour = 21,
+    startHour: defaultStartHour = 8,
+    endHour: defaultEndHour = 21,
 }: Props) {
+    // The default 8:00–21:00 grid widens to fit trainings and duty slots outside it,
+    // otherwise e.g. a 22:00 training (clients can book it) would not be shown at all.
+    const { startHour, endHour } = useMemo(() => {
+        let from = defaultStartHour;
+        let to = defaultEndHour;
+        for (const training of dayTrainings) {
+            const hour = trainingHour(training);
+            if (hour == null) continue;
+            from = Math.min(from, hour);
+            to = Math.max(to, hour);
+        }
+        for (const slot of dayDutySlots) {
+            const hour = Number(slot.startTime.slice(0, 2));
+            if (!Number.isFinite(hour)) continue;
+            from = Math.min(from, hour);
+            to = Math.max(to, hour);
+        }
+        return { startHour: from, endHour: to };
+    }, [dayTrainings, dayDutySlots, defaultStartHour, defaultEndHour]);
+
     const hours = useMemo(() => buildHourSlots(startHour, endHour), [startHour, endHour]);
 
     const byHour = useMemo(() => {
         const map = new Map<number, TrainingResponse[]>();
         for (const training of dayTrainings) {
-            const hour = trainingHour(training, startHour);
+            const hour = trainingHour(training);
             const bucket = hour ?? startHour;
             const list = map.get(bucket) ?? [];
             list.push(training);
