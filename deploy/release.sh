@@ -1,6 +1,7 @@
 #!/bin/sh
 # Release of the current `main` on a server (dev or prod):  sh /opt/fitappMain/deploy/release.sh
 #
+# 4. old Docker build cache (older than a week) is pruned so the disk does not fill up
 # 1. backup: DB dump, .env, Caddyfile, local code changes and the previous commit → /root/fitapp-release-<ts>/
 # 2. update: local code edits are stashed (Caddyfile and .env stay server-local), git pull --ff-only
 # 3. rebuild and restart, wait for the backend, print the Liquibase changesets that ran
@@ -60,4 +61,7 @@ else
   docker logs "$BACKEND" 2>&1 | grep -E "ChangeSet .* ran successfully|Started .*Application|APPLICATION FAILED|ERROR" | tail -20
   docker logs "$BACKEND" 2>&1 | grep -q "Started .*Application" || { echo "ERROR: backend did not start — see rollback above"; exit 1; }
 fi
+# Build cache grows with every release (it filled the dev disk to 85%); keep only the last week of it.
+docker builder prune -f --filter until=168h >/dev/null 2>&1 || true
+
 echo "== release ok, backup in $B"
