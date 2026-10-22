@@ -134,6 +134,12 @@ export default function ClientHomeScreen() {
                     </div>
                 )}
 
+                {trainer && (
+                    <button type="button" className="fb-btn fb-btn--primary fb-book-cta" onClick={() => navigate("/client/booking")}>
+                        Записаться на тренировку
+                    </button>
+                )}
+
                 <div className="fb-section-header">
                     <span className="fb-section-title fb-section-title--flush">Ближайшая тренировка</span>
                 </div>
@@ -177,7 +183,17 @@ export default function ClientHomeScreen() {
                         </div>
                     </div>
                 ) : (
-                    <div className="fb-empty">Запланированных тренировок нет</div>
+                    <div className="fb-empty">
+                        Запланированных тренировок нет
+                        {trainer && (
+                            <>
+                                <br />
+                                <button type="button" className="fb-section-header__link" onClick={() => navigate("/client/booking")}>
+                                    Выбрать время у тренера ›
+                                </button>
+                            </>
+                        )}
+                    </div>
                 )}
 
                 {rest.length > 0 && (

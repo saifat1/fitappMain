@@ -335,9 +335,7 @@ export const router = createBrowserRouter([
         path: "/client/booking",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <ClientBookingPage />
-                </AppLayout>
+                <ClientBookingPage />
             </ProtectedRoute>
         ),
     },
