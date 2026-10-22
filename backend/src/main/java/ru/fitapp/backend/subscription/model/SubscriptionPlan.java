@@ -1,12 +1,12 @@
 package ru.fitapp.backend.subscription.model;
 
 /**
- * Trainer subscription plans (approved 22.10.2026). Prices are in kopecks; the client limit counts
- * the trainer's active (not archived) clients, null — no limit. Clients themselves never pay.
+ * Trainer subscription plans (approved 22.10.2026; Pro limit 30 → 15 in FIT-59). Prices are in kopecks;
+ * the client limit counts the trainer's active (not archived) clients, null — no limit. Clients never pay.
  */
 public enum SubscriptionPlan {
     FREE("Старт", 3, 0, 0),
-    PRO("Pro", 30, 69_000, 590_000),
+    PRO("Pro", 15, 69_000, 590_000),
     UNLIMITED("Безлимит", null, 119_000, 990_000);
 
     private final String title;
