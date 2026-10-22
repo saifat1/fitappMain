@@ -1,0 +1,7 @@
+# Secrets — real values live only on the servers / your machine. Template: .env.example
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
