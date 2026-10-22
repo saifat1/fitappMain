@@ -1,5 +1,7 @@
 app:
   public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:3000}
+  cors:
+    extra-origins: ${APP_EXTRA_ORIGINS:}
   jwt:
     secret: ${JWT_SECRET:dev-secret}
     expiration-ms: 86400000

@@ -64,23 +64,30 @@ public class SecurityConfig {
                 .build();
     }
 
-    /** The stand's own address (APP_PUBLIC_BASE_URL) is allowed too, so a new server needs only .env, not a code patch. */
+    /**
+     * The stand's own address (APP_PUBLIC_BASE_URL) is allowed too, so a new server needs only .env, not a code patch.
+     * APP_EXTRA_ORIGINS (comma-separated) keeps an old address working after a move to a new domain.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.public-base-url:http://localhost:3000}") String publicBaseUrl
+            @Value("${app.public-base-url:http://localhost:3000}") String publicBaseUrl,
+            @Value("${app.cors.extra-origins:}") String extraOrigins
     ) {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Stream.of(
-                "http://localhost:3000",
-                "http://localhost:5174",
-                "http://localhost:5173",
-                "http://89.111.137.65:8081",
-                "http://89-111-137-65.swtest.ru:8081",
-                "https://89-111-137-65.swtest.ru",
-                "https://89.111.137.65",
-                publicBaseUrl.replaceAll("/+$", "")
-        ).distinct().toList());
+        configuration.setAllowedOrigins(Stream.concat(
+                Stream.of(
+                        "http://localhost:3000",
+                        "http://localhost:5174",
+                        "http://localhost:5173",
+                        "http://89.111.137.65:8081",
+                        "http://89-111-137-65.swtest.ru:8081",
+                        "https://89-111-137-65.swtest.ru",
+                        "https://89.111.137.65",
+                        publicBaseUrl
+                ),
+                Stream.of(extraOrigins.split(","))
+        ).map(origin -> origin.trim().replaceAll("/+$", "")).filter(origin -> !origin.isEmpty()).distinct().toList());
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));

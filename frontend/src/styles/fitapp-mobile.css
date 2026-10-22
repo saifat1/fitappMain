@@ -1599,7 +1599,7 @@
     color: rgba(255, 255, 255, 0.75);
 }
 
-.fb-welcome__seller a { color: inherit; }
+.fb-welcome__seller a { color: inherit; white-space: nowrap; }
 
 /* client booking (FIT-63) */
 .fb-book-cta { width: 100%; margin: 4px 0 8px; }
