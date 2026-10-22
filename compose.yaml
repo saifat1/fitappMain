@@ -41,6 +41,8 @@ services:
       PUSH_VAPID_PUBLIC_KEY: ${PUSH_VAPID_PUBLIC_KEY:-}
       PUSH_VAPID_PRIVATE_KEY: ${PUSH_VAPID_PRIVATE_KEY:-}
       PUSH_VAPID_SUBJECT: ${PUSH_VAPID_SUBJECT:-mailto:no-reply@fitapp.com.ru}
+      BILLING_ENABLED: ${BILLING_ENABLED:-false}
+      BILLING_PROVIDER: ${BILLING_PROVIDER:-test}
     expose:
       - "8080"
 
