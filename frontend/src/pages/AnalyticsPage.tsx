@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import MobileShell from "../widgets/MobileShell";
+import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import {
     analyticsStatsApi,
     type AnalyticsSummary,
@@ -72,8 +74,12 @@ export default function AnalyticsPage() {
             });
 
             setSummary(data);
-        } catch {
-            setErrorText("Не удалось загрузить аналитику");
+        } catch (error) {
+            setErrorText(
+                axios.isAxiosError<ApiErrorResponse>(error)
+                    ? error.response?.data?.message ?? "Не удалось загрузить аналитику"
+                    : "Не удалось загрузить аналитику"
+            );
         } finally {
             setLoading(false);
         }
