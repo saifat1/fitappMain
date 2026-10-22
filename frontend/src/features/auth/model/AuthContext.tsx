@@ -7,6 +7,7 @@ import {
     useState,
     type ReactNode,
 } from "react";
+import axios from "axios";
 import { authApi } from "../../../shared/api/authApi";
 import { legalApi } from "../../../shared/api/legalApi";
 import {
@@ -36,6 +37,23 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+function isAuthRejected(error: unknown): boolean {
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    return status === 401 || status === 403;
+}
+
+/** Retries network/server hiccups (not auth rejections): 3 attempts, 0.8 s and 1.6 s apart. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+    for (let i = 0; ; i += 1) {
+        try {
+            return await fn();
+        } catch (error) {
+            if (isAuthRejected(error) || i >= attempts - 1) throw error;
+            await new Promise((resolve) => setTimeout(resolve, 800 * (i + 1)));
+        }
+    }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [token, setTokenState] = useState<string | null>(getAccessToken());
@@ -110,12 +128,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 return;
             }
 
+            // Sign out only when the server rejects the token (401/403). A dropped connection on a
+            // phone used to log the trainer out on the next page load — those are retried instead.
             try {
                 setTokenState(storedToken);
-                await loadMe();
-                await refreshConsentStatus();
-            } catch {
-                logout();
+                await withRetry(loadMe);
+                await withRetry(refreshConsentStatus);
+            } catch (error) {
+                if (isAuthRejected(error)) {
+                    logout();
+                }
             } finally {
                 setIsInitializing(false);
             }
