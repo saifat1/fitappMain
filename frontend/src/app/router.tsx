@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import LoginPage from "../pages/LoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
@@ -20,7 +20,6 @@ import TrainingDetailsPage from "../pages/TrainingDetailsPage";
 import ProtectedRoute from "../components/ProtectedRoute";
 import RootRedirect from "../components/RootRedirect";
 import TrainerRoute from "../components/TrainerRoute";
-import AppLayout from "../widgets/AppLayout";
 import RescheduleRequestsPage from "../pages/RescheduleRequestsPage";
 import TrainerProfilePage from "../pages/TrainerProfilePage";
 import RescheduleRequestDetailsPage from "../pages/RescheduleRequestDetailsPage";
@@ -28,13 +27,11 @@ import CreateRescheduleRequestPage from "../pages/CreateRescheduleRequestPage";
 import ExerciseTemplatesPage from "../pages/ExerciseTemplatesPage";
 import ExerciseTemplateCreatePage from "../pages/ExerciseTemplateCreatePage";
 import ExerciseTemplateDetailsPage from "../pages/ExerciseTemplateDetailsPage";
-import MorePage from "../pages/MorePage";
 import ClientBookingPage from "../pages/ClientBookingPage";
 import TrainerAvailabilityPage from "../pages/TrainerAvailabilityPage";
 import TrainerBookingRequestsPage from "../pages/TrainerBookingRequestsPage";
 import ClientHistoryPage from "../pages/ClientHistoryPage";
 import TrainerRegisterPage from "../pages/TrainerRegisterPage";
-import TrainerSalaryReportPage from "../pages/TrainerSalaryReportPage";
 import AnalyticsPage from "../pages/AnalyticsPage";
 import LegalDocumentPage from "../pages/LegalDocumentPage";
 import LegalConsentsPage from "../pages/LegalConsentsPage";
@@ -95,32 +92,20 @@ export const router = createBrowserRouter([
         path: "/analytics",
         element: (
             <ProtectedRoute>
-                <AppLayout>
-                    <AnalyticsPage />
-                </AppLayout>
+                <AnalyticsPage />
             </ProtectedRoute>
         ),
     },
     {
         path: "/trainer/salary-report",
-        element: (
-            <ProtectedRoute>
-                <TrainerRoute>
-                    <AppLayout>
-                        <TrainerSalaryReportPage />
-                    </AppLayout>
-                </TrainerRoute>
-            </ProtectedRoute>
-        ),
+        element: <Navigate to="/trainer/profile" replace />,
     },
     {
         path: "/trainer/clients/:clientId/history",
         element: (
             <ProtectedRoute>
                 <TrainerRoute>
-                    <AppLayout>
-                        <ClientHistoryPage />
-                    </AppLayout>
+                    <ClientHistoryPage />
                 </TrainerRoute>
             </ProtectedRoute>
         ),
@@ -253,9 +238,7 @@ export const router = createBrowserRouter([
         path: "/trainer/invites",
         element: (
             <TrainerRoute>
-                <AppLayout>
-                    <InvitesPage />
-                </AppLayout>
+                <InvitesPage />
             </TrainerRoute>
         ),
     },
@@ -323,13 +306,7 @@ export const router = createBrowserRouter([
     },
     {
         path: "/more",
-        element: (
-            <ProtectedRoute>
-                <AppLayout>
-                    <MorePage />
-                </AppLayout>
-            </ProtectedRoute>
-        ),
+        element: <Navigate to="/me" replace />,
     },
     {
         path: "/client/booking",

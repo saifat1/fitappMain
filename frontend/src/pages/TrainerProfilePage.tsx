@@ -263,6 +263,20 @@ export default function TrainerProfilePage() {
                 <span className="fb-row__chevron">›</span>
             </button>
 
+            {currentUser?.admin && (
+                <button
+                    type="button"
+                    className="fb-row fb-row--button fb-profile-link"
+                    onClick={() => navigate("/analytics")}
+                >
+                    <span className="fb-row__main">
+                        <span className="fb-row__title">Аналитика</span>
+                        <span className="fb-row__sub">Входы, тренировки и активность пользователей</span>
+                    </span>
+                    <span className="fb-row__chevron">›</span>
+                </button>
+            )}
+
             <div className="fb-segment">
                 <button type="button" className={tabItemClass(activeTab === "info")} onClick={() => setActiveTab("info")}>
                     О себе

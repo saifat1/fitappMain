@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import MobileShell from "../widgets/MobileShell";
 import {
     analyticsStatsApi,
     type AnalyticsSummary,
 } from "../shared/api/analyticsStatsApi";
+
+type QuickRange = "today" | "7d" | "30d" | "custom";
 
 function formatDateTime(value?: string | null) {
     if (!value) {
         return "Никогда";
     }
 
-    return new Date(value).toLocaleString("ru-RU");
+    return new Date(value).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 function formatName(firstName?: string | null, lastName?: string | null) {
@@ -17,17 +21,14 @@ function formatName(firstName?: string | null, lastName?: string | null) {
     return fullName || "—";
 }
 
-function toInputDate(date: Date) {
-    return date.toISOString().slice(0, 10);
+function formatRole(role: string) {
+    if (role === "TRAINER") return "Тренер";
+    if (role === "CLIENT") return "Клиент";
+    return role;
 }
 
-function getTodayRange() {
-    const today = toInputDate(new Date());
-
-    return {
-        from: today,
-        to: today,
-    };
+function toInputDate(date: Date) {
+    return date.toISOString().slice(0, 10);
 }
 
 function getLastDaysRange(days: number) {
@@ -42,16 +43,25 @@ function getLastDaysRange(days: number) {
     };
 }
 
+const QUICK_RANGES: { value: Exclude<QuickRange, "custom">; label: string; days: number }[] = [
+    { value: "today", label: "Сегодня", days: 1 },
+    { value: "7d", label: "7 дней", days: 7 },
+    { value: "30d", label: "30 дней", days: 30 },
+];
+
+/** Admin: product usage stats (FIT-67 — new design, reached from the trainer profile). */
 export default function AnalyticsPage() {
+    const navigate = useNavigate();
     const defaultRange = useMemo(() => getLastDaysRange(7), []);
 
     const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+    const [quick, setQuick] = useState<QuickRange>("7d");
     const [from, setFrom] = useState(defaultRange.from);
     const [to, setTo] = useState(defaultRange.to);
     const [loading, setLoading] = useState(true);
     const [errorText, setErrorText] = useState<string | null>(null);
 
-    async function loadSummary(nextFrom = from, nextTo = to) {
+    async function loadSummary(nextFrom: string, nextTo: string) {
         try {
             setLoading(true);
             setErrorText(null);
@@ -63,7 +73,7 @@ export default function AnalyticsPage() {
 
             setSummary(data);
         } catch {
-            setErrorText("Не удалось загрузить аналитику. Проверь доступ и backend.");
+            setErrorText("Не удалось загрузить аналитику");
         } finally {
             setLoading(false);
         }
@@ -71,30 +81,12 @@ export default function AnalyticsPage() {
 
     useEffect(() => {
         void loadSummary(defaultRange.from, defaultRange.to);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [defaultRange]);
 
-    function applyToday() {
-        const range = getTodayRange();
+    function applyQuick(value: Exclude<QuickRange, "custom">, days: number) {
+        const range = getLastDaysRange(days);
 
-        setFrom(range.from);
-        setTo(range.to);
-
-        void loadSummary(range.from, range.to);
-    }
-
-    function applyWeek() {
-        const range = getLastDaysRange(7);
-
-        setFrom(range.from);
-        setTo(range.to);
-
-        void loadSummary(range.from, range.to);
-    }
-
-    function applyMonth() {
-        const range = getLastDaysRange(30);
-
+        setQuick(value);
         setFrom(range.from);
         setTo(range.to);
 
@@ -102,212 +94,124 @@ export default function AnalyticsPage() {
     }
 
     function applyCustomRange() {
+        setQuick("custom");
         void loadSummary(from, to);
     }
 
-    if (loading && !summary) {
-        return (
-            <div className="page-card">
-                <h1>Аналитика</h1>
-                <p className="muted">Загрузка...</p>
-            </div>
-        );
-    }
+    const back = (
+        <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => navigate(-1)}>‹</button>
+    );
 
-    if (errorText && !summary) {
-        return (
-            <div className="page-card">
-                <h1>Аналитика</h1>
-                <p className="error-text">{errorText}</p>
-            </div>
-        );
-    }
+    const tiles: { label: string; value: number }[] = summary
+        ? [
+              { label: "Входы тренеров", value: summary.trainerLoginCount },
+              { label: "Входы клиентов", value: summary.clientLoginCount },
+              { label: "Тренировок всего", value: summary.totalTrainings },
+              { label: "Назначено", value: summary.plannedTrainings },
+              { label: "Завершено", value: summary.completedTrainings },
+              { label: "Активных клиентов", value: summary.activeClientsRange },
+              { label: "Активных тренеров", value: summary.activeTrainersRange },
+              { label: "Клиентов сегодня", value: summary.activeClientsToday },
+              { label: "Клиентов за 7 дней", value: summary.activeClientsWeek },
+              { label: "Тренеров сегодня", value: summary.activeTrainersToday },
+              { label: "Тренеров за 7 дней", value: summary.activeTrainersWeek },
+          ]
+        : [];
 
     return (
-        <div className="page-card">
-            <div className="page-header">
-                <div>
-                    <h1>Аналитика</h1>
-                    <p className="muted">
-                        Статистика за период: {summary?.rangeFrom ?? from} —{" "}
-                        {summary?.rangeTo ?? to}
-                    </p>
-                </div>
-            </div>
-
-            <div className="analytics-filters">
-                <div className="analytics-filters__quick">
-                    <button type="button" className="secondary-button" onClick={applyToday}>
-                        Сегодня
-                    </button>
-
-                    <button type="button" className="secondary-button" onClick={applyWeek}>
-                        7 дней
-                    </button>
-
-                    <button type="button" className="secondary-button" onClick={applyMonth}>
-                        30 дней
-                    </button>
+        <MobileShell title="Аналитика" left={back} showTabBar={false}>
+            <div className="fb-tab-panel fb-analytics">
+                <div className="fb-chips fb-chips--wrap">
+                    {QUICK_RANGES.map((item) => (
+                        <button
+                            key={item.value}
+                            type="button"
+                            className={`fb-chip ${quick === item.value ? "fb-chip--active" : ""}`}
+                            onClick={() => applyQuick(item.value, item.days)}
+                        >
+                            {item.label}
+                        </button>
+                    ))}
                 </div>
 
-                <div className="analytics-filters__range">
-                    <label>
-                        С
-                        <input
-                            type="date"
-                            value={from}
-                            onChange={(event) => setFrom(event.target.value)}
-                        />
+                <div className="fb-analytics__range">
+                    <label className="fb-analytics__date">
+                        <span>С</span>
+                        <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
                     </label>
-
-                    <label>
-                        По
-                        <input
-                            type="date"
-                            value={to}
-                            onChange={(event) => setTo(event.target.value)}
-                        />
+                    <label className="fb-analytics__date">
+                        <span>По</span>
+                        <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
                     </label>
-
                     <button
                         type="button"
-                        className="primary-button"
+                        className="fb-btn fb-btn--ghost fb-analytics__apply"
                         onClick={applyCustomRange}
                         disabled={loading}
                     >
-                        Применить
+                        Показать
                     </button>
                 </div>
-            </div>
 
-            {errorText && <p className="error-text">{errorText}</p>}
+                {errorText && <div className="fb-cal-error">{errorText}</div>}
 
-            {summary && (
-                <>
-                    <div className="stats-grid">
-                        <div className="stat-card">
-                            <div className="stat-label">Логины тренеров за период</div>
-                            <div className="stat-value">{summary.trainerLoginCount}</div>
+                {loading && !summary ? (
+                    <div className="fb-empty">Загрузка…</div>
+                ) : summary ? (
+                    <>
+                        <div className="fb-hint">
+                            Период: {summary.rangeFrom} — {summary.rangeTo}
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-label">Логины клиентов за период</div>
-                            <div className="stat-value">{summary.clientLoginCount}</div>
+                        <div className="fb-stat-grid">
+                            {tiles.map((tile) => (
+                                <div key={tile.label} className="fb-stat-tile">
+                                    <div className="fb-stat-tile__label">{tile.label}</div>
+                                    <div className="fb-stat-tile__value">{tile.value}</div>
+                                </div>
+                            ))}
                         </div>
 
-                        <div className="stat-card">
-                            <div className="stat-label">Всего тренировок за период</div>
-                            <div className="stat-value">{summary.totalTrainings}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Назначено тренировок за период</div>
-                            <div className="stat-value">{summary.plannedTrainings}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Завершено тренировок за период</div>
-                            <div className="stat-value">{summary.completedTrainings}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные клиенты за период</div>
-                            <div className="stat-value">{summary.activeClientsRange}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные тренеры за период</div>
-                            <div className="stat-value">{summary.activeTrainersRange}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные клиенты сегодня</div>
-                            <div className="stat-value">{summary.activeClientsToday}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные клиенты за 7 дней</div>
-                            <div className="stat-value">{summary.activeClientsWeek}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные тренеры сегодня</div>
-                            <div className="stat-value">{summary.activeTrainersToday}</div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-label">Активные тренеры за 7 дней</div>
-                            <div className="stat-value">{summary.activeTrainersWeek}</div>
-                        </div>
-                    </div>
-
-                    <section className="section-block">
-                        <h2>Самые частые события за период</h2>
-
+                        <div className="fb-section-title fb-section-title--flush">Частые события</div>
                         {summary.topEvents.length === 0 ? (
-                            <p className="muted">Событий за выбранный период нет.</p>
+                            <div className="fb-empty">Событий за период нет</div>
                         ) : (
-                            <div className="table-wrapper">
-                                <table className="data-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Событие</th>
-                                        <th>Количество</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {summary.topEvents.map((event) => (
-                                        <tr key={event.eventType}>
-                                            <td>{event.eventType}</td>
-                                            <td>{event.count}</td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
+                            <div className="fb-list">
+                                {summary.topEvents.map((event) => (
+                                    <div key={event.eventType} className="fb-row">
+                                        <span className="fb-row__main">
+                                            <span className="fb-row__title fb-analytics__event">{event.eventType}</span>
+                                        </span>
+                                        <span className="fb-pill fb-pill--muted">{event.count}</span>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                    </section>
 
-                    <section className="section-block">
-                        <h2>Кто давно не заходил</h2>
-                        <p className="muted">
-                            Этот блок не зависит от выбранного периода и показывает пользователей
-                            с самой старой активностью.
-                        </p>
-
+                        <div className="fb-section-title fb-section-title--flush">Давно не заходили</div>
+                        <div className="fb-hint">Не зависит от периода: пользователи с самой старой активностью.</div>
                         {summary.inactiveUsers.length === 0 ? (
-                            <p className="muted">Пользователей нет.</p>
+                            <div className="fb-empty">Пользователей нет</div>
                         ) : (
-                            <div className="table-wrapper">
-                                <table className="data-table">
-                                    <thead>
-                                    <tr>
-                                        <th>Пользователь</th>
-                                        <th>Email</th>
-                                        <th>Роль</th>
-                                        <th>Последний логин</th>
-                                        <th>Последняя активность</th>
-                                        <th>Всего логинов</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {summary.inactiveUsers.map((user) => (
-                                        <tr key={user.id}>
-                                            <td>{formatName(user.firstName, user.lastName)}</td>
-                                            <td>{user.email}</td>
-                                            <td>{user.role}</td>
-                                            <td>{formatDateTime(user.lastLoginAt)}</td>
-                                            <td>{formatDateTime(user.lastSeenAt)}</td>
-                                            <td>{user.loginCount ?? 0}</td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
+                            <div className="fb-list">
+                                {summary.inactiveUsers.map((user) => (
+                                    <div key={user.id} className="fb-row">
+                                        <span className="fb-row__main">
+                                            <span className="fb-row__title">
+                                                {formatName(user.firstName, user.lastName)} · {formatRole(user.role)}
+                                            </span>
+                                            <span className="fb-row__sub">{user.email}</span>
+                                            <span className="fb-row__sub">
+                                                Активность: {formatDateTime(user.lastSeenAt)} · входов: {user.loginCount ?? 0}
+                                            </span>
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                    </section>
-                </>
-            )}
-        </div>
+                    </>
+                ) : null}
+            </div>
+        </MobileShell>
     );
 }

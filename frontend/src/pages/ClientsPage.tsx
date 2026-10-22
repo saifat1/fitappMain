@@ -190,6 +190,12 @@ export default function ClientsPage() {
                     </button>
                 </div>
             )}
+
+            {tab === "active" && (
+                <button type="button" className="fb-add-link fb-clients__invites" onClick={() => navigate("/trainer/invites")}>
+                    Приглашения по email ›
+                </button>
+            )}
         </MobileShell>
     );
 }

@@ -325,6 +325,10 @@ export default function ClientDetailsPage() {
                                         <span className="fb-row__main"><span className="fb-row__title">Архив тренировок</span></span>
                                         <span className="fb-row__chevron">›</span>
                                     </button>
+                                    <button type="button" className="fb-row fb-row--button" onClick={() => navigate(`/trainer/clients/${id}/history`)}>
+                                        <span className="fb-row__main"><span className="fb-row__title">История и статистика</span></span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
                                 </div>
 
                                 <ClientContractsSection clientId={id} onBalanceChange={load} />

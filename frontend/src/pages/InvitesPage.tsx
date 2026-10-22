@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import styles from "./BookingPages.module.css";
+import MobileShell from "../widgets/MobileShell";
+import FbTextField from "../shared/ui/FbTextField";
 import { trainerApi } from "../shared/api/trainerApi";
 import type {
     CreateInviteRequest,
@@ -33,15 +35,11 @@ function getInviteStatusLabel(status: string): string {
 function getInviteStatusClass(status: string): string {
     switch (status) {
         case "NEW":
-            return `${styles.badge} ${styles.inviteBadgeActive}`;
+            return "fb-pill fb-pill--invite";
         case "USED":
-            return `${styles.badge} ${styles.inviteBadgeUsed}`;
-        case "EXPIRED":
-            return `${styles.badge} ${styles.inviteBadgeExpired}`;
-        case "CANCELLED":
-            return `${styles.badge} ${styles.inviteBadgeCancelled}`;
+            return "fb-pill fb-pill--ok";
         default:
-            return styles.badge;
+            return "fb-pill fb-pill--muted";
     }
 }
 
@@ -50,10 +48,12 @@ function formatDateTime(value: string | null): string {
         return "—";
     }
 
-    return new Date(value).toLocaleString("ru-RU");
+    return new Date(value).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
+/** Trainer: registration links by email (FIT-67 — new design, reached from «Клиенты»). */
 export default function InvitesPage() {
+    const navigate = useNavigate();
     const [invites, setInvites] = useState<InviteResponse[]>([]);
     const [email, setEmail] = useState("");
     const [expiresInDays, setExpiresInDays] = useState("7");
@@ -82,21 +82,6 @@ export default function InvitesPage() {
     useEffect(() => {
         void loadInvites();
     }, [loadInvites]);
-
-    const stats = useMemo(() => {
-        const active = invites.filter((item) => item.status === "NEW").length;
-        const used = invites.filter((item) => item.status === "USED").length;
-        const expired = invites.filter((item) => item.status === "EXPIRED").length;
-        const cancelled = invites.filter((item) => item.status === "CANCELLED").length;
-
-        return {
-            total: invites.length,
-            active,
-            used,
-            expired,
-            cancelled,
-        };
-    }, [invites]);
 
     const handleCreateInvite = async (event: FormEvent) => {
         event.preventDefault();
@@ -162,7 +147,7 @@ export default function InvitesPage() {
     };
 
     const handleDelete = async (inviteId: number) => {
-        const confirmed = window.confirm("Удалить приглашение?");
+        const confirmed = window.confirm("Удалить приглашение? Ссылка перестанет работать.");
         if (!confirmed) {
             return;
         }
@@ -182,194 +167,124 @@ export default function InvitesPage() {
         }
     };
 
+    const back = (
+        <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => navigate(-1)}>‹</button>
+    );
+
     return (
-        <div className={styles.page}>
-            <div className={styles.header}>
-                <h1 className={styles.title}>Приглашения</h1>
-                <p className={styles.subtitle}>
-                    Создавай ссылки регистрации для клиентов и управляй уже созданными приглашениями.
+        <MobileShell title="Приглашения" left={back} showTabBar={false}>
+            <div className="fb-tab-panel fb-invites">
+                <p className="fb-hint">
+                    Ссылка для регистрации клиента по email. Клиент сам заполнит профиль и появится в вашем списке.
                 </p>
-            </div>
 
-            <section className={styles.card}>
-                <div className={styles.requestHeader}>
-                    <div>
-                        <h2 className={styles.sectionTitle}>Сводка</h2>
-                        <p className={styles.subtitle}>
-                            Быстрый обзор текущих приглашений.
-                        </p>
-                    </div>
+                <form className="fb-invites__form" onSubmit={handleCreateInvite}>
+                    <FbTextField
+                        id="invite-email"
+                        label="Email клиента"
+                        type="email"
+                        autoComplete="off"
+                        value={email}
+                        onChange={setEmail}
+                    />
+                    <FbTextField
+                        id="invite-expire-days"
+                        label="Срок действия, дней"
+                        type="number"
+                        inputMode="numeric"
+                        value={expiresInDays}
+                        onChange={setExpiresInDays}
+                    />
+                    <button type="submit" className="fb-btn fb-btn--primary fb-form-submit" disabled={isSubmitting}>
+                        {isSubmitting ? "Создаём…" : "Создать приглашение"}
+                    </button>
+                </form>
 
+                {errorMessage && <div className="fb-cal-error">{errorMessage}</div>}
+                {successMessage && <div className="fb-success-note">{successMessage}</div>}
+
+                <div className="fb-segment fb-invites__segment">
                     <button
                         type="button"
-                        className={styles.buttonSecondary}
-                        onClick={() => void loadInvites()}
-                        disabled={isLoading}
+                        className={`fb-segment__item ${!showAll ? "fb-segment__item--active" : ""}`}
+                        onClick={() => setShowAll(false)}
                     >
-                        {isLoading ? "Обновляем..." : "Обновить"}
+                        Активные
+                    </button>
+                    <button
+                        type="button"
+                        className={`fb-segment__item ${showAll ? "fb-segment__item--active" : ""}`}
+                        onClick={() => setShowAll(true)}
+                    >
+                        Все
                     </button>
                 </div>
 
-                <div className={styles.inviteStatsGrid}>
-                    <div className={styles.inviteStatCard}>
-                        <div className={styles.inviteStatLabel}>Всего</div>
-                        <div className={styles.inviteStatValue}>{stats.total}</div>
-                    </div>
-
-                    <div className={styles.inviteStatCard}>
-                        <div className={styles.inviteStatLabel}>Активные</div>
-                        <div className={styles.inviteStatValue}>{stats.active}</div>
-                    </div>
-
-                    <div className={styles.inviteStatCard}>
-                        <div className={styles.inviteStatLabel}>Использованы</div>
-                        <div className={styles.inviteStatValue}>{stats.used}</div>
-                    </div>
-
-                    <div className={styles.inviteStatCard}>
-                        <div className={styles.inviteStatLabel}>Архив</div>
-                        <div className={styles.inviteStatValue}>
-                            {stats.expired + stats.cancelled}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {errorMessage && <div className={styles.error}>{errorMessage}</div>}
-            {successMessage && <div className={styles.success}>{successMessage}</div>}
-
-            <section className={styles.card}>
-                <h2 className={styles.sectionTitle}>Новое приглашение</h2>
-
-                <form className={styles.inviteCreateForm} onSubmit={handleCreateInvite}>
-                    <div className={styles.fieldWide}>
-                        <label className={styles.label} htmlFor="invite-email">
-                            Email клиента
-                        </label>
-                        <input
-                            id="invite-email"
-                            className={styles.input}
-                            type="email"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            placeholder="client@test.local"
-                            required
-                        />
-                    </div>
-
-                    <div className={styles.field}>
-                        <label className={styles.label} htmlFor="invite-expire-days">
-                            Срок, дней
-                        </label>
-                        <input
-                            id="invite-expire-days"
-                            className={styles.input}
-                            type="number"
-                            min={1}
-                            step={1}
-                            inputMode="numeric"
-                            value={expiresInDays}
-                            onChange={(event) => setExpiresInDays(event.target.value)}
-                            required
-                        />
-                    </div>
-
-                    <div className={styles.inviteCreateAction}>
-                        <button
-                            type="submit"
-                            className={styles.button}
-                            disabled={isSubmitting}
-                        >
-                            {isSubmitting ? "Создаём..." : "Создать"}
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <section className={styles.card}>
-                <div className={styles.requestHeader}>
-                    <div>
-                        <h2 className={styles.sectionTitle}>Список приглашений</h2>
-                        <p className={styles.subtitle}>
-                            Можно копировать ссылку, смотреть статус и удалять неактуальные записи.
-                        </p>
-                    </div>
-                </div>
-
-                <label className={styles.inviteCheckboxRow}>
-                    <input
-                        type="checkbox"
-                        checked={showAll}
-                        onChange={(event) => setShowAll(event.target.checked)}
-                    />
-                    <span>Показывать все</span>
-                </label>
-
                 {isLoading ? (
-                    <div className={styles.empty}>Загрузка...</div>
+                    <div className="fb-empty">Загрузка…</div>
                 ) : invites.length === 0 ? (
-                    <div className={styles.emptyBlock}>
-                        <h3 className={styles.emptyTitle}>Приглашений нет</h3>
-                        <p className={styles.subtitle}>
-                            Создай первое приглашение для нового клиента.
-                        </p>
-                    </div>
+                    <div className="fb-empty">{showAll ? "Приглашений нет" : "Активных приглашений нет"}</div>
                 ) : (
-                    <div className={styles.requestsList}>
+                    <div className="fb-invites__list">
                         {invites.map((invite) => {
                             const isDeleting = deletingInviteId === invite.id;
                             const isCopied = copiedInviteId === invite.id;
 
                             return (
-                                <article key={invite.id} className={styles.requestCard}>
-                                    <div className={styles.requestHeader}>
-                                        <div>
-                                            <strong>{invite.email ?? "Без привязки к email"}</strong>
-                                            <div className={styles.inviteMeta}>
-                                                <div>ID {invite.id}</div>
-                                                {invite.clientId != null && <div>Клиент ID {invite.clientId}</div>}
-                                                <div>Истекает {formatDateTime(invite.expiresAt)}</div>
-                                                <div>Использовано {formatDateTime(invite.usedAt)}</div>
+                                <div key={invite.id} className="fb-breq__card">
+                                    <div className="fb-breq__head">
+                                        <div className="fb-breq__main">
+                                            <div className="fb-breq__client">{invite.email ?? "Без email"}</div>
+                                            <div className="fb-breq__when">
+                                                {invite.usedAt
+                                                    ? `Использовано ${formatDateTime(invite.usedAt)}`
+                                                    : `Действует до ${formatDateTime(invite.expiresAt)}`}
                                             </div>
                                         </div>
-
-                                        <div className={getInviteStatusClass(invite.status)}>
+                                        <span className={getInviteStatusClass(invite.status)}>
                                             {getInviteStatusLabel(invite.status)}
-                                        </div>
+                                        </span>
                                     </div>
 
-                                    <div className={styles.inviteLinkBlock}>
-                                        <div className={styles.inviteLinkLabel}>Ссылка для регистрации</div>
-                                        <div className={styles.inviteLinkValue}>
-                                            {invite.registrationLink}
+                                    {invite.status === "NEW" && (
+                                        <div className="fb-linkbox">
+                                            <span className="fb-linkbox__url">{invite.registrationLink}</span>
+                                            <button
+                                                type="button"
+                                                className="fb-linkbox__copy"
+                                                onClick={() => void handleCopy(invite)}
+                                                aria-label="Скопировать"
+                                            >
+                                                {isCopied ? "✓" : "⧉"}
+                                            </button>
                                         </div>
-                                    </div>
+                                    )}
 
-                                    <div className={styles.inlineActions}>
+                                    <div className="fb-breq__actions">
+                                        {invite.clientId != null && (
+                                            <button
+                                                type="button"
+                                                className="fb-btn fb-btn--ghost fb-invites__btn"
+                                                onClick={() => navigate(`/trainer/clients/${invite.clientId}`)}
+                                            >
+                                                Клиент
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
-                                            className={styles.buttonSecondary}
-                                            onClick={() => void handleCopy(invite)}
-                                        >
-                                            {isCopied ? "Скопировано" : "Копировать"}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className={styles.buttonDanger}
+                                            className="fb-btn fb-btn--ghost fb-invites__btn fb-btn--danger-text"
                                             onClick={() => void handleDelete(invite.id)}
                                             disabled={isDeleting}
-                                            title="Удалить"
                                         >
-                                            {isDeleting ? "Удаляем..." : "Удалить"}
+                                            {isDeleting ? "Удаляем…" : "Удалить"}
                                         </button>
                                     </div>
-                                </article>
+                                </div>
                             );
                         })}
                     </div>
                 )}
-            </section>
-        </div>
+            </div>
+        </MobileShell>
     );
 }
