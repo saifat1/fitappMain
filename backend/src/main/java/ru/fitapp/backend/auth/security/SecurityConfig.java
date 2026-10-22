@@ -84,6 +84,9 @@ public class SecurityConfig {
                         "http://89-111-137-65.swtest.ru:8081",
                         "https://89-111-137-65.swtest.ru",
                         "https://89.111.137.65",
+                        // Store app (Capacitor): Android serves the bundled page from https://localhost, iOS from capacitor://localhost
+                        "https://localhost",
+                        "capacitor://localhost",
                         publicBaseUrl
                 ),
                 Stream.of(extraOrigins.split(","))

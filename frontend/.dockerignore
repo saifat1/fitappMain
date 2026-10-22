@@ -1,0 +1,5 @@
+node_modules
+dist
+# store app projects (FIT-68) are built locally, not in the web image
+android
+ios

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { publicApi } from "../shared/api/publicApi";
+import { PUBLIC_SITE_URL } from "../shared/lib/platform";
 import type { PublicPricingResponse } from "../features/subscription/model/subscription.types";
 
 type LegalDocument = {
@@ -284,7 +285,7 @@ function fillPlaceholders(text: string, pricing: PublicPricingResponse | null): 
         sellerPhone: s?.phone || "—",
         sellerCity: s?.city || "—",
         sellerTaxStatus: s?.taxStatus ? s.taxStatus.charAt(0).toLowerCase() + s.taxStatus.slice(1) : "плательщик налога на профессиональный доход",
-        site: window.location.origin,
+        site: PUBLIC_SITE_URL,
         trialDays: String(pricing?.trialDays ?? 14),
         graceDays: String(pricing?.graceDays ?? 3),
     };
