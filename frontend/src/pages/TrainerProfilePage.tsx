@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
 import MobileShell from "../widgets/MobileShell";
+import AppVersionInfo from "../shared/ui/AppVersionInfo";
 import Avatar from "../shared/ui/Avatar";
 import { avatarColor } from "../features/calendar/lib/calendarWeek";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
@@ -359,6 +360,8 @@ export default function TrainerProfilePage() {
             <button type="button" className="fb-delete-link" onClick={() => navigate("/account/delete")}>
                 Удалить аккаунт
             </button>
+
+            <AppVersionInfo />
         </MobileShell>
     );
 }

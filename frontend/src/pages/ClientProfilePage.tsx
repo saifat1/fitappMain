@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 import MobileShell from "../widgets/MobileShell";
+import AppVersionInfo from "../shared/ui/AppVersionInfo";
 import Avatar from "../shared/ui/Avatar";
 import { useAuth } from "../features/auth/model/AuthContext";
 import { avatarColor, getInitials } from "../features/calendar/lib/calendarWeek";
@@ -76,6 +77,8 @@ export default function ClientProfilePage() {
             <button type="button" className="fb-delete-link" onClick={() => navigate("/account/delete")}>
                 Удалить аккаунт
             </button>
+
+            <AppVersionInfo />
         </MobileShell>
     );
 }

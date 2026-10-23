@@ -7,6 +7,9 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+# FIT-74: commit shown as the site's build (deploy/release.sh passes it; Docker has no .git)
+ARG BUILD_COMMIT=
+ENV BUILD_COMMIT=$BUILD_COMMIT
 RUN npm run build
 
 # stage 2: nginx

@@ -39,6 +39,7 @@ services:
       MAIL_FROM: ${MAIL_FROM:-}
       PASSWORD_RESET_EXP_MIN: ${PASSWORD_RESET_EXP_MIN:-60}
       FEEDBACK_NOTIFY_EMAIL: ${FEEDBACK_NOTIFY_EMAIL:-}
+      BUILD_COMMIT: ${BACKEND_COMMIT:-dev}
       ANALYTICS_REPORT_TOKEN: ${ANALYTICS_REPORT_TOKEN:-}
       ANALYTICS_REPORT_EMAIL: ${ANALYTICS_REPORT_EMAIL:-}
       PUSH_ENABLED: ${PUSH_ENABLED:-false}
@@ -65,6 +66,8 @@ services:
   frontend:
     build:
       context: ./frontend
+      args:
+        BUILD_COMMIT: ${FRONTEND_COMMIT:-}
     restart: unless-stopped
     depends_on:
       - backend

@@ -2,6 +2,11 @@ apply plugin: 'com.android.application'
 
 // Release signing key lives outside the public repository (FIT-68):
 // ~/.fitapp/keystore.properties with storeFile, storePassword, keyAlias, keyPassword.
+// FIT-74: the app version is the one in package.json (shown in the profile too);
+// versionCode = major*10000 + minor*100 + patch, so it grows with every new version (1.0 in RuStore had 1).
+def appVersion = new groovy.json.JsonSlurper().parse(file("../../package.json")).version
+def appVersionCode = appVersion.tokenize('.').collect { it as int }.inject(0) { acc, n -> acc * 100 + n }
+
 def keystorePropertiesFile = new File(System.getProperty("user.home"), ".fitapp/keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
@@ -15,8 +20,8 @@ android {
         applicationId "ru.com.fitapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

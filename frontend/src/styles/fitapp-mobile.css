@@ -1793,3 +1793,6 @@
 .fb-metrics__table th, .fb-metrics__table td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--fb-line); white-space: nowrap; }
 .fb-metrics__table th:first-child, .fb-metrics__table td:first-child { text-align: left; }
 .fb-metrics__table th { color: var(--fb-muted); font-weight: 500; }
+
+/* build versions in the profile footer (FIT-74) */
+.fb-app-version { padding: 4px 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; font-size: 11px; line-height: 1.5; color: var(--fb-muted); }

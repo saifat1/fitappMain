@@ -70,7 +70,9 @@ $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory |
   или `bundleRelease assembleRelease`. Для дев-стенда перед sync задать `$env:VITE_API_BASE_URL="https://195-208-61-184.swtest.ru/api"`.
 - Ключ подписи релиза — только на машине: `%USERPROFILE%\.fitapp\fitapp-release.jks` + `keystore.properties`.
   Потеря ключа = нельзя обновить приложение в RuStore. Готовые файлы складываются в `builds/` (не в git).
-- Перед каждым релизом в стор увеличить `versionCode`/`versionName` в `android/app/build.gradle`.
+- Версия — одна на сайт и приложение: `version` в `frontend/package.json` (FIT-74). Перед каждым релизом в стор
+  поднять её и записать в `CHANGELOG.md`; `versionName`/`versionCode` Android берёт из неё (1.0.0 → 10000).
+  В профиле внизу видно версию и сборку текущего клиента (сайт / приложение) и сборку сервера.
 
 ## Процесс работы с задачами (YouGile)
 

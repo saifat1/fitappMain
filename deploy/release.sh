@@ -43,6 +43,10 @@ chmod 600 .env
 echo "now at $(git log --oneline -1)"
 
 echo "== rebuild and restart"
+# FIT-74: build ids shown in the profile — the last commit that touched each part, so an unchanged backend
+# keeps its container (and isn't restarted) when only the frontend changed.
+export BACKEND_COMMIT=$(git log -1 --format=%h -- backend)
+export FRONTEND_COMMIT=$(git log -1 --format=%h -- frontend)
 $COMPOSE up -d --build
 
 echo "== wait for backend"
