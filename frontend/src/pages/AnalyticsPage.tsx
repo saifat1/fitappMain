@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import MobileShell from "../widgets/MobileShell";
+import ProductMetricsBlock from "../features/analytics/ui/ProductMetricsBlock";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import {
     analyticsStatsApi,
     type AnalyticsSummary,
+    type ProductMetrics,
 } from "../shared/api/analyticsStatsApi";
 
 type QuickRange = "today" | "7d" | "30d" | "custom";
@@ -57,6 +59,7 @@ export default function AnalyticsPage() {
     const defaultRange = useMemo(() => getLastDaysRange(7), []);
 
     const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
+    const [metrics, setMetrics] = useState<ProductMetrics | null>(null);
     const [quick, setQuick] = useState<QuickRange>("7d");
     const [from, setFrom] = useState(defaultRange.from);
     const [to, setTo] = useState(defaultRange.to);
@@ -68,12 +71,13 @@ export default function AnalyticsPage() {
             setLoading(true);
             setErrorText(null);
 
-            const data = await analyticsStatsApi.getSummary({
-                from: nextFrom,
-                to: nextTo,
-            });
+            const [data, productMetrics] = await Promise.all([
+                analyticsStatsApi.getSummary({ from: nextFrom, to: nextTo }),
+                analyticsStatsApi.getMetrics({ from: nextFrom, to: nextTo }),
+            ]);
 
             setSummary(data);
+            setMetrics(productMetrics);
         } catch (error) {
             setErrorText(
                 axios.isAxiosError<ApiErrorResponse>(error)
@@ -177,6 +181,8 @@ export default function AnalyticsPage() {
                                 </div>
                             ))}
                         </div>
+
+                        {metrics && <ProductMetricsBlock metrics={metrics} />}
 
                         <div className="fb-section-title fb-section-title--flush">Частые события</div>
                         {summary.topEvents.length === 0 ? (

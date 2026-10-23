@@ -18,6 +18,10 @@ app:
     fcm:
       # Firebase service-account JSON, base64 — store app push (FIT-69). Empty = off.
       credentials-base64: ${FCM_CREDENTIALS_BASE64:}
+  analytics:
+    # FIT-72 weekly report: secret for /api/analytics/report/** (server .env only) and where the report is emailed.
+    report-token: ${ANALYTICS_REPORT_TOKEN:}
+    report-email: ${ANALYTICS_REPORT_EMAIL:}
   feedback:
     # FIT-73: where new ideas / problem reports are emailed. Empty = no email.
     notify-email: ${FEEDBACK_NOTIFY_EMAIL:}

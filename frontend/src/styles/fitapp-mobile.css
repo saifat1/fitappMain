@@ -1781,3 +1781,15 @@
 .fb-feedback__text { white-space: pre-wrap; }
 .fb-feedback__status { font-size: 16px; padding: 8px 10px; border: 1px solid var(--fb-line-strong); border-radius: 10px; background: var(--fb-surface); color: var(--fb-ink); }
 .fb-feedback .fb-chips--wrap { padding: 4px 0; }
+
+/* product metrics on «Аналитика» (FIT-72) */
+.fb-metrics { display: flex; flex-direction: column; }
+.fb-metrics__funnel { display: flex; flex-direction: column; gap: 6px; padding: 4px 0 8px; }
+.fb-metrics__step { display: flex; justify-content: space-between; font-size: 14px; color: var(--fb-ink-2); padding: 6px 10px; background: var(--fb-surface-2); border-radius: 10px; }
+.fb-metrics__step b { color: var(--fb-ink); }
+.fb-metrics__pct { font-weight: 400; color: var(--fb-muted); margin-left: 4px; }
+.fb-metrics__table-wrap { overflow-x: auto; }
+.fb-metrics__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fb-metrics__table th, .fb-metrics__table td { padding: 6px 4px; text-align: right; border-bottom: 1px solid var(--fb-line); white-space: nowrap; }
+.fb-metrics__table th:first-child, .fb-metrics__table td:first-child { text-align: left; }
+.fb-metrics__table th { color: var(--fb-muted); font-weight: 500; }

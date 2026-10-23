@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.fitapp.backend.common.exception.ErrorResponse;
+import ru.fitapp.backend.common.monitoring.ServerErrorCounter;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +18,12 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final ServerErrorCounter serverErrorCounter;
+
+    public GlobalExceptionHandler(ServerErrorCounter serverErrorCounter) {
+        this.serverErrorCounter = serverErrorCounter;
+    }
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(ApiException ex) {
@@ -85,6 +92,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpectedException(Exception ex) {
         log.error("Unhandled exception", ex);
+        serverErrorCounter.increment();
 
         ErrorResponse response = new ErrorResponse(
                 "INTERNAL_ERROR",

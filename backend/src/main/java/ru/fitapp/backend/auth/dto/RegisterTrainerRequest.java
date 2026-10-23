@@ -23,6 +23,19 @@ public class RegisterTrainerRequest {
     @NotBlank(message = "Подтверждение пароля обязательно")
     private String confirmPassword;
 
+    /** FIT-72: utm_source / ?src= of the first visit, or «android_app». Optional. */
+    @Size(max = 64)
+    private String source;
+
+    public String getSource() {
+        return source;
+    }
+
+    public RegisterTrainerRequest setSource(String source) {
+        this.source = source;
+        return this;
+    }
+
     public String getEmail() {
         return email;
     }

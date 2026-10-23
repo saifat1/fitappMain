@@ -17,6 +17,8 @@ export type RegisterTrainerRequest = {
     lastName: string;
     password: string;
     confirmPassword: string;
+    /** FIT-72: where the trainer came from (see shared/lib/signupSource.ts). */
+    source?: string;
 };
 
 export type InviteDetailsResponse = {

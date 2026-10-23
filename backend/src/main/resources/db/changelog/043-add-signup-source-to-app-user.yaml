@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 043-add-signup-source-to-app-user
+      author: claude
+      changes:
+        # FIT-72: where the user came from — utm_source / ?src= of the first visit, «android_app», «invite». Null for old users.
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: signup_source
+                  type: varchar(64)

@@ -77,6 +77,19 @@ public class AppUser {
     @Column(name = "is_admin", nullable = false)
     private boolean admin = false;
 
+    /** FIT-72: where the user came from (utm_source / ?src= of the first visit, «android_app», «invite»). */
+    @Column(name = "signup_source", length = 64)
+    private String signupSource;
+
+    public String getSignupSource() {
+        return signupSource;
+    }
+
+    public AppUser setSignupSource(String signupSource) {
+        this.signupSource = signupSource;
+        return this;
+    }
+
     public AppUser() {
     }
 

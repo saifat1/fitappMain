@@ -5,6 +5,7 @@ import FbTextField from "../shared/ui/FbTextField";
 import FbPasswordField from "../shared/ui/FbPasswordField";
 import { useAuth } from "../features/auth/model/AuthContext";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import { signupSource } from "../shared/lib/signupSource";
 
 export default function TrainerRegisterPage() {
     const { registerTrainer, isAuthenticated, isInitializing } = useAuth();
@@ -41,6 +42,7 @@ export default function TrainerRegisterPage() {
                 lastName,
                 password,
                 confirmPassword,
+                source: signupSource(),
             });
 
             navigate("/me", { replace: true });

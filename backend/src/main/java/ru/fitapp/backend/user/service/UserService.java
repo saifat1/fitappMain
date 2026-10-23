@@ -115,6 +115,15 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /** FIT-72: first-touch source of a new trainer; only letters, digits, «_-.:», lowercased, up to 64 chars. */
+    public void setSignupSource(AppUser user, String source) {
+        if (source == null) return;
+        String normalized = source.trim().toLowerCase().replaceAll("[^a-z0-9_.:-]", "");
+        if (normalized.isEmpty()) return;
+        user.setSignupSource(normalized.length() > 64 ? normalized.substring(0, 64) : normalized);
+        userRepository.save(user);
+    }
+
     public AppUser claimClientRegistration(
             AppUser client,
             String passwordHash,
@@ -131,6 +140,9 @@ public class UserService {
         client.setStatus(UserStatus.ACTIVE);
         client.setClaimedByClient(true);
         client.setClaimedAt(LocalDateTime.now());
+        if (client.getSignupSource() == null) {
+            client.setSignupSource("invite");
+        }
 
         return userRepository.save(client);
     }

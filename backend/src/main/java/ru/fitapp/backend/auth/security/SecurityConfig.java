@@ -50,6 +50,8 @@ public class SecurityConfig {
                                 "/api/payments/notifications/**",
                                 // logout in the store app: the device token alone identifies what to forget (FIT-69)
                                 "/api/push/devices/remove",
+                                // weekly report: protected by X-Report-Token in the controller (FIT-72)
+                                "/api/analytics/report/**",
                                 "/api/public/**",
                                 "/uploads/**"
                         ).permitAll()

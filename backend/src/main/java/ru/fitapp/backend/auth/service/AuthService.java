@@ -119,6 +119,7 @@ public class AuthService {
                 request.getFirstName(),
                 request.getLastName()
         );
+        userService.setSignupSource(client, "invite");
 
         trainerClientService.linkTrainerToClient(invite.getTrainer(), client);
         inviteService.markAsUsed(invite);
@@ -145,6 +146,7 @@ public class AuthService {
         );
 
         trainerAvailabilityService.initializeDefaultRulesForTrainer(trainer);
+        userService.setSignupSource(trainer, request.getSource());
 
         String token = jwtService.generateToken(trainer);
 

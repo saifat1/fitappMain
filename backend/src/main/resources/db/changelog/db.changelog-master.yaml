@@ -83,3 +83,5 @@ databaseChangeLog:
       file: db/changelog/041-create-device-push-token.yaml
   - include:
       file: db/changelog/042-create-feedback.yaml
+  - include:
+      file: db/changelog/043-add-signup-source-to-app-user.yaml
