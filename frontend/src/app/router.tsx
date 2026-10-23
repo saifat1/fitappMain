@@ -41,6 +41,8 @@ import SubscriptionPage from "../pages/SubscriptionPage";
 import TestPaymentPage from "../pages/TestPaymentPage";
 import PricingPage from "../pages/PricingPage";
 import DeleteAccountPage from "../pages/DeleteAccountPage";
+import FeedbackPage from "../pages/FeedbackPage";
+import AdminFeedbackPage from "../pages/AdminFeedbackPage";
 
 export const router = createBrowserRouter([
     {
@@ -299,6 +301,22 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <CreateRescheduleRequestPage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/feedback",
+        element: (
+            <ProtectedRoute>
+                <FeedbackPage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/admin/feedback",
+        element: (
+            <ProtectedRoute>
+                <AdminFeedbackPage />
             </ProtectedRoute>
         ),
     },

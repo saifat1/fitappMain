@@ -11,6 +11,7 @@ const DATA_ROWS: Row[] = [
     { label: "Информация о здоровье", sub: "Заполняет тренер", to: "/client/questionnaire" },
     { label: "Измерения", to: "/client/measurements" },
     { label: "Запросы на перенос", to: "/reschedule-requests" },
+    { label: "Предложить идею / Сообщить о проблеме", sub: "Чего не хватает или что работает не так", to: "/feedback" },
 ];
 
 const DOC_ROWS: Row[] = [

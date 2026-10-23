@@ -33,6 +33,11 @@ public class MailService {
         send(to, subject, body);
     }
 
+    /** Plain-text notification to the team (feedback, weekly report). */
+    public void sendNotification(String to, String subject, String body) {
+        send(to, subject, body);
+    }
+
     private void send(String to, String subject, String body) {
         if (!mailEnabled) {
             // Dev / no-SMTP mode: surface the link in logs so the flow is testable.

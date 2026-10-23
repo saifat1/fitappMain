@@ -18,6 +18,9 @@ app:
     fcm:
       # Firebase service-account JSON, base64 — store app push (FIT-69). Empty = off.
       credentials-base64: ${FCM_CREDENTIALS_BASE64:}
+  feedback:
+    # FIT-73: where new ideas / problem reports are emailed. Empty = no email.
+    notify-email: ${FEEDBACK_NOTIFY_EMAIL:}
   password-reset:
     expiration-minutes: ${PASSWORD_RESET_EXP_MIN:60}
   billing:

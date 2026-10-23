@@ -1773,3 +1773,11 @@
 .fb-reset-link .fb-hint { padding-top: 0; }
 .fb-reset-link__actions { display: flex; gap: 8px; }
 .fb-reset-link__actions .fb-btn { flex: 1; min-height: 44px; font-size: 15px; }
+
+/* ideas & problem reports (FIT-73) */
+.fb-feedback { gap: 8px; padding-top: 8px; }
+.fb-feedback__types { margin: 4px 0; }
+.fb-feedback__list { display: flex; flex-direction: column; gap: 10px; }
+.fb-feedback__text { white-space: pre-wrap; }
+.fb-feedback__status { font-size: 16px; padding: 8px 10px; border: 1px solid var(--fb-line-strong); border-radius: 10px; background: var(--fb-surface); color: var(--fb-ink); }
+.fb-feedback .fb-chips--wrap { padding: 4px 0; }

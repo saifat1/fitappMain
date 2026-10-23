@@ -263,6 +263,32 @@ export default function TrainerProfilePage() {
                 <span className="fb-row__chevron">›</span>
             </button>
 
+            <button
+                type="button"
+                className="fb-row fb-row--button fb-profile-link"
+                onClick={() => navigate("/feedback", { state: { from: "/trainer/profile" } })}
+            >
+                <span className="fb-row__main">
+                    <span className="fb-row__title">Предложить идею / Сообщить о проблеме</span>
+                    <span className="fb-row__sub">Чего не хватает или что работает не так</span>
+                </span>
+                <span className="fb-row__chevron">›</span>
+            </button>
+
+            {currentUser?.admin && (
+                <button
+                    type="button"
+                    className="fb-row fb-row--button fb-profile-link"
+                    onClick={() => navigate("/admin/feedback")}
+                >
+                    <span className="fb-row__main">
+                        <span className="fb-row__title">Обращения пользователей</span>
+                        <span className="fb-row__sub">Идеи и проблемы от тренеров и клиентов</span>
+                    </span>
+                    <span className="fb-row__chevron">›</span>
+                </button>
+            )}
+
             {currentUser?.admin && (
                 <button
                     type="button"
