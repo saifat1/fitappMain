@@ -1,19 +1,32 @@
 #!/bin/sh
-# Release of the current `main` on a server (dev or prod):  sh /opt/fitappMain/deploy/release.sh
+# Release on a server:
+#   dev:   sh /opt/fitappMain/deploy/release.sh           — the current `main`
+#   prod:  sh /opt/fitappMain/deploy/release.sh v1.0.1    — a version tag (only tested tasks), never plain main
 #
 # 1. backup: DB dump, .env, Caddyfile, local code changes and the previous commit → /root/fitapp-release-<ts>/
-# 2. update: local code edits are stashed (Caddyfile and .env stay server-local), git pull --ff-only
+# 2. update: local code edits are stashed (Caddyfile and .env stay server-local), then `main` is pulled
+#    or the tag is checked out (detached)
 # 3. rebuild and restart, wait for the backend, print the Liquibase changesets that ran
 # 4. old Docker build cache (older than a week) is pruned so the disk does not fill up
 #
 # Rollback (migrations are forward-only, so the DB is restored too):
-#   git checkout <previous-commit>; docker compose -f compose.yaml -f docker-compose.prod.yml up -d --build
+#   sh deploy/release.sh <previous tag>   (or git checkout <previous-commit>; $COMPOSE up -d --build)
 #   docker exec -i <db> sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --no-owner' < db.dump
 set -eu
 
 APP_DIR=${APP_DIR:-/opt/fitappMain}
 COMPOSE="docker compose -f compose.yaml -f docker-compose.prod.yml"
+REF=${1:-main}
 cd "$APP_DIR"
+
+# Run the script of the version being released, from a copy: git replaces this file during the update.
+if [ -z "${FITAPP_RELEASE_COPY:-}" ]; then
+  git fetch -q --tags origin
+  if [ "$REF" = main ]; then SRC=origin/main; else SRC="refs/tags/$REF"; fi
+  git rev-parse -q --verify "$SRC^{commit}" >/dev/null || { echo "ERROR: no tag $REF (git tag -l 'v*')"; exit 1; }
+  git show "$SRC:deploy/release.sh" > /tmp/fitapp-release.sh
+  FITAPP_RELEASE_COPY=1 exec sh /tmp/fitapp-release.sh "$@"
+fi
 
 TS=$(date +%Y%m%d-%H%M)
 RELEASE_START=$(date +%s)
@@ -37,7 +50,12 @@ echo "== update code"
 git checkout -q -- .env .env.local .env.server-nginx 2>/dev/null || true
 # Server-local code edits (e.g. old CORS patches) are kept in a stash, not lost. Caddyfile stays as is.
 git stash push -q -m "server-local-before-release-$TS" -- . ':(exclude)Caddyfile' 2>/dev/null || true
-git pull -q --ff-only origin main
+if [ "$REF" = main ]; then
+  git checkout -q main
+  git pull -q --ff-only origin main
+else
+  git checkout -q --detach "refs/tags/$REF"
+fi
 cp -p "$B/.env" .env
 chmod 600 .env
 echo "now at $(git log --oneline -1)"
@@ -47,6 +65,9 @@ echo "== rebuild and restart"
 # keeps its container (and isn't restarted) when only the frontend changed.
 export BACKEND_COMMIT=$(git log -1 --format=%h -- backend)
 export FRONTEND_COMMIT=$(git log -1 --format=%h -- frontend)
+# Version in the profile: the tag on prod ("1.0.1"), "1.0.1-3-g<hash>" on dev (3 commits after 1.0.1).
+export APP_VERSION=$(git describe --tags --match 'v[0-9]*' 2>/dev/null | sed 's/^v//' || true)
+echo "version ${APP_VERSION:-?}, frontend $FRONTEND_COMMIT, backend $BACKEND_COMMIT"
 $COMPOSE up -d --build
 
 echo "== wait for backend"

@@ -7,9 +7,10 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-# FIT-74: commit shown as the site's build (deploy/release.sh passes it; Docker has no .git)
+# FIT-74: version and commit shown in the profile (deploy/release.sh passes them; Docker has no .git)
 ARG BUILD_COMMIT=
-ENV BUILD_COMMIT=$BUILD_COMMIT
+ARG APP_VERSION=
+ENV BUILD_COMMIT=$BUILD_COMMIT APP_VERSION=$APP_VERSION
 RUN npm run build
 
 # stage 2: nginx

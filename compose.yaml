@@ -68,6 +68,7 @@ services:
       context: ./frontend
       args:
         BUILD_COMMIT: ${FRONTEND_COMMIT:-}
+        APP_VERSION: ${APP_VERSION:-}
     restart: unless-stopped
     depends_on:
       - backend
