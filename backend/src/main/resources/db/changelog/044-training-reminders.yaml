@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 044-training-reminders
+      author: claude
+      changes:
+        # FIT-75: «Напоминать о тренировках» in the profile, on by default.
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: training_reminders
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+        # Reminders already sent, so the 5-minute job never repeats one. slot = the training's date+time
+        # (a rescheduled training gets a new slot and is reminded again) or the day of the trainer's summary.
+        - createTable:
+            tableName: reminder_log
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_reminder_log
+                    nullable: false
+
+              # CLIENT_EVENING, CLIENT_SOON, TRAINER_DAY
+              - column:
+                  name: kind
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+
+              # training id for client reminders, trainer id for the morning summary
+              - column:
+                  name: ref_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: slot
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: sent_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: reminder_log
+            columnNames: kind, ref_id, slot
+            constraintName: uk_reminder_log_kind_ref_slot

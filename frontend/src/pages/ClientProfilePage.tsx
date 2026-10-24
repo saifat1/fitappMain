@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import MobileShell from "../widgets/MobileShell";
 import AppVersionInfo from "../shared/ui/AppVersionInfo";
+import ReminderSettingsRow from "../features/notification/ui/ReminderSettingsRow";
 import Avatar from "../shared/ui/Avatar";
 import { useAuth } from "../features/auth/model/AuthContext";
 import { avatarColor, getInitials } from "../features/calendar/lib/calendarWeek";
@@ -65,6 +66,11 @@ export default function ClientProfilePage() {
             <div className="fb-tab-panel">
                 <div className="fb-section-title">Мои данные</div>
                 {renderRows(DATA_ROWS)}
+
+                <div className="fb-section-title">Уведомления</div>
+                <div className="fb-list">
+                    <ReminderSettingsRow hint="Накануне в 19:00 и за 2 часа до тренировки" />
+                </div>
 
                 <div className="fb-section-title">Документы</div>
                 {renderRows(DOC_ROWS)}

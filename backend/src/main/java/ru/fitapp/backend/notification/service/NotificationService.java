@@ -215,6 +215,26 @@ public class NotificationService {
         );
     }
 
+    // ---------- Reminders (FIT-75) ----------
+
+    /** «Напоминание о тренировке» to the client; body is «Завтра, 25.10 в 10:00» / «Сегодня в 10:00». */
+    public void notifyTrainingReminder(Training training, String body) {
+        create(
+                training.getClient(),
+                training.getTrainer(),
+                NotificationType.TRAINING_REMINDER,
+                "Напоминание о тренировке",
+                body,
+                "TRAINING",
+                training.getId()
+        );
+    }
+
+    /** The trainer's morning «Тренировки на сегодня» — one per day, opens the calendar. */
+    public void notifyTrainerDaySummary(AppUser trainer, String body) {
+        create(trainer, null, NotificationType.TRAINER_DAY_SUMMARY, "Тренировки на сегодня", body, "CALENDAR", null);
+    }
+
     // ---------- New client ----------
 
     public void notifyNewClient(AppUser trainer, AppUser client) {
@@ -290,7 +310,9 @@ public class NotificationService {
 
         notificationRepository.save(notification);
 
-        String pushBody = actorLabel(actor) + (body != null && !body.isBlank() ? ", " + body : "");
+        String pushBody = actor == null
+                ? (body != null ? body : "")
+                : actorLabel(actor) + (body != null && !body.isBlank() ? ", " + body : "");
         Map<String, Object> pushData = Map.of(
                 "type", type.name(),
                 "relatedEntityType", relatedEntityType != null ? relatedEntityType : "",

@@ -77,6 +77,16 @@ export default function NotificationsPage() {
             return;
         }
 
+        // FIT-75: a reminder opens the training (with «Перенести» / «Отменить»), the morning summary the calendar.
+        if (notification.type === "TRAINING_REMINDER" && notification.relatedEntityId) {
+            navigate(`/trainings/${notification.relatedEntityId}`);
+            return;
+        }
+        if (notification.type === "TRAINER_DAY_SUMMARY") {
+            navigate("/trainings");
+            return;
+        }
+
         if (notification.type === "CONTRACT_EXPIRING") {
             // relatedEntityId is the contract itself — actorId is the client
             // it belongs to, which is what's actually navigable.

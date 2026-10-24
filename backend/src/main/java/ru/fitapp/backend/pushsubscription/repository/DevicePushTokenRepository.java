@@ -10,6 +10,8 @@ public interface DevicePushTokenRepository extends JpaRepository<DevicePushToken
 
     List<DevicePushToken> findAllByUserId(Long userId);
 
+    boolean existsByUserId(Long userId);
+
     Optional<DevicePushToken> findByToken(String token);
 
     void deleteByToken(String token);

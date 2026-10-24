@@ -90,6 +90,19 @@ public class AppUser {
         return this;
     }
 
+    /** FIT-75: «Напоминать о тренировках» — client reminders before trainings, the trainer's morning summary. */
+    @Column(name = "training_reminders", nullable = false)
+    private boolean trainingReminders = true;
+
+    public boolean isTrainingReminders() {
+        return trainingReminders;
+    }
+
+    public AppUser setTrainingReminders(boolean trainingReminders) {
+        this.trainingReminders = trainingReminders;
+        return this;
+    }
+
     public AppUser() {
     }
 

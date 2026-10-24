@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../features/auth/model/AuthContext";
 import MobileShell from "../widgets/MobileShell";
 import AppVersionInfo from "../shared/ui/AppVersionInfo";
+import ReminderSettingsRow from "../features/notification/ui/ReminderSettingsRow";
 import Avatar from "../shared/ui/Avatar";
 import { avatarColor } from "../features/calendar/lib/calendarWeek";
 import TrainerProfileInfoCard from "../features/trainer-profile/ui/TrainerProfileInfoCard";
@@ -263,6 +264,11 @@ export default function TrainerProfilePage() {
                 </span>
                 <span className="fb-row__chevron">›</span>
             </button>
+
+            <ReminderSettingsRow
+                className="fb-row fb-profile-link"
+                hint="Вам — сводка дня в 8:00, клиентам — накануне и за 2 часа"
+            />
 
             <button
                 type="button"

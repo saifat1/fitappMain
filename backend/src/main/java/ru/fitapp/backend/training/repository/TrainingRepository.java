@@ -16,6 +16,25 @@ import java.util.List;
 
 public interface TrainingRepository extends JpaRepository<Training, Long> {
 
+    /** FIT-75: planned trainings with a time in [from, to] for the reminder job (client may be null for the trainer's summary). */
+    @Query("""
+            select t from Training t
+            join fetch t.trainer
+            left join fetch t.client
+            where t.trainingDate between :from and :to
+              and t.status = :status
+              and t.trainingType in :types
+              and t.startTime is not null
+              and t.hiddenFromSchedule = false
+            order by t.trainingDate, t.startTime
+            """)
+    List<Training> findForReminders(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to,
+            @Param("status") TrainingStatus status,
+            @Param("types") Collection<TrainingType> types
+    );
+
     List<Training> findAllByTrainerIdAndTrainingDateBetweenOrderByTrainingDateAscStartTimeAsc(
             Long trainerId,
             LocalDate from,

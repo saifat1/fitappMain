@@ -18,6 +18,9 @@ public enum NotificationType {
     RESCHEDULE_REQUEST_CREATED(NotificationKind.REQUEST),
     RESCHEDULE_REQUEST_APPROVED(NotificationKind.REQUEST),
     TRAINING_COMPLETED(NotificationKind.REQUEST),
+    // FIT-75: the client's reminder before a training and the trainer's morning summary
+    TRAINING_REMINDER(NotificationKind.REQUEST),
+    TRAINER_DAY_SUMMARY(NotificationKind.REQUEST),
 
     // Kind: CANCELLATION (red) — a decline or a cancellation
     BOOKING_REQUEST_DECLINED(NotificationKind.CANCELLATION),

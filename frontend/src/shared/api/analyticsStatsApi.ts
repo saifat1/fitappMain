@@ -71,6 +71,7 @@ export type ProductMetrics = {
         contractsCreated: number;
         feedbackReceived: number;
         appDevicesWithPush: number;
+        remindersSent: number;
     };
     money: {
         revenueRub: number;

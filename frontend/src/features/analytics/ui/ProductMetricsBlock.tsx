@@ -93,6 +93,7 @@ export default function ProductMetricsBlock({ metrics }: { metrics: ProductMetri
                 <Tile label="Отменено тренировок" value={usage.trainingsCancelled} />
                 <Tile label="Обращений" value={usage.feedbackReceived} />
                 <Tile label="Телефонов с пушами" value={usage.appDevicesWithPush} />
+                <Tile label="Напоминаний клиентам" value={usage.remindersSent} />
             </div>
             {usage.trainingsByType.length > 0 && (
                 <div className="fb-hint">
