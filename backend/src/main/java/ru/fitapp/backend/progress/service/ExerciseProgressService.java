@@ -34,7 +34,8 @@ import java.util.Optional;
 /**
  * FIT-76: progress by exercise, built from completed trainings (no extra tables). Exercises of different trainings
  * are «the same» when their titles match ignoring case, spaces and ё/е — there is no link to the template.
- * The trainer sees only their own trainings with the client, the client sees all of theirs.
+ * The trainer sees all completed trainings of their client, also those with other trainers or done on their own
+ * (Иван Сысоев, 24.10.2026); the client sees the same.
  */
 @Service
 @Transactional(readOnly = true)
@@ -55,10 +56,9 @@ public class ExerciseProgressService {
         this.notificationService = notificationService;
     }
 
-    /** @param trainerId null — all of the client's trainings (the client's own view). */
-    public List<Summary> getSummaries(Long clientId, Long trainerId) {
+    public List<Summary> getSummaries(Long clientId) {
         List<Summary> result = new ArrayList<>();
-        for (Series series : buildSeries(clientId, trainerId).values()) {
+        for (Series series : buildSeries(clientId).values()) {
             List<Point> points = series.points();
             Point last = points.get(points.size() - 1);
             List<BigDecimal> recent = points.subList(Math.max(0, points.size() - RECENT_VALUES), points.size())
@@ -70,29 +70,29 @@ public class ExerciseProgressService {
         return result;
     }
 
-    public Optional<Series> getSeries(Long clientId, Long trainerId, String key) {
-        return Optional.ofNullable(buildSeries(clientId, trainerId).get(normalizeKey(key)));
+    public Optional<Series> getSeries(Long clientId, String key) {
+        return Optional.ofNullable(buildSeries(clientId).get(normalizeKey(key)));
     }
 
-    /** «В прошлый раз»: the latest completed training of the client (with this trainer) before {@code current}. */
+    /** «В прошлый раз»: the latest completed training of the client before {@code current}. */
     public Optional<Previous> getPrevious(Training current, String title) {
         if (current.getClient() == null) {
             return Optional.empty();
         }
-        return findPrevious(current.getClient().getId(), current.getTrainer().getId(), title, current);
+        return findPrevious(current.getClient().getId(), title, current);
     }
 
     /** The same for a training that isn't saved yet (the «Новая тренировка» screen): the latest completed one. */
-    public Optional<Previous> getLatest(Long clientId, Long trainerId, String title) {
-        return findPrevious(clientId, trainerId, title, null);
+    public Optional<Previous> getLatest(Long clientId, String title) {
+        return findPrevious(clientId, title, null);
     }
 
-    private Optional<Previous> findPrevious(Long clientId, Long trainerId, String title, Training current) {
+    private Optional<Previous> findPrevious(Long clientId, String title, Training current) {
         if (title == null || title.isBlank()) {
             return Optional.empty();
         }
         String key = normalizeKey(title);
-        return completedExercises(clientId, trainerId).stream()
+        return completedExercises(clientId).stream()
                 .filter(exercise -> key.equals(normalizeKey(exercise.getTitle())))
                 .filter(exercise -> current == null || (!exercise.getTraining().getId().equals(current.getId())
                         && CHRONOLOGICAL.compare(exercise.getTraining(), current) < 0))
@@ -116,7 +116,7 @@ public class ExerciseProgressService {
                 return;
             }
             List<String> records = new ArrayList<>();
-            for (Series series : buildSeries(client.getId(), null).values()) {
+            for (Series series : buildSeries(client.getId()).values()) {
                 if (series.metric() != Metric.WEIGHT) {
                     continue;
                 }
@@ -135,13 +135,13 @@ public class ExerciseProgressService {
 
     // ---------- Internals ----------
 
-    private List<TrainingExercise> completedExercises(Long clientId, Long trainerId) {
-        return trainingExerciseRepository.findAllForProgress(clientId, trainerId, TrainingStatus.COMPLETED);
+    private List<TrainingExercise> completedExercises(Long clientId) {
+        return trainingExerciseRepository.findAllForProgress(clientId, TrainingStatus.COMPLETED);
     }
 
     /** Series by exercise key, points in chronological order; exercises without any number are left out. */
-    private Map<String, Series> buildSeries(Long clientId, Long trainerId) {
-        List<TrainingExercise> exercises = new ArrayList<>(completedExercises(clientId, trainerId));
+    private Map<String, Series> buildSeries(Long clientId) {
+        List<TrainingExercise> exercises = new ArrayList<>(completedExercises(clientId));
         exercises.sort(Comparator.comparing(TrainingExercise::getTraining, CHRONOLOGICAL)
                 .thenComparing(TrainingExercise::getOrderNum));
 

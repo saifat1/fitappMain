@@ -43,14 +43,14 @@ public class ExerciseProgressController {
     public List<Summary> trainerSummaries(@PathVariable Long clientId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
-        return exerciseProgressService.getSummaries(clientId, trainer.getId());
+        return exerciseProgressService.getSummaries(clientId);
     }
 
     @GetMapping("/api/trainer/clients/{clientId}/progress/series")
     public Series trainerSeries(@PathVariable Long clientId, @RequestParam String key) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
-        return exerciseProgressService.getSeries(clientId, trainer.getId(), key).orElseThrow(ExerciseProgressController::notFound);
+        return exerciseProgressService.getSeries(clientId, key).orElseThrow(ExerciseProgressController::notFound);
     }
 
     /** «В прошлый раз» on the «Новая тренировка» screen, before the training exists. Empty body — not done yet. */
@@ -58,17 +58,17 @@ public class ExerciseProgressController {
     public Previous trainerPrevious(@PathVariable Long clientId, @RequestParam String title) {
         AppUser trainer = currentUserService.getCurrentTrainer();
         trainerClientService.getClientOfTrainer(trainer.getId(), clientId);
-        return exerciseProgressService.getLatest(clientId, trainer.getId(), title).orElse(null);
+        return exerciseProgressService.getLatest(clientId, title).orElse(null);
     }
 
     @GetMapping("/api/client/progress")
     public List<Summary> mySummaries() {
-        return exerciseProgressService.getSummaries(currentClient().getId(), null);
+        return exerciseProgressService.getSummaries(currentClient().getId());
     }
 
     @GetMapping("/api/client/progress/series")
     public Series mySeries(@RequestParam String key) {
-        return exerciseProgressService.getSeries(currentClient().getId(), null, key).orElseThrow(ExerciseProgressController::notFound);
+        return exerciseProgressService.getSeries(currentClient().getId(), key).orElseThrow(ExerciseProgressController::notFound);
     }
 
     /** Empty body when the client hasn't done this exercise before. */
