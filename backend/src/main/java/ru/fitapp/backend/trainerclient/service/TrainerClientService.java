@@ -100,6 +100,17 @@ public class TrainerClientService {
                 .toList();
     }
 
+    /** FIT-77: the client's trainer — the given one if it is theirs, otherwise the first one (as on the client's home screen). */
+    @Transactional(readOnly = true)
+    public AppUser getTrainerOfClient(Long clientId, Long trainerId) {
+        List<TrainerClient> links = trainerClientRepository.findAllByClientIdWithTrainer(clientId);
+        return links.stream()
+                .filter(link -> trainerId == null || link.getTrainer().getId().equals(trainerId))
+                .map(TrainerClient::getTrainer)
+                .findFirst()
+                .orElseThrow(() -> new ApiException("TRAINER_NOT_FOUND", "У вас пока нет тренера — тренировку записать не к кому"));
+    }
+
     @Transactional(readOnly = true)
     public AppUser getClientOfTrainer(Long trainerId, Long clientId) {
         TrainerClient link = trainerClientRepository.findByTrainerIdAndClientId(trainerId, clientId)

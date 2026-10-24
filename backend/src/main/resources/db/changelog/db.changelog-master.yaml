@@ -87,3 +87,5 @@ databaseChangeLog:
       file: db/changelog/043-add-signup-source-to-app-user.yaml
   - include:
       file: db/changelog/044-training-reminders.yaml
+  - include:
+      file: db/changelog/045-add-created-by-client-to-training.yaml

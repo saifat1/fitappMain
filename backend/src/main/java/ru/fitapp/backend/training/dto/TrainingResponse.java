@@ -26,6 +26,8 @@ public class TrainingResponse {
     private List<String> focusMuscleGroups;
     private String trainerNote;
     private String clientNote;
+    /** FIT-77: the client wrote it down themselves. */
+    private boolean createdByClient;
     private Long contractId;
     private String contractNumber;
     private LocalDateTime createdAt;
@@ -199,6 +201,15 @@ public class TrainingResponse {
 
     public TrainingResponse setClientNote(String clientNote) {
         this.clientNote = clientNote;
+        return this;
+    }
+
+    public boolean isCreatedByClient() {
+        return createdByClient;
+    }
+
+    public TrainingResponse setCreatedByClient(boolean createdByClient) {
+        this.createdByClient = createdByClient;
         return this;
     }
 

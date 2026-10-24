@@ -135,9 +135,15 @@ export default function ClientHomeScreen() {
                 )}
 
                 {trainer && (
-                    <button type="button" className="fb-btn fb-btn--primary fb-book-cta" onClick={() => navigate("/client/booking")}>
-                        Записаться на тренировку
-                    </button>
+                    <>
+                        <button type="button" className="fb-btn fb-btn--primary fb-book-cta" onClick={() => navigate("/client/booking")}>
+                            Записаться на тренировку
+                        </button>
+                        {/* FIT-77: a self-guided training the client writes down for themselves */}
+                        <button type="button" className="fb-btn fb-btn--ghost fb-book-cta" onClick={() => navigate("/client/trainings/new")}>
+                            Записать свою тренировку
+                        </button>
+                    </>
                 )}
 
                 <div className="fb-section-header">

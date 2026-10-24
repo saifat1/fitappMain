@@ -16,16 +16,19 @@ type Props = {
     onPick: (draft: DraftExercise) => void;
     onClose: () => void;
     loadPrevious?: (title: string) => Promise<PreviousExercise | null>;
+    /** FIT-77: only «Новое» — a client has no exercise templates. */
+    customOnly?: boolean;
 };
 
-export default function ExercisePickerSheet({ onPick, onClose, loadPrevious }: Props) {
-    const [tab, setTab] = useState<Tab>("template");
+export default function ExercisePickerSheet({ onPick, onClose, loadPrevious, customOnly = false }: Props) {
+    const [tab, setTab] = useState<Tab>(customOnly ? "custom" : "template");
     const [templates, setTemplates] = useState<ExerciseTemplateResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [category, setCategory] = useState<CategoryFilter>("ALL");
     const [selected, setSelected] = useState<ExerciseTemplateResponse | null>(null);
 
     useEffect(() => {
+        if (customOnly) return;
         let active = true;
         (async () => {
             try {
@@ -38,7 +41,7 @@ export default function ExercisePickerSheet({ onPick, onClose, loadPrevious }: P
         return () => {
             active = false;
         };
-    }, []);
+    }, [customOnly]);
 
     const filtered = useMemo(
         () => (category === "ALL" ? templates : templates.filter((t) => t.muscleGroup === category)),
@@ -59,6 +62,7 @@ export default function ExercisePickerSheet({ onPick, onClose, loadPrevious }: P
         <>
             <button type="button" className="fb-sheet-backdrop" aria-label="Закрыть" onClick={onClose} />
             <div className="fb-sheet fb-sheet--tall" role="dialog" aria-label="Упражнение">
+                {!customOnly && (
                 <div className="fb-segment">
                     <button
                         type="button"
@@ -75,6 +79,7 @@ export default function ExercisePickerSheet({ onPick, onClose, loadPrevious }: P
                         Новое
                     </button>
                 </div>
+                )}
 
                 {tab === "custom" ? (
                     <ExerciseDetailForm onAdd={handleAdd} loadPrevious={loadPrevious} />

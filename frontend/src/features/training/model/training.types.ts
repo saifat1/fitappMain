@@ -34,6 +34,8 @@ export type TrainingResponse = {
     roundRestSeconds: number | null;
     trainerNote: string | null;
     clientNote: string | null;
+    /** FIT-77: the client wrote it down themselves — they manage it, it's not in the salary report. */
+    createdByClient: boolean;
     contractId: number | null;
     contractNumber: string | null;
     createdAt: string;

@@ -82,6 +82,10 @@ public class Training {
     @Column(name = "hidden_from_schedule", nullable = false)
     private boolean hiddenFromSchedule = false;
 
+    /** FIT-77: written down by the client themselves — the client manages it, it's not in the salary report. */
+    @Column(name = "created_by_client", nullable = false)
+    private boolean createdByClient = false;
+
     @Column(name = "trainer_note", length = 2000)
     private String trainerNote;
 
@@ -243,6 +247,15 @@ public class Training {
 
     public Training setHiddenFromSchedule(boolean hiddenFromSchedule) {
         this.hiddenFromSchedule = hiddenFromSchedule;
+        return this;
+    }
+
+    public boolean isCreatedByClient() {
+        return createdByClient;
+    }
+
+    public Training setCreatedByClient(boolean createdByClient) {
+        this.createdByClient = createdByClient;
         return this;
     }
 

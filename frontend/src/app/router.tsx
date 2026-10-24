@@ -14,6 +14,7 @@ import ClientMeasurementsPage from "../pages/ClientMeasurementsPage";
 import ClientMyQuestionnairePage from "../pages/ClientMyQuestionnairePage";
 import ClientMyMeasurementsPage from "../pages/ClientMyMeasurementsPage";
 import ExerciseProgressPage from "../pages/ExerciseProgressPage";
+import ClientTrainingCreatePage from "../pages/ClientTrainingCreatePage";
 import InvitesPage from "../pages/InvitesPage";
 import TrainingsPage from "../pages/TrainingsPage";
 import TrainingCreatePage from "../pages/TrainingCreatePage";
@@ -362,6 +363,14 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <ClientMyQuestionnairePage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/trainings/new",
+        element: (
+            <ProtectedRoute>
+                <ClientTrainingCreatePage />
             </ProtectedRoute>
         ),
     },

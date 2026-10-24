@@ -64,7 +64,7 @@ public class TrainingExerciseService {
     }
 
     public TrainingExerciseResponse createExercise(Long trainingId, CreateTrainingExerciseRequest request) {
-        Training training = trainingService.getTrainerOwnedTrainingEntity(trainingId);
+        Training training = trainingService.getManageableTrainingEntity(trainingId);
 
         TrainingExercise exercise = new TrainingExercise()
                 .setTraining(training)
@@ -147,7 +147,8 @@ public class TrainingExerciseService {
             throw new ApiException("ACCESS_DENIED", "Нет доступа к упражнению");
         }
 
-        if (isTrainerOwner) {
+        // FIT-77: in a training the client wrote down themselves the client edits everything, like the trainer.
+        if (isTrainerOwner || (isClientOwner && training.isCreatedByClient())) {
             if (request.getTitle() != null) {
                 exercise.setTitle(normalizeRequired(request.getTitle(), "Название упражнения обязательно"));
             }
@@ -222,7 +223,7 @@ public class TrainingExerciseService {
     }
 
     public void deleteExercise(Long trainingId, Long exerciseId) {
-        trainingService.getTrainerOwnedTrainingEntity(trainingId);
+        trainingService.getManageableTrainingEntity(trainingId);
         TrainingExercise exercise = getExerciseOrThrow(trainingId, exerciseId);
         trainingExerciseRepository.delete(exercise);
     }
@@ -232,7 +233,7 @@ public class TrainingExerciseService {
             Long exerciseId,
             UpdateExerciseCompletionRequest request
     ) {
-        trainingService.getAccessibleTrainingEntity(trainingId);
+        trainingService.getManageableTrainingEntity(trainingId);
         TrainingExercise exercise = getExerciseOrThrow(trainingId, exerciseId);
         exercise.setIsCompleted(request.getIsCompleted());
 

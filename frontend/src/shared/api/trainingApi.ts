@@ -19,6 +19,10 @@ export const trainingApi = {
     cancelTraining: (id: number) =>
         apiClient.patch(`/trainings/${id}/cancel`).then((r) => r.data),
 
+    /** FIT-77, client-only: write down a self-guided training for yourself. */
+    createMyTraining: (payload: unknown) =>
+        apiClient.post("/client/trainings", payload).then((r) => r.data),
+
     /** Client-only: cancel a training that belongs to the current client. */
     cancelMyTraining: (id: number) =>
         apiClient.post(`/client/trainings/${id}/cancel`).then((r) => r.data),

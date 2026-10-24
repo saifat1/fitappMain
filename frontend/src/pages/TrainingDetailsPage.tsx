@@ -104,6 +104,8 @@ export default function TrainingDetailsPage() {
     const isClient = currentUser?.role === "CLIENT";
 
     const [training, setTraining] = useState<TrainingResponse | null>(null);
+    // FIT-77: a training the client wrote down themselves — the client manages it like a trainer.
+    const ownsAsClient = isClient && Boolean(training?.createdByClient);
     const [exercises, setExercises] = useState<TrainingExerciseResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
@@ -138,7 +140,8 @@ export default function TrainingDetailsPage() {
             setDate(t.trainingDate);
             setStart(time(t.startTime));
             setEnd(time(t.endTime));
-            setComment(t.trainerNote ?? "");
+            // FIT-77: in the client's own training the comment is the client's note.
+            setComment((t.createdByClient && isClient ? t.clientNote : t.trainerNote) ?? "");
             setRounds(String(t.rounds ?? 1));
             setRoundRest(t.roundRestSeconds ? formatTimer(t.roundRestSeconds) : "");
             await loadExercises();
@@ -147,7 +150,7 @@ export default function TrainingDetailsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [id, loadExercises]);
+    }, [id, loadExercises, isClient]);
 
     useEffect(() => {
         void load();
@@ -196,7 +199,7 @@ export default function TrainingDetailsPage() {
     };
 
     const handleDelete = () => {
-        const question = training?.status === "COMPLETED"
+        const question = training?.status === "COMPLETED" && !ownsAsClient
             ? "Удалить проведённую тренировку из расписания? Она останется списанной с договора и в отчёте. Чтобы вернуть её на договор, используйте «Вернуть в план»."
             : "Удалить тренировку?";
         if (!window.confirm(question)) return;
@@ -328,7 +331,7 @@ export default function TrainingDetailsPage() {
 
     const status = training.status;
     const pill = STATUS_PILL[status] ?? null;
-    const canEditExercises = !isClient && status !== "CANCELLED";
+    const canEditExercises = (!isClient || ownsAsClient) && status !== "CANCELLED";
     const isCircuit = training.trainingType === "CIRCUIT";
     const rowTitle = (ex: TrainingExerciseResponse, index: number) => (isCircuit ? `${index + 1}. ${ex.title}` : ex.title);
     const rowSub = (ex: TrainingExerciseResponse) => (isCircuit ? circuitSummary(ex) : exerciseSummary(ex));
@@ -339,7 +342,7 @@ export default function TrainingDetailsPage() {
                 <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => (editing ? setEditing(false) : navigate(-1))}>‹</button>
                 <h1 className="fb-topbar__title">Тренировка</h1>
 
-                {!editing && (!isClient || status === "PLANNED") && (
+                {!editing && (!isClient || ownsAsClient || status === "PLANNED") && (
                     <button type="button" className="fb-topbar__action" aria-label="Меню" onClick={() => setMenuOpen((v) => !v)}>
                         ⋮
                     </button>
@@ -349,7 +352,7 @@ export default function TrainingDetailsPage() {
                     <>
                         <button type="button" className="fb-overlay" aria-label="Закрыть" onClick={() => setMenuOpen(false)} />
                         <div className="fb-menu" role="menu">
-                            {isClient ? (
+                            {isClient && !ownsAsClient ? (
                                 <button type="button" className="fb-menu__item" onClick={() => { setMenuOpen(false); navigate(`/trainings/${id}/reschedule-request`); }}>
                                     Перенести
                                 </button>
@@ -396,6 +399,13 @@ export default function TrainingDetailsPage() {
                     {pill && <span className={`fb-pill ${pill.cls}`}>{pill.label}</span>}
                 </div>
 
+                {!isCircuit && training.createdByClient && (
+                    <>
+                        <ReadonlyRow label="Своя тренировка клиента" value={training.title ?? "Самостоятельная"} />
+                        {training.description && <ReadonlyRow label="Описание" value={training.description} />}
+                    </>
+                )}
+
                 {isCircuit && (
                     <>
                         <ReadonlyRow label="Круговая тренировка" value={training.title ?? "—"} />
@@ -436,6 +446,9 @@ export default function TrainingDetailsPage() {
                         <ReadonlyRow label="Конец" value={time(training.endTime)} />
                         <ReadonlyRow label="Повтор" value="Никогда" />
                         {training.trainerNote && <ReadonlyRow label="Комментарий" value={training.trainerNote} />}
+                        {training.createdByClient && training.clientNote && (
+                            <ReadonlyRow label="Комментарий клиента" value={training.clientNote} />
+                        )}
                     </>
                 )}
 
@@ -506,7 +519,7 @@ export default function TrainingDetailsPage() {
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-                {!editing && !isClient && status !== "CANCELLED" && (
+                {!editing && (!isClient || ownsAsClient) && status !== "CANCELLED" && (
                     <button
                         type="button"
                         className="fb-fab fb-fab--flush"
@@ -528,6 +541,7 @@ export default function TrainingDetailsPage() {
                 <ExercisePickerSheet
                     onPick={(draft) => void addExerciseFromPicker(draft.source)}
                     loadPrevious={loadPrevious}
+                    customOnly={isClient}
                     onClose={() => setExerciseSheetOpen(false)}
                 />
             )}

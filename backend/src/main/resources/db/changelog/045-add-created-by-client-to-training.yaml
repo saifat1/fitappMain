@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 045-add-created-by-client-to-training
+      author: claude
+      changes:
+        # FIT-77: a self-guided training the client wrote down themselves — the client manages it,
+        # the trainer sees it in the calendar, it never goes into the trainer's salary report.
+        - addColumn:
+            tableName: training
+            columns:
+              - column:
+                  name: created_by_client
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

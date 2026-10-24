@@ -58,10 +58,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/trainer/**").hasRole("TRAINER")
                         .requestMatchers("/api/client/**").hasRole("CLIENT")
                         .requestMatchers(HttpMethod.GET, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
-                        .requestMatchers(HttpMethod.POST, "/api/trainings/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.PUT, "/api/trainings/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/trainings/**").hasRole("TRAINER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/trainings/**").hasRole("TRAINER")
+                        // FIT-77: a client manages the trainings they wrote down themselves; who may change
+                        // which training is checked in TrainingService / TrainingExerciseService.
+                        .requestMatchers(HttpMethod.POST, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
+                        .requestMatchers(HttpMethod.PUT, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
+                        .requestMatchers(HttpMethod.PATCH, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/trainings/**").hasAnyRole("TRAINER", "CLIENT")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

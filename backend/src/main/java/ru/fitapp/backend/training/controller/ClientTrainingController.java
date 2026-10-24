@@ -1,9 +1,13 @@
 package ru.fitapp.backend.training.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.fitapp.backend.training.dto.CreateClientTrainingRequest;
+import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.service.TrainingService;
 
 /**
@@ -18,6 +22,12 @@ public class ClientTrainingController {
 
     public ClientTrainingController(TrainingService trainingService) {
         this.trainingService = trainingService;
+    }
+
+    /** FIT-77: a self-guided training the client writes down for themselves. */
+    @PostMapping
+    public TrainingResponse createMyTraining(@Valid @RequestBody CreateClientTrainingRequest request) {
+        return trainingService.createForCurrentClient(request);
     }
 
     @PostMapping("/{trainingId}/cancel")

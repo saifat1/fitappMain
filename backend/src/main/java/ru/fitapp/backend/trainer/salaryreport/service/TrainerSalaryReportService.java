@@ -60,7 +60,10 @@ public class TrainerSalaryReportService {
                         from,
                         to,
                         TrainingStatus.COMPLETED
-                );
+                ).stream()
+                        // FIT-77: trainings the client wrote down themselves aren't the trainer's work.
+                        .filter(training -> !training.isCreatedByClient())
+                        .toList();
 
         List<TrainerDutySlot> dutySlots =
                 trainerDutySlotRepository.findAllByTrainerIdAndDutyDateBetweenOrderByDutyDateAscStartTimeAsc(

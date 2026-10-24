@@ -7,6 +7,7 @@ import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
 import ru.fitapp.backend.progress.service.ExerciseProgressService;
+import ru.fitapp.backend.training.dto.CreateClientTrainingRequest;
 import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
@@ -107,6 +108,34 @@ public class TrainingService {
         return mapToResponse(saved);
     }
 
+    /**
+     * FIT-77: the client writes down a self-guided training for themselves. It goes to the trainer's calendar
+     * (trainer = the client's trainer), the client manages it (exercises, edit, complete, delete), and it
+     * never goes into the salary report. Self-guided trainings the trainer creates are unchanged.
+     */
+    public TrainingResponse createForCurrentClient(CreateClientTrainingRequest request) {
+        AppUser client = currentClient();
+        validateTimeRange(request.getStartTime(), request.getEndTime());
+        AppUser trainer = trainerClientService.getTrainerOfClient(client.getId(), request.getTrainerId());
+
+        Training training = new Training()
+                .setTrainer(trainer)
+                .setClient(client)
+                .setTrainingDate(request.getTrainingDate())
+                .setStartTime(request.getStartTime())
+                .setEndTime(request.getEndTime())
+                .setStatus(TrainingStatus.PLANNED)
+                .setTrainingType(TrainingType.INDEPENDENT)
+                .setFocusMuscleGroups(join(request.getFocusMuscleGroups()))
+                .setTitle(normalizeNote(request.getTitle()))
+                .setDescription(normalizeNote(request.getDescription()))
+                .setCreatedByClient(true);
+
+        Training saved = trainingRepository.save(training);
+        analyticsService.trackUserAction(client, AnalyticsEventType.TRAINING_CREATED, "training", String.valueOf(saved.getId()), null);
+        return mapToResponse(saved);
+    }
+
     @Transactional(readOnly = true)
     public List<TrainingResponse> getTrainings(LocalDate from, LocalDate to) {
         validateDateRange(from, to);
@@ -179,8 +208,9 @@ public class TrainingService {
     }
 
     public TrainingResponse updateTraining(Long trainingId, UpdateTrainingRequest request) {
-        AppUser trainer = currentUserService.getCurrentTrainer();
-        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+        AppUser user = currentUserService.getCurrentUser();
+        Training training = getManageableTrainingOrThrow(trainingId, user);
+        boolean byClient = user.getRole() == UserRole.CLIENT;
 
         LocalDate targetDate = request.getTrainingDate() != null ? request.getTrainingDate() : training.getTrainingDate();
         LocalTime targetStart = request.getStartTime() != null ? request.getStartTime() : training.getStartTime();
@@ -206,7 +236,12 @@ public class TrainingService {
         }
 
         if (request.getTrainerNote() != null) {
-            training.setTrainerNote(normalizeNote(request.getTrainerNote()));
+            // The client's own training: the «Комментарий» field is the client's note.
+            if (byClient) {
+                training.setClientNote(normalizeNote(request.getTrainerNote()));
+            } else {
+                training.setTrainerNote(normalizeNote(request.getTrainerNote()));
+            }
         }
 
         if (training.getTrainingType() == TrainingType.CIRCUIT) {
@@ -224,8 +259,20 @@ public class TrainingService {
     }
 
     public void cancelTraining(Long trainingId) {
-        AppUser trainer = currentUserService.getCurrentTrainer();
-        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+        AppUser user = currentUserService.getCurrentUser();
+        Training training = getManageableTrainingOrThrow(trainingId, user);
+
+        // FIT-77: the client deletes their own training — it just disappears, nobody is notified.
+        if (user.getRole() == UserRole.CLIENT) {
+            if (training.getStatus() != TrainingStatus.COMPLETED) {
+                training.setStatus(TrainingStatus.CANCELLED);
+                training.setCancelledBy(CancelledBy.CLIENT);
+            }
+            training.setHiddenFromSchedule(true);
+            trainingRepository.save(training);
+            return;
+        }
+        AppUser trainer = user;
 
         // "Удалить" on a training that already took place only removes it from the
         // schedule: it stays COMPLETED, stays drawn from the contract and in the
@@ -329,6 +376,12 @@ public class TrainingService {
         return training;
     }
 
+    /** The trainer's training, or (FIT-77) the client's own one — exercises can be added/removed by whoever manages it. */
+    @Transactional(readOnly = true)
+    public Training getManageableTrainingEntity(Long trainingId) {
+        return getManageableTrainingOrThrow(trainingId, currentUserService.getCurrentUser());
+    }
+
     @Transactional(readOnly = true)
     public Training getTrainerOwnedTrainingEntity(Long trainingId) {
         AppUser trainer = currentUserService.getCurrentTrainer();
@@ -348,6 +401,27 @@ public class TrainingService {
         }
 
         return training;
+    }
+
+    private Training getManageableTrainingOrThrow(Long trainingId, AppUser user) {
+        if (user.getRole() == UserRole.TRAINER) {
+            return getTrainerOwnedTrainingOrThrow(trainingId, user.getId());
+        }
+        Training training = trainingRepository.findById(trainingId)
+                .orElseThrow(() -> new ApiException("TRAINING_NOT_FOUND", "Тренировка не найдена"));
+        if (user.getRole() != UserRole.CLIENT || !training.isCreatedByClient()
+                || !training.getClient().getId().equals(user.getId())) {
+            throw new ApiException("ACCESS_DENIED", "Изменять можно только тренировки, которые вы записали сами");
+        }
+        return training;
+    }
+
+    private AppUser currentClient() {
+        AppUser user = currentUserService.getCurrentUser();
+        if (user.getRole() != UserRole.CLIENT) {
+            throw new ApiException("ACCESS_DENIED", "Доступ разрешён только клиенту");
+        }
+        return user;
     }
 
     private Training getTrainerOwnedTrainingOrThrow(Long trainingId, Long trainerId) {
@@ -382,6 +456,7 @@ public class TrainingService {
                 .setRoundRestSeconds(training.getRoundRestSeconds())
                 .setTrainerNote(training.getTrainerNote())
                 .setClientNote(training.getClientNote())
+                .setCreatedByClient(training.isCreatedByClient())
                 .setContractId(training.getContract() != null ? training.getContract().getId() : null)
                 .setContractNumber(training.getContract() != null ? training.getContract().getContractNumber() : null)
                 .setCreatedAt(training.getCreatedAt())
@@ -463,23 +538,26 @@ public class TrainingService {
     }
 
     public TrainingResponse completeTraining(Long trainingId) {
-        AppUser trainer = currentUserService.getCurrentTrainer();
-        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+        AppUser user = currentUserService.getCurrentUser();
+        Training training = getManageableTrainingOrThrow(trainingId, user);
 
         training.setStatus(TrainingStatus.COMPLETED);
 
         if (training.getTrainingType().drawsFromContract()) {
             clientContractService
-                    .consumeOneForCompletedTraining(training.getClient(), trainer)
+                    .consumeOneForCompletedTraining(training.getClient(), training.getTrainer())
                     .ifPresent(training::setContract);
         }
 
         Training saved = trainingRepository.save(training);
-        notificationService.notifyTrainingCompleted(saved);
+        // «Тренировка проведена» goes from the trainer to the client — not when the client completes their own.
+        if (user.getRole() == UserRole.TRAINER) {
+            notificationService.notifyTrainingCompleted(saved);
+        }
         exerciseProgressService.notifyRecords(saved);
 
         analyticsService.trackUserAction(
-                trainer,
+                user,
                 AnalyticsEventType.TRAINING_COMPLETED,
                 "training",
                 String.valueOf(saved.getId()),
@@ -490,8 +568,7 @@ public class TrainingService {
     }
 
     public TrainingResponse restoreTrainingToPlanned(Long trainingId) {
-        AppUser trainer = currentUserService.getCurrentTrainer();
-        Training training = getTrainerOwnedTrainingOrThrow(trainingId, trainer.getId());
+        Training training = getManageableTrainingOrThrow(trainingId, currentUserService.getCurrentUser());
 
         if (training.getStatus() != TrainingStatus.COMPLETED) {
             throw new ApiException(
