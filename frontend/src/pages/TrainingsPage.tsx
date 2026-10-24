@@ -68,7 +68,9 @@ export default function TrainingsPage() {
         try {
             const data: TrainingResponse[] = await trainingApi.getTrainings(
                 addDaysKey(today, -PAST_DAYS),
-                addDaysKey(today, FUTURE_DAYS)
+                addDaysKey(today, FUTURE_DAYS),
+                // FIT-77: a client's archive also shows the trainings the client wrote down themselves
+                clientId != null
             );
             setTrainings(clientId ? data.filter((t) => t.clientId === clientId) : data);
         } catch (error) {
@@ -92,6 +94,12 @@ export default function TrainingsPage() {
             .then((client) => setClientTitle(shortName(clientName(client))))
             .catch(() => setClientTitle(""));
     }, [clientId]);
+
+    // FIT-77: not yet completed trainings the client wrote down themselves — the number on «Самостоятельные».
+    const clientOwnPlanned = useMemo(
+        () => trainings.filter((t) => t.createdByClient && t.status === "PLANNED").length,
+        [trainings]
+    );
 
     const stats = useMemo(
         () => ({
@@ -162,6 +170,11 @@ export default function TrainingsPage() {
                         onClick={() => setTypeFilter(f.code)}
                     >
                         {f.label}
+                        {f.code === "INDEPENDENT" && clientOwnPlanned > 0 ? (
+                            <span className="fb-chip__badge" aria-label={`Записал клиент, не проведено: ${clientOwnPlanned}`}>
+                                {clientOwnPlanned}
+                            </span>
+                        ) : null}
                     </button>
                 ))}
             </div>

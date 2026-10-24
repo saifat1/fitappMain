@@ -1818,3 +1818,6 @@
 .fb-progress-chart__detail { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 12px; border-radius: 12px; background: var(--fb-surface-2); font-size: 14px; color: var(--fb-ink-2); }
 .fb-progress-chart__detail b { font-size: 16px; color: var(--fb-ink); }
 .fb-progress-chart__sets { flex-basis: 100%; }
+
+/* number on the «Самостоятельные» chip of a client's archive (FIT-77) */
+.fb-chip__badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; background: #f9ab00; color: #fff; font-size: 11px; font-weight: 700; line-height: 1; }

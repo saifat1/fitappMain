@@ -137,7 +137,7 @@ public class TrainingService {
     }
 
     @Transactional(readOnly = true)
-    public List<TrainingResponse> getTrainings(LocalDate from, LocalDate to) {
+    public List<TrainingResponse> getTrainings(LocalDate from, LocalDate to, boolean includeClientOwn) {
         validateDateRange(from, to);
 
         AppUser currentUser = currentUserService.getCurrentUser();
@@ -151,6 +151,9 @@ public class TrainingService {
                     )
                     .stream()
                     .filter(t -> isVisibleInCalendar(t, UserRole.TRAINER))
+                    // FIT-77 (Иван Сысоев, 24.10): a training the client wrote down for themselves isn't in the
+                    // trainer's calendar — only in that client's «Архив тренировок» → «Самостоятельные».
+                    .filter(t -> includeClientOwn || !t.isCreatedByClient())
                     .map(this::mapToResponse)
                     .toList();
         }

@@ -1,8 +1,11 @@
 import { apiClient } from "./axios";
 
 export const trainingApi = {
-    getTrainings: (from: string, to: string) =>
-        apiClient.get(`/trainings?from=${from}&to=${to}`).then((r) => r.data),
+    /** includeClientOwn (FIT-77, trainer): also the trainings clients wrote down themselves — for the client's archive. */
+    getTrainings: (from: string, to: string, includeClientOwn = false) =>
+        apiClient
+            .get(`/trainings?from=${from}&to=${to}${includeClientOwn ? "&includeClientOwn=true" : ""}`)
+            .then((r) => r.data),
 
     getTraining: (id: number) =>
         apiClient.get(`/trainings/${id}`).then((r) => r.data),

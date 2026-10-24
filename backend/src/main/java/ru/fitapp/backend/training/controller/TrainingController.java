@@ -24,9 +24,11 @@ public class TrainingController {
     @GetMapping
     public List<TrainingResponse> getTrainings(
             @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            // FIT-77: the trainer's calendar leaves out trainings clients wrote down themselves; the client's archive asks for them
+            @RequestParam(value = "includeClientOwn", defaultValue = "false") boolean includeClientOwn
     ) {
-        return trainingService.getTrainings(from, to);
+        return trainingService.getTrainings(from, to, includeClientOwn);
     }
 
     @GetMapping("/{trainingId}")
