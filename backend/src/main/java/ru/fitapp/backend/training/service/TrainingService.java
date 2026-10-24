@@ -6,6 +6,7 @@ import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.common.security.CurrentUserService;
 import ru.fitapp.backend.contract.service.ClientContractService;
 import ru.fitapp.backend.notification.service.NotificationService;
+import ru.fitapp.backend.progress.service.ExerciseProgressService;
 import ru.fitapp.backend.training.dto.CreateTrainingRequest;
 import ru.fitapp.backend.training.dto.TrainingResponse;
 import ru.fitapp.backend.training.dto.UpdateTrainingRequest;
@@ -38,6 +39,7 @@ public class TrainingService {
     private final NotificationService notificationService;
     private final ClientContractService clientContractService;
     private final SubscriptionAccessService subscriptionAccessService;
+    private final ExerciseProgressService exerciseProgressService;
 
     public TrainingService(TrainingRepository trainingRepository,
                            CurrentUserService currentUserService,
@@ -45,7 +47,8 @@ public class TrainingService {
                            AnalyticsService analyticsService,
                            NotificationService notificationService,
                            ClientContractService clientContractService,
-                           SubscriptionAccessService subscriptionAccessService) {
+                           SubscriptionAccessService subscriptionAccessService,
+                           ExerciseProgressService exerciseProgressService) {
         this.trainingRepository = trainingRepository;
         this.currentUserService = currentUserService;
         this.trainerClientService = trainerClientService;
@@ -53,6 +56,7 @@ public class TrainingService {
         this.notificationService = notificationService;
         this.clientContractService = clientContractService;
         this.subscriptionAccessService = subscriptionAccessService;
+        this.exerciseProgressService = exerciseProgressService;
     }
 
     public TrainingResponse createTraining(CreateTrainingRequest request) {
@@ -472,6 +476,7 @@ public class TrainingService {
 
         Training saved = trainingRepository.save(training);
         notificationService.notifyTrainingCompleted(saved);
+        exerciseProgressService.notifyRecords(saved);
 
         analyticsService.trackUserAction(
                 trainer,

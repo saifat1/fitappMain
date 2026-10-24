@@ -1,5 +1,7 @@
 import { useState } from "react";
 import FbTextField from "../../../shared/ui/FbTextField";
+import PreviousExerciseHint from "../../progress/ui/PreviousExerciseHint";
+import type { PreviousExercise } from "../../../shared/api/progressApi";
 import { summaryFromParts, type DraftExercise } from "../model/trainingDraft";
 import type { ExerciseTemplateResponse } from "../../exercise-template/model/exerciseTemplate.types";
 import type {
@@ -17,6 +19,8 @@ type Props = {
     onAdd?: (draft: DraftExercise) => void;
     onSave?: (payload: UpdateTrainingExerciseRequest) => Promise<void> | void;
     onBack?: () => void;
+    /** FIT-76: «В прошлый раз …» under the title — what this client did with the exercise last time. */
+    loadPrevious?: (title: string) => Promise<PreviousExercise | null>;
 };
 
 const MAX_SETS = 50;
@@ -114,7 +118,7 @@ function seed(template?: ExerciseTemplateResponse | null, exercise?: TrainingExe
     };
 }
 
-export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, onBack }: Props) {
+export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, onBack, loadPrevious }: Props) {
     const isTemplate = Boolean(template);
     const isEdit = Boolean(exercise);
 
@@ -253,6 +257,8 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
             ) : (
                 <FbTextField id="ex-title" label="Название упражнения" value={title} onChange={setTitle} />
             )}
+
+            {loadPrevious ? <PreviousExerciseHint title={(isTemplate ? template?.name : title) ?? ""} load={loadPrevious} /> : null}
 
             <label className="fb-textarea">
                 <span className="fb-textarea__label">Описание</span>

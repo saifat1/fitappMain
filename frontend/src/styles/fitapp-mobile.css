@@ -1796,3 +1796,25 @@
 
 /* build versions in the profile footer (FIT-74) */
 .fb-app-version { padding: 4px 16px calc(16px + env(safe-area-inset-bottom)); text-align: center; font-size: 11px; line-height: 1.5; color: var(--fb-muted); }
+
+/* exercise progress (FIT-76) */
+.fb-prev-hint { margin: -4px 0 12px; padding: 8px 10px; border-radius: 10px; background: var(--fb-surface-2); font-size: 14px; color: var(--fb-ink-2); }
+.fb-prev-hint b { color: var(--fb-ink); font-weight: 600; }
+.fb-progress-change { flex: none; font-size: 13px; font-weight: 600; color: var(--fb-muted); white-space: nowrap; }
+.fb-progress-change--up { color: var(--fb-green); }
+.fb-sparkline { flex: none; width: 64px; height: 24px; }
+.fb-sparkline path { fill: none; stroke: var(--fb-green); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.fb-progress-total { margin: 12px 0 4px; font-size: 16px; color: var(--fb-ink-2); }
+.fb-progress-total b { color: var(--fb-ink); }
+.fb-progress-chart { margin: 8px 0; }
+.fb-progress-chart svg { display: block; width: 100%; height: auto; }
+.fb-progress-chart__grid { stroke: var(--fb-line); stroke-width: 1; }
+.fb-progress-chart__tick { fill: var(--fb-muted); font-size: 10px; }
+.fb-progress-chart__line { fill: none; stroke: var(--fb-green); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.fb-progress-chart__hit { cursor: pointer; }
+.fb-progress-chart__dot { fill: var(--fb-surface); stroke: var(--fb-green); stroke-width: 2; }
+.fb-progress-chart__dot--record { fill: #f9ab00; stroke: #f9ab00; }
+.fb-progress-chart__dot--active { fill: var(--fb-green); }
+.fb-progress-chart__detail { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 10px 12px; border-radius: 12px; background: var(--fb-surface-2); font-size: 14px; color: var(--fb-ink-2); }
+.fb-progress-chart__detail b { font-size: 16px; color: var(--fb-ink); }
+.fb-progress-chart__sets { flex-basis: 100%; }

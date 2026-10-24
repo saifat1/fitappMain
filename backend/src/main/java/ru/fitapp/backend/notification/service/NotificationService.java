@@ -235,6 +235,19 @@ public class NotificationService {
         create(trainer, null, NotificationType.TRAINER_DAY_SUMMARY, "Тренировки на сегодня", body, "CALENDAR", null);
     }
 
+    /** FIT-76: «Новый рекорд» to the client after the trainer completed the training; body «Жим лёжа — 75 кг». */
+    public void notifyPersonalRecord(Training training, String body) {
+        create(
+                training.getClient(),
+                training.getTrainer(),
+                NotificationType.PERSONAL_RECORD,
+                "Новый рекорд 💪",
+                body,
+                "TRAINING",
+                training.getId()
+        );
+    }
+
     // ---------- New client ----------
 
     public void notifyNewClient(AppUser trainer, AppUser client) {

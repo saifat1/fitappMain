@@ -1,6 +1,9 @@
 package ru.fitapp.backend.trainingexercise.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import ru.fitapp.backend.training.model.TrainingStatus;
 import ru.fitapp.backend.trainingexercise.entity.TrainingExercise;
 
 import java.util.Collection;
@@ -18,6 +21,21 @@ public interface TrainingExerciseRepository extends JpaRepository<TrainingExerci
     Optional<TrainingExercise> findByIdAndTrainingId(Long id, Long trainingId);
 
     long countByTrainingId(Long trainingId);
+
+    /** FIT-76: exercises (with sets) of the client's completed trainings; trainerId null — with any trainer. */
+    @Query("""
+            select distinct te from TrainingExercise te
+            join fetch te.training t
+            left join fetch te.setDetails
+            where t.client.id = :clientId
+              and t.status = :status
+              and (:trainerId is null or t.trainer.id = :trainerId)
+            """)
+    List<TrainingExercise> findAllForProgress(
+            @Param("clientId") Long clientId,
+            @Param("trainerId") Long trainerId,
+            @Param("status") TrainingStatus status
+    );
 
     Optional<TrainingExercise> findTopByTrainingIdOrderByOrderNumDesc(Long trainingId);
 }

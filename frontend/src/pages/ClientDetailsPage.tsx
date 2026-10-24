@@ -391,6 +391,13 @@ export default function ClientDetailsPage() {
                                         <span className="fb-row__main"><span className="fb-row__title">Измерения</span></span>
                                         <span className="fb-row__chevron">›</span>
                                     </button>
+                                    <button type="button" className="fb-row fb-row--button" onClick={() => navigate(`/trainer/clients/${id}/progress`)}>
+                                        <span className="fb-row__main">
+                                            <span className="fb-row__title">Прогресс</span>
+                                            <span className="fb-row__sub">Веса и повторы по упражнениям</span>
+                                        </span>
+                                        <span className="fb-row__chevron">›</span>
+                                    </button>
                                     <button type="button" className="fb-row fb-row--button" onClick={() => navigate(`/trainings?clientId=${id}&period=past`)}>
                                         <span className="fb-row__main"><span className="fb-row__title">Архив тренировок</span></span>
                                         <span className="fb-row__chevron">›</span>

@@ -21,6 +21,8 @@ public enum NotificationType {
     // FIT-75: the client's reminder before a training and the trainer's morning summary
     TRAINING_REMINDER(NotificationKind.REQUEST),
     TRAINER_DAY_SUMMARY(NotificationKind.REQUEST),
+    // FIT-76: the client lifted more than ever before
+    PERSONAL_RECORD(NotificationKind.REQUEST),
 
     // Kind: CANCELLATION (red) — a decline or a cancellation
     BOOKING_REQUEST_DECLINED(NotificationKind.CANCELLATION),

@@ -13,6 +13,7 @@ import ClientQuestionnairePage from "../pages/ClientQuestionnairePage";
 import ClientMeasurementsPage from "../pages/ClientMeasurementsPage";
 import ClientMyQuestionnairePage from "../pages/ClientMyQuestionnairePage";
 import ClientMyMeasurementsPage from "../pages/ClientMyMeasurementsPage";
+import ExerciseProgressPage from "../pages/ExerciseProgressPage";
 import InvitesPage from "../pages/InvitesPage";
 import TrainingsPage from "../pages/TrainingsPage";
 import TrainingCreatePage from "../pages/TrainingCreatePage";
@@ -235,6 +236,14 @@ export const router = createBrowserRouter([
         ),
     },
     {
+        path: "/trainer/clients/:clientId/progress",
+        element: (
+            <TrainerRoute>
+                <ExerciseProgressPage />
+            </TrainerRoute>
+        ),
+    },
+    {
         path: "/trainer/clients/:clientId/measurements",
         element: (
             <TrainerRoute>
@@ -353,6 +362,14 @@ export const router = createBrowserRouter([
         element: (
             <ProtectedRoute>
                 <ClientMyQuestionnairePage />
+            </ProtectedRoute>
+        ),
+    },
+    {
+        path: "/client/progress",
+        element: (
+            <ProtectedRoute>
+                <ExerciseProgressPage />
             </ProtectedRoute>
         ),
     },

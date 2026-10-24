@@ -3,6 +3,7 @@ import ExerciseDetailForm from "./ExerciseDetailForm";
 import { exerciseTemplateApi } from "../../../shared/api/exerciseTemplateApi";
 import { MUSCLE_GROUPS, muscleGroupLabel } from "../../exercise-template/lib/muscleGroup";
 import { summaryFromParts, type DraftExercise } from "../model/trainingDraft";
+import type { PreviousExercise } from "../../../shared/api/progressApi";
 import type {
     ExerciseTemplateResponse,
     MuscleGroup,
@@ -14,9 +15,10 @@ type CategoryFilter = "ALL" | MuscleGroup;
 type Props = {
     onPick: (draft: DraftExercise) => void;
     onClose: () => void;
+    loadPrevious?: (title: string) => Promise<PreviousExercise | null>;
 };
 
-export default function ExercisePickerSheet({ onPick, onClose }: Props) {
+export default function ExercisePickerSheet({ onPick, onClose, loadPrevious }: Props) {
     const [tab, setTab] = useState<Tab>("template");
     const [templates, setTemplates] = useState<ExerciseTemplateResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -75,11 +77,12 @@ export default function ExercisePickerSheet({ onPick, onClose }: Props) {
                 </div>
 
                 {tab === "custom" ? (
-                    <ExerciseDetailForm onAdd={handleAdd} />
+                    <ExerciseDetailForm onAdd={handleAdd} loadPrevious={loadPrevious} />
                 ) : selected ? (
                     <ExerciseDetailForm
                         template={selected}
                         onAdd={handleAdd}
+                        loadPrevious={loadPrevious}
                         onBack={() => setSelected(null)}
                     />
                 ) : (

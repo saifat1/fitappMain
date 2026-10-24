@@ -82,6 +82,10 @@ export default function NotificationsPage() {
             navigate(`/trainings/${notification.relatedEntityId}`);
             return;
         }
+        if (notification.type === "PERSONAL_RECORD") {
+            navigate("/client/progress");
+            return;
+        }
         if (notification.type === "TRAINER_DAY_SUMMARY") {
             navigate("/trainings");
             return;

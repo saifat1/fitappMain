@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -6,6 +6,7 @@ import FbTextField from "../shared/ui/FbTextField";
 import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import ClientPickerSheet from "../features/training/ui/ClientPickerSheet";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
+import { progressApi } from "../shared/api/progressApi";
 import CircuitExercisesEditor from "../features/training/ui/CircuitExercisesEditor";
 import {
     circuitRoundsError,
@@ -90,6 +91,12 @@ export default function TrainingCreatePage() {
             active = false;
         };
     }, []);
+
+    // FIT-76: «В прошлый раз» needs a client; the training itself doesn't exist yet.
+    const loadPrevious = useCallback(
+        (title: string) => (clientId ? progressApi.previousForClient(clientId, title) : Promise.resolve(null)),
+        [clientId]
+    );
 
     const selectedClient = useMemo(
         () => clients.find((c) => c.id === clientId) ?? null,
@@ -337,6 +344,7 @@ export default function TrainingCreatePage() {
             {exerciseSheetOpen && (
                 <ExercisePickerSheet
                     onPick={(draft) => setExercises((prev) => [...prev, draft])}
+                    loadPrevious={loadPrevious}
                     onClose={() => setExerciseSheetOpen(false)}
                 />
             )}

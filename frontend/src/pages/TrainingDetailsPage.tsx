@@ -8,6 +8,7 @@ import { useAuth } from "../features/auth/model/AuthContext";
 import ExercisePickerSheet from "../features/training/ui/ExercisePickerSheet";
 import ExerciseDetailForm from "../features/training/ui/ExerciseDetailForm";
 import { trainingApi } from "../shared/api/trainingApi";
+import { progressApi } from "../shared/api/progressApi";
 import { trainingExerciseApi } from "../shared/api/trainingExerciseApi";
 import { exerciseTemplateApi } from "../shared/api/exerciseTemplateApi";
 import { setsBreakdown, summaryFromParts } from "../features/training/model/trainingDraft";
@@ -97,6 +98,8 @@ export default function TrainingDetailsPage() {
     const navigate = useNavigate();
     const { trainingId } = useParams<{ trainingId: string }>();
     const id = Number(trainingId);
+    // FIT-76: «В прошлый раз» in the exercise form.
+    const loadPrevious = useCallback((title: string) => progressApi.previousForTraining(id, title), [id]);
     const { currentUser } = useAuth();
     const isClient = currentUser?.role === "CLIENT";
 
@@ -524,6 +527,7 @@ export default function TrainingDetailsPage() {
             {exerciseSheetOpen && (
                 <ExercisePickerSheet
                     onPick={(draft) => void addExerciseFromPicker(draft.source)}
+                    loadPrevious={loadPrevious}
                     onClose={() => setExerciseSheetOpen(false)}
                 />
             )}
@@ -536,6 +540,7 @@ export default function TrainingDetailsPage() {
                             key={editingExercise.id}
                             exercise={editingExercise}
                             onSave={(payload) => saveExercise(editingExercise.id, payload)}
+                            loadPrevious={loadPrevious}
                         />
                     </div>
                 </>
