@@ -95,11 +95,14 @@ export default function TrainingsPage() {
             .catch(() => setClientTitle(""));
     }, [clientId]);
 
-    // FIT-77: not yet completed trainings the client wrote down themselves — the number on «Самостоятельные».
-    const clientOwnPlanned = useMemo(
-        () => trainings.filter((t) => t.createdByClient && t.status === "PLANNED").length,
+    // FIT-77: not yet completed trainings the client wrote down themselves — the number on «Самостоятельные»,
+    // and in that filter they're listed on top whatever the tab (the archive opens on «Прошедшие»).
+    const clientOwnPlannedList = useMemo(
+        () => [...trainings.filter((t) => t.createdByClient && t.status === "PLANNED")].sort(compareAsc),
         [trainings]
     );
+    const clientOwnPlanned = clientOwnPlannedList.length;
+    const showClientOwnBlock = clientId != null && typeFilter === "INDEPENDENT" && clientOwnPlanned > 0;
 
     const stats = useMemo(
         () => ({
@@ -115,11 +118,16 @@ export default function TrainingsPage() {
         const byPeriod = trainings.filter((t) =>
             period === "upcoming" ? t.trainingDate >= today : t.trainingDate < today
         );
-        const byType = byPeriod.filter((t) => typeFilter === "ALL" || t.trainingType === typeFilter);
+        const byType = byPeriod.filter(
+            (t) =>
+                (typeFilter === "ALL" || t.trainingType === typeFilter) &&
+                // shown in their own block above
+                !(clientId != null && typeFilter === "INDEPENDENT" && t.createdByClient && t.status === "PLANNED")
+        );
         const sorted = [...byType].sort(compareAsc);
         if (period === "past") sorted.reverse();
         return groupByMonth(sorted, (t) => t.trainingDate);
-    }, [trainings, period, typeFilter]);
+    }, [trainings, period, typeFilter, clientId]);
 
     // In the trainer's unfiltered list each row needs the client's name.
     const rowTitle = (t: TrainingResponse): string | undefined =>
@@ -181,9 +189,20 @@ export default function TrainingsPage() {
 
             {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
+            {!isLoading && showClientOwnBlock ? (
+                <div>
+                    <div className="fb-section-title">Записал клиент · не проведены</div>
+                    <div className="fb-list">
+                        {clientOwnPlannedList.map((t) => (
+                            <UpcomingTrainingRow key={t.id} training={t} onClick={() => navigate(`/trainings/${t.id}`)} />
+                        ))}
+                    </div>
+                </div>
+            ) : null}
+
             {isLoading ? (
                 <div className="fb-cal-status">Загрузка…</div>
-            ) : groups.length === 0 ? (
+            ) : groups.length === 0 && showClientOwnBlock ? null : groups.length === 0 ? (
                 <div className="fb-empty" style={{ marginTop: 16 }}>
                     {period === "upcoming" ? "Запланированных тренировок нет" : "Прошедших тренировок нет"}
                 </div>
