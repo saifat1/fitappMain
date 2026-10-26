@@ -45,6 +45,9 @@ app:
     hash: ${ROBOKASSA_HASH:md5}
     # Send the Receipt line item (fiscalization); off until checked against the shop's receipt settings.
     receipt: ${ROBOKASSA_RECEIPT:false}
+    # Bind the card for auto-renewal (Recurring=true). Only after Robokassa support enabled recurring payments
+    # for the shop — otherwise every payment fails with error 34.
+    recurring: ${ROBOKASSA_RECURRING:false}
   # Seller details for the public «Тарифы» page and the offer (required by the payment provider).
   # Set on the server only — they are not kept in the repository.
   seller:

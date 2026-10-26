@@ -261,7 +261,6 @@ public class SubscriptionService {
                 .setBillingPeriod(period)
                 .setPaidUntil(paidUntil)
                 .setTrialEndsAt(null)
-                .setAutoRenew(true)
                 .setLastRenewalAttemptAt(null);
         // Only a trainer-confirmed payment sets the saved card: for Robokassa the token is the first
         // payment of the series, and renewals must keep pointing at it.
@@ -271,6 +270,8 @@ public class SubscriptionService {
                 s.setPaymentMethodTitle(n.paymentMethodTitle());
             }
         }
+        // Auto-renewal needs a saved card (with Robokassa — while recurring payments aren't enabled there is none).
+        s.setAutoRenew(s.getPaymentMethodToken() != null);
     }
 
     /** Remaining paid time of the old plan, re-priced at the new plan's daily rate. */

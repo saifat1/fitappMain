@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
  * Robokassa (docs.robokassa.ru, checked 22.10.2026):
  * <ul>
  *     <li>payment — redirect to Merchant/Index.aspx, {@code InvId} = our subscription_payment.id,
- *     {@code Recurring=true} so the card can be charged again;
+ *     {@code Recurring=true} so the card can be charged again (only with ROBOKASSA_RECURRING=true — until Robokassa
+ *     enables recurring payments for the shop the parameter makes every payment fail with error 34);
  *     signature {@code MerchantLogin:OutSum:InvId[:Receipt]:Password1};</li>
  *     <li>ResultURL — sent only for successful payments, signature {@code OutSum:InvId:Password2},
  *     reply {@code OK{InvId}};</li>
@@ -54,6 +55,7 @@ public class RobokassaPaymentProvider implements PaymentProvider {
     private final boolean testMode;
     private final String hashAlgorithm;
     private final boolean sendReceipt;
+    private final boolean recurring;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 
     public RobokassaPaymentProvider(
@@ -62,7 +64,8 @@ public class RobokassaPaymentProvider implements PaymentProvider {
             @Value("${app.robokassa.password2:}") String password2,
             @Value("${app.robokassa.test:true}") boolean testMode,
             @Value("${app.robokassa.hash:md5}") String hash,
-            @Value("${app.robokassa.receipt:false}") boolean sendReceipt
+            @Value("${app.robokassa.receipt:false}") boolean sendReceipt,
+            @Value("${app.robokassa.recurring:false}") boolean recurring
     ) {
         this.login = login.trim();
         this.password1 = password1.trim();
@@ -76,6 +79,7 @@ public class RobokassaPaymentProvider implements PaymentProvider {
             default -> "MD5";
         };
         this.sendReceipt = sendReceipt;
+        this.recurring = recurring;
     }
 
     @Override
@@ -99,7 +103,9 @@ public class RobokassaPaymentProvider implements PaymentProvider {
         params.put("OutSum", outSum);
         params.put("InvId", invId);
         params.put("Description", truncate(request.description(), 100));
-        params.put("Recurring", "true");
+        if (recurring) {
+            params.put("Recurring", "true");
+        }
         if (receipt != null) {
             params.put("Receipt", receipt);
         }
@@ -180,8 +186,10 @@ public class RobokassaPaymentProvider implements PaymentProvider {
             return Optional.empty();
         }
 
-        // ResultURL means "paid"; InvId of a purchase becomes the PreviousInvoiceID for renewals.
-        return Optional.of(new PaymentNotification(invId, PaymentStatus.SUCCEEDED, invId, "Банковская карта (Robokassa)", null));
+        // ResultURL means "paid"; InvId of a purchase becomes the PreviousInvoiceID for renewals —
+        // only if the card was bound (Recurring), otherwise there is nothing to charge later.
+        return Optional.of(new PaymentNotification(invId, PaymentStatus.SUCCEEDED, recurring ? invId : null,
+                "Банковская карта (Robokassa)", null));
     }
 
     @Override

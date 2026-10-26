@@ -42,6 +42,8 @@
 - Robokassa: `ROBOKASSA_LOGIN/PASSWORD1/PASSWORD2/TEST/HASH` только в `.env` сервера (при `ROBOKASSA_TEST=true` — тестовые пароли).
   Result URL `https://<сайт>/api/payments/notifications/robokassa` (POST), Success/Fail URL `https://<сайт>/subscription`.
   InvId = `subscription_payment.id`; автопродление — `Merchant/Recurring` с PreviousInvoiceID первого платежа (подключает поддержка).
+  `ROBOKASSA_RECURRING=true` — только после того, как поддержка включила повторные платежи (иначе любая оплата → ошибка 34);
+  без него карта не привязывается и автопродления нет. Магазин активирован 26.10.2026, Робочеки СМЗ подключены.
 - Публичные страницы для модерации платёжки: `/pricing`, `/legal/offer`, `/legal/refund`; реквизиты — `SELLER_*` в `.env` сервера.
 
 ## Сборка и проверка (Windows, PowerShell 5.1)
