@@ -90,3 +90,24 @@ fi
 docker builder prune -f --filter until=168h >/dev/null 2>&1 || true
 
 echo "== release ok, backup in $B"
+
+# Release note to Telegram — only for a version tag (prod), never for main (dev). The bot token and chat id live
+# in the server's .env only: TELEGRAM_BOT_TOKEN, TELEGRAM_RELEASE_CHAT_ID. The text is the tag's CHANGELOG.md section.
+# A failed send never fails the release.
+env_value() { grep "^$1=" .env 2>/dev/null | tail -1 | cut -d= -f2- | sed 's/^"//; s/"$//'; }
+TG_TOKEN=$(env_value TELEGRAM_BOT_TOKEN)
+TG_CHAT=$(env_value TELEGRAM_RELEASE_CHAT_ID)
+if [ "$REF" != main ] && [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ]; then
+  VERSION=${REF#v}
+  NOTES=$(awk -v v="$VERSION" 'index($0, "## " v " ") == 1 { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md \
+    | sed 's/^- /• /' | sed '/^[[:space:]]*$/d')
+  SITE=$(env_value APP_PUBLIC_BASE_URL)
+  TEXT=$(printf '🚀 FitApp %s выложена на бой%s\n\n%s' "$VERSION" "${SITE:+ — $SITE}" "${NOTES:-Список изменений — в CHANGELOG.md}")
+  if curl -s -m 15 -o /dev/null -w '%{http_code}' "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+      --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=$TEXT" \
+      --data-urlencode "disable_web_page_preview=true" | grep -q '^200$'; then
+    echo "== release note sent to Telegram"
+  else
+    echo "WARNING: release note was not sent to Telegram (check TELEGRAM_BOT_TOKEN / TELEGRAM_RELEASE_CHAT_ID)"
+  fi
+fi
