@@ -25,8 +25,15 @@ SITE=$(prod_env APP_PUBLIC_BASE_URL)
 NOTES=$(git show "$TAG:CHANGELOG.md" \
   | awk -v v="$VERSION" 'index($0, "## " v " ") == 1 { on = 1; next } /^## / { on = 0 } on' \
   | sed 's/^- /• /' | sed '/^[[:space:]]*$/d')
-TEXT=$(printf '🚀 FitApp %s выложена на бой%s\n\n%s' "$VERSION" "${SITE:+ — $SITE}" "${NOTES:-Список изменений — в CHANGELOG.md}")
+# The text goes through a file: on Windows curl gets non-ASCII command-line arguments in the ANSI code page
+# and Telegram rejects them ("strings must be encoded in UTF-8").
+TEXT_FILE=$(mktemp)
+trap 'rm -f "$TEXT_FILE"' EXIT
+printf '🚀 FitApp %s выложена на бой%s\n\n%s' "$VERSION" "${SITE:+ — $SITE}" "${NOTES:-Список изменений — в CHANGELOG.md}" > "$TEXT_FILE"
+
+# Windows curl.exe needs a Windows path (Git Bash gives /tmp/…).
+CURL_FILE=$(command -v cygpath >/dev/null 2>&1 && cygpath -w "$TEXT_FILE" || echo "$TEXT_FILE")
 
 CODE=$(curl -s -m 20 -o /dev/null -w '%{http_code}' "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
-  --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=$TEXT" --data-urlencode "disable_web_page_preview=true")
+  --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text@$CURL_FILE" --data-urlencode "disable_web_page_preview=true")
 [ "$CODE" = 200 ] && echo "release note for $TAG sent to Telegram" || { echo "ERROR: Telegram answered HTTP $CODE"; exit 1; }
