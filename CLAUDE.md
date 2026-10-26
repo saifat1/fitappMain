@@ -105,8 +105,9 @@ $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory |
   Сначала раздел `## 1.0.1 — <дата>` в `CHANGELOG.md` (и номер в `frontend/package.json`) — коммит в `main`, тег на него:
   `git tag -a v1.0.1 <hash> -m "FIT-71, FIT-72, FIT-73"`, `git push origin v1.0.1`,
   на сервере `cd /opt/fitappMain && sh deploy/release.sh v1.0.1`.
-- После выкладки тега `release.sh` сам пишет в Telegram «FitApp 1.0.1 выложена на бой» + раздел версии из
-  `CHANGELOG.md` (бот и чат — `TELEGRAM_BOT_TOKEN`, `TELEGRAM_RELEASE_CHAT_ID` в `.env` боя; нет их — не пишет).
+- После выкладки на бой — сообщение в Telegram (бот @FitAppReleasesBot): с этой машины `sh deploy/notify-release.sh v1.0.1`
+  (серверы до api.telegram.org не достают). Текст — раздел версии из `CHANGELOG.md`; токен и чат —
+  `TELEGRAM_BOT_TOKEN`, `TELEGRAM_RELEASE_CHAT_ID` в `.env` боя, скрипт читает их по ssh и не выводит.
 - Номер: исправления и мелочи — третья цифра (1.0.1), заметные новые функции — вторая (1.1.0).
 - Версию видно внизу профиля: на бою «1.0.1», на деве «1.0.1-3-g<hash>» (3 коммита после 1.0.1), плюс сборка сервера.
 - Android-приложение: перед релизом в стор поставить в `frontend/package.json` номер выложенного тега
