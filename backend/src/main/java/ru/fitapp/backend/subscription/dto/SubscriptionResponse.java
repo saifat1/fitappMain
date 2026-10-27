@@ -12,6 +12,7 @@ import java.util.List;
  * @param clientLimit   null — no limit
  * @param testMode      payments go through the test page, no real money
  * @param clients       active clients with their workable flag — only when over the limit
+ * @param cardSaved     a card is bound for automatic renewals (paid with the consent to automatic charges)
  */
 public record SubscriptionResponse(
         boolean enabled,
@@ -26,6 +27,7 @@ public record SubscriptionResponse(
         LocalDateTime graceUntil,
         boolean autoRenew,
         String paymentMethodTitle,
+        boolean cardSaved,
         Integer clientLimit,
         int activeClients,
         boolean overLimit,

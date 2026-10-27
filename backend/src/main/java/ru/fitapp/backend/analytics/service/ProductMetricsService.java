@@ -156,7 +156,7 @@ public class ProductMetricsService {
         m.put("feedbackReceived", count("select count(*) from feedback where created_at >= ? and created_at < ?", start, end));
         m.put("appDevicesWithPush", count("select count(*) from device_push_token"));
         // FIT-75: reminders to clients before trainings (evening before + ~2 hours before)
-        m.put("remindersSent", count("select count(*) from reminder_log where kind <> 'TRAINER_DAY' and sent_at >= ? and sent_at < ?", start, end));
+        m.put("remindersSent", count("select count(*) from reminder_log where kind in ('CLIENT_EVENING', 'CLIENT_SOON') and sent_at >= ? and sent_at < ?", start, end));
         return m;
     }
 

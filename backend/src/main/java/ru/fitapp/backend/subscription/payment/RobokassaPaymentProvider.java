@@ -103,7 +103,8 @@ public class RobokassaPaymentProvider implements PaymentProvider {
         params.put("OutSum", outSum);
         params.put("InvId", invId);
         params.put("Description", truncate(request.description(), 100));
-        if (recurring) {
+        // The card is bound only when recurring payments are enabled for the shop and the trainer agreed (FIT-80).
+        if (recurring && request.recurring()) {
             params.put("Recurring", "true");
         }
         if (receipt != null) {

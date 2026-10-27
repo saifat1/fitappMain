@@ -15,7 +15,11 @@ public class ReminderLog {
         /** Client, ~2 hours before. */
         CLIENT_SOON,
         /** Trainer, the morning summary of the day (08:00). */
-        TRAINER_DAY
+        TRAINER_DAY,
+        /** Trainer, 3 days before the paid period ends — slot = paid_until (FIT-79). */
+        SUBSCRIPTION_END,
+        /** Trainer, 3 days before the free trial ends — slot = trial_ends_at. */
+        TRIAL_END
     }
 
     @Id

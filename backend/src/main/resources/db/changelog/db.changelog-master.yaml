@@ -89,3 +89,5 @@ databaseChangeLog:
       file: db/changelog/044-training-reminders.yaml
   - include:
       file: db/changelog/045-add-created-by-client-to-training.yaml
+  - include:
+      file: db/changelog/046-subscription-auto-renew-consent.yaml

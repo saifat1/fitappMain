@@ -136,6 +136,19 @@ public class SubscriptionPayment {
         return this;
     }
 
+    /** FIT-80: the trainer agreed to automatic charges with this payment — only then the card is saved for renewals. */
+    @Column(name = "auto_renew_consent", nullable = false)
+    private boolean autoRenewConsent = false;
+
+    public boolean isAutoRenewConsent() {
+        return autoRenewConsent;
+    }
+
+    public SubscriptionPayment setAutoRenewConsent(boolean autoRenewConsent) {
+        this.autoRenewConsent = autoRenewConsent;
+        return this;
+    }
+
     public String getFailureReason() {
         return failureReason;
     }

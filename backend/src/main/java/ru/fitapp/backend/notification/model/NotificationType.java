@@ -23,6 +23,8 @@ public enum NotificationType {
     TRAINER_DAY_SUMMARY(NotificationKind.REQUEST),
     // FIT-76: the client lifted more than ever before
     PERSONAL_RECORD(NotificationKind.REQUEST),
+    // FIT-79: 3 days before the subscription is charged / ends
+    SUBSCRIPTION_REMINDER(NotificationKind.REQUEST),
 
     // Kind: CANCELLATION (red) — a decline or a cancellation
     BOOKING_REQUEST_DECLINED(NotificationKind.CANCELLATION),

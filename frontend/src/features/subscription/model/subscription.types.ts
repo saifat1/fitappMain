@@ -44,6 +44,8 @@ export type SubscriptionResponse = {
     graceUntil: string | null;
     autoRenew: boolean;
     paymentMethodTitle: string | null;
+    /** FIT-80: a card is bound for automatic renewals (paid with the consent to automatic charges). */
+    cardSaved: boolean;
     clientLimit: number | null;
     activeClients: number;
     overLimit: boolean;

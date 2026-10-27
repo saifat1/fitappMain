@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 046-subscription-auto-renew-consent
+      author: claude
+      changes:
+        # FIT-80 (Robokassa requirements for recurring payments): the trainer ticked
+        # «Я согласен на автоматические списания согласно условиям оферты» for this payment —
+        # only then the card is bound and the subscription renews itself.
+        - addColumn:
+            tableName: subscription_payment
+            columns:
+              - column:
+                  name: auto_renew_consent
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+        # History of consents to automatic charges and of their withdrawal (Robokassa asks to keep it).
+        - createTable:
+            tableName: subscription_consent
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_subscription_consent
+                    nullable: false
+
+              - column:
+                  name: trainer_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_subscription_consent_trainer
+                    references: app_user(id)
+
+              # the payment the consent was given with; null — switched in «Подписка»
+              - column:
+                  name: payment_id
+                  type: bigint
+
+              # GRANTED, REVOKED
+              - column:
+                  name: action
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: plan
+                  type: varchar(16)
+
+              - column:
+                  name: billing_period
+                  type: varchar(8)
+
+              - column:
+                  name: amount_kopecks
+                  type: integer
+
+              # exactly what the trainer saw / did
+              - column:
+                  name: consent_text
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: offer_version
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: ip
+                  type: varchar(64)
+
+              - column:
+                  name: user_agent
+                  type: varchar(255)
+
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - createIndex:
+            tableName: subscription_consent
+            indexName: idx_subscription_consent_trainer
+            columns:
+              - column:
+                  name: trainer_id

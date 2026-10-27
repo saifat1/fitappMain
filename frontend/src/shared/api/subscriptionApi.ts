@@ -14,8 +14,9 @@ export const subscriptionApi = {
         return response.data;
     },
 
-    checkout: async (plan: PlanCode, billingPeriod: BillingPeriod): Promise<CheckoutResponse> => {
-        const response = await apiClient.post("/trainer/subscription/checkout", { plan, billingPeriod });
+    /** autoRenewConsent (FIT-80): the ticked «Я согласен на автоматические списания…» — otherwise a one-time payment. */
+    checkout: async (plan: PlanCode, billingPeriod: BillingPeriod, autoRenewConsent: boolean): Promise<CheckoutResponse> => {
+        const response = await apiClient.post("/trainer/subscription/checkout", { plan, billingPeriod, autoRenewConsent });
         return response.data;
     },
 

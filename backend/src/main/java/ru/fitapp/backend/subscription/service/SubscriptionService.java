@@ -23,6 +23,8 @@ import ru.fitapp.backend.subscription.payment.PaymentProvider;
 import ru.fitapp.backend.subscription.payment.PaymentRequest;
 import ru.fitapp.backend.subscription.payment.ProviderPayment;
 import ru.fitapp.backend.subscription.payment.TestPaymentProvider;
+import ru.fitapp.backend.subscription.entity.SubscriptionConsent;
+import ru.fitapp.backend.subscription.repository.SubscriptionConsentRepository;
 import ru.fitapp.backend.subscription.repository.SubscriptionPaymentRepository;
 import ru.fitapp.backend.subscription.repository.TrainerSubscriptionRepository;
 import ru.fitapp.backend.trainerclient.entity.TrainerClient;
@@ -49,6 +51,7 @@ public class SubscriptionService {
     private final SubscriptionAccessService accessService;
     private final TrainerSubscriptionRepository subscriptionRepository;
     private final SubscriptionPaymentRepository paymentRepository;
+    private final SubscriptionConsentRepository consentRepository;
     private final CurrentUserService currentUserService;
     private final List<PaymentProvider> providers;
     private final String providerCode;
@@ -58,6 +61,7 @@ public class SubscriptionService {
             SubscriptionAccessService accessService,
             TrainerSubscriptionRepository subscriptionRepository,
             SubscriptionPaymentRepository paymentRepository,
+            SubscriptionConsentRepository consentRepository,
             CurrentUserService currentUserService,
             List<PaymentProvider> providers,
             @Value("${app.billing.provider:test}") String providerCode,
@@ -66,6 +70,7 @@ public class SubscriptionService {
         this.accessService = accessService;
         this.subscriptionRepository = subscriptionRepository;
         this.paymentRepository = paymentRepository;
+        this.consentRepository = consentRepository;
         this.currentUserService = currentUserService;
         this.providers = providers;
         this.providerCode = providerCode;
@@ -87,7 +92,7 @@ public class SubscriptionService {
 
         if (!accessService.isEnabled()) {
             return new SubscriptionResponse(false, false, null, null, null, null, null, null, null, null,
-                    false, null, null, 0, false, plans, List.of(), List.of());
+                    false, null, false, null, 0, false, plans, List.of(), List.of());
         }
 
         AppUser trainer = currentUserService.getCurrentTrainer();
@@ -141,6 +146,7 @@ public class SubscriptionService {
                         ? s.getPaidUntil().plusDays(SubscriptionAccessService.GRACE_DAYS) : null,
                 Boolean.TRUE.equals(s.getAutoRenew()),
                 s.getPaymentMethodTitle(),
+                s.getPaymentMethodToken() != null,
                 limit,
                 active.size(),
                 overLimit,
@@ -150,11 +156,22 @@ public class SubscriptionService {
         );
     }
 
-    public SubscriptionResponse setAutoRenew(boolean enabledFlag) {
+    public SubscriptionResponse setAutoRenew(boolean enabledFlag, ClientInfo client) {
         assertEnabled();
-        TrainerSubscription s = accessService.getOrCreate(currentUserService.getCurrentTrainer());
+        AppUser trainer = currentUserService.getCurrentTrainer();
+        TrainerSubscription s = accessService.getOrCreate(trainer);
         if (enabledFlag && s.getPaymentMethodToken() == null) {
-            throw new ApiException("VALIDATION_ERROR", "Сначала оплатите подписку картой — она сохранится для автопродления");
+            throw new ApiException("VALIDATION_ERROR",
+                    "Сначала оплатите подписку с согласием на автоматические списания — тогда карта сохранится для автопродления");
+        }
+        if (Boolean.TRUE.equals(s.getAutoRenew()) != enabledFlag) {
+            recordConsent(trainer, null,
+                    enabledFlag ? SubscriptionConsent.Action.GRANTED : SubscriptionConsent.Action.REVOKED,
+                    s.getPlan().isPaid() ? s.getPlan() : null, s.getBillingPeriod(),
+                    enabledFlag
+                            ? "Включил автопродление в разделе «Подписка». " + CONSENT_TEXT + ". " + chargeTerms(s.getPlan(), s.getBillingPeriod())
+                            : "Отключил автопродление в разделе «Подписка»",
+                    client);
         }
         s.setAutoRenew(enabledFlag);
         return getCurrent();
@@ -177,7 +194,11 @@ public class SubscriptionService {
 
     // ---------------------------------------------------------------- payments
 
-    public CheckoutResponse checkout(SubscriptionPlan plan, BillingPeriod period) {
+    /**
+     * @param autoRenewConsent FIT-80: the trainer ticked the consent to automatic charges — the card is bound and the
+     *                         subscription renews itself; otherwise it's a one-time payment and auto-renewal stays off
+     */
+    public CheckoutResponse checkout(SubscriptionPlan plan, BillingPeriod period, boolean autoRenewConsent, ClientInfo client) {
         assertEnabled();
         if (!plan.isPaid()) {
             throw new ApiException("VALIDATION_ERROR", "Тариф «Старт» бесплатный — оплачивать его не нужно");
@@ -193,7 +214,12 @@ public class SubscriptionService {
                 .setAmountKopecks(plan.priceKopecks(period))
                 .setPurpose(PaymentPurpose.PURCHASE)
                 .setStatus(PaymentStatus.PENDING)
-                .setProvider(provider.code()));
+                .setProvider(provider.code())
+                .setAutoRenewConsent(autoRenewConsent));
+        if (autoRenewConsent) {
+            recordConsent(trainer, payment.getId(), SubscriptionConsent.Action.GRANTED, plan, period,
+                    CONSENT_TEXT + ". " + chargeTerms(plan, period), client);
+        }
 
         ProviderPayment created = provider.createPayment(paymentRequest(payment, trainer));
         payment.setProviderPaymentId(created.providerPaymentId());
@@ -264,11 +290,13 @@ public class SubscriptionService {
                 .setLastRenewalAttemptAt(null);
         // Only a trainer-confirmed payment sets the saved card: for Robokassa the token is the first
         // payment of the series, and renewals must keep pointing at it.
-        if (payment.getPurpose() == PaymentPurpose.PURCHASE && n.paymentMethodToken() != null) {
-            s.setPaymentMethodToken(n.paymentMethodToken());
+        if (payment.getPurpose() == PaymentPurpose.PURCHASE) {
             if (n.paymentMethodTitle() != null) {
                 s.setPaymentMethodTitle(n.paymentMethodTitle());
             }
+            // FIT-80: a card is kept for renewals only with the consent to automatic charges; a one-time payment
+            // without it also drops a card saved earlier — nothing is charged without the latest consent.
+            s.setPaymentMethodToken(payment.isAutoRenewConsent() ? n.paymentMethodToken() : null);
         }
         // Auto-renewal needs a saved card (with Robokassa — while recurring payments aren't enabled there is none).
         s.setAutoRenew(s.getPaymentMethodToken() != null);
@@ -379,12 +407,49 @@ public class SubscriptionService {
 
     // ---------------------------------------------------------------- helpers
 
+    /** Who / from where — for the consent history. */
+    public record ClientInfo(String ip, String userAgent) {
+    }
+
+    /** FIT-80: the wording of the checkbox on the «Подписка» screen; the offer version it refers to. */
+    static final String CONSENT_TEXT = "Я согласен на автоматические списания согласно условиям оферты";
+    static final String OFFER_VERSION = "1.1";
+
+    /** «690 ₽ раз в месяц за Pro до отключения автопродления» — what the trainer agrees to. */
+    private static String chargeTerms(SubscriptionPlan plan, BillingPeriod period) {
+        if (plan == null || !plan.isPaid() || period == null) {
+            return "";
+        }
+        return String.format("%,d", plan.priceKopecks(period) / 100).replace(',', ' ') + " ₽ раз в "
+                + (period == BillingPeriod.YEAR ? "год" : "месяц") + " за тариф " + plan.getTitle()
+                + " до отключения автопродления";
+    }
+
+    private void recordConsent(AppUser trainer, Long paymentId, SubscriptionConsent.Action action,
+                               SubscriptionPlan plan, BillingPeriod period, String text, ClientInfo client) {
+        consentRepository.save(new SubscriptionConsent()
+                .setTrainer(trainer)
+                .setPaymentId(paymentId)
+                .setAction(action)
+                .setPlan(plan)
+                .setBillingPeriod(period)
+                .setAmountKopecks(plan != null && plan.isPaid() && period != null ? plan.priceKopecks(period) : null)
+                .setConsentText(truncate(text, 500))
+                .setOfferVersion(OFFER_VERSION)
+                .setIp(client != null ? truncate(client.ip(), 64) : null)
+                .setUserAgent(client != null ? truncate(client.userAgent(), 255) : null));
+    }
+
+    private static String truncate(String value, int max) {
+        return value == null || value.length() <= max ? value : value.substring(0, max);
+    }
+
     private PaymentRequest paymentRequest(SubscriptionPayment payment, AppUser trainer) {
         // Plain text: Robokassa rejects special characters in Description.
         String description = "Подписка FitApp " + payment.getPlan().getTitle() + " на "
                 + (payment.getBillingPeriod() == BillingPeriod.YEAR ? "год" : "месяц");
         return new PaymentRequest(payment.getId(), payment.getAmountKopecks(), description,
-                publicBaseUrl + "/subscription?payment=" + payment.getId(), trainer.getEmail());
+                publicBaseUrl + "/subscription?payment=" + payment.getId(), trainer.getEmail(), payment.isAutoRenewConsent());
     }
 
     private PaymentProvider provider() {

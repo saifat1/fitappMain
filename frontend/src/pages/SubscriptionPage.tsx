@@ -52,6 +52,8 @@ export default function SubscriptionPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
     const [period, setPeriod] = useState<BillingPeriod>("MONTH");
+    // FIT-80 (Robokassa): the consent to automatic charges is never ticked by default.
+    const [autoRenewConsent, setAutoRenewConsent] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
     const [selection, setSelection] = useState<number[] | null>(null);
 
@@ -86,7 +88,7 @@ export default function SubscriptionPage() {
 
     const pay = (plan: PlanCode) =>
         run(`pay-${plan}`, async () => {
-            const { confirmationUrl } = await subscriptionApi.checkout(plan, period);
+            const { confirmationUrl } = await subscriptionApi.checkout(plan, period, autoRenewConsent);
             // Provider's page (or our test page) — a full redirect, the provider sends the trainer back.
             window.location.assign(confirmationUrl);
         }, "Не удалось перейти к оплате");
@@ -197,6 +199,32 @@ export default function SubscriptionPage() {
                     </button>
                 </div>
 
+                {data.enabled && (
+                    <div className="fb-consent">
+                        <label className="fb-consent__check">
+                            <input
+                                type="checkbox"
+                                checked={autoRenewConsent}
+                                onChange={(e) => setAutoRenewConsent(e.target.checked)}
+                            />
+                            <span>
+                                Я согласен на автоматические списания согласно условиям{" "}
+                                <Link to="/legal/offer" target="_blank" rel="noopener">оферты</Link>
+                            </span>
+                        </label>
+                        <div className="fb-consent__terms">
+                            {autoRenewConsent ? "Списания" : "С галочкой — списания"} {period === "YEAR" ? "раз в год" : "раз в месяц"} в
+                            день окончания оплаченного периода, в размере стоимости выбранного тарифа:{" "}
+                            {data.plans
+                                .filter((p) => (period === "YEAR" ? p.yearPriceKopecks : p.monthPriceKopecks) > 0)
+                                .map((p) => `${p.title} — ${formatRub(period === "YEAR" ? p.yearPriceKopecks : p.monthPriceKopecks)}`)
+                                .join(", ")}
+                            . За 3 дня до списания пришлём напоминание. Отключить автопродление можно в любой момент здесь же,
+                            в разделе «Подписка». Без галочки — разовая оплата, без автопродления.
+                        </div>
+                    </div>
+                )}
+
                 {data.plans.map((plan) => {
                     const isCurrent = data.enabled && data.plan === plan.code && (plan.code === "FREE" ? data.status === "FREE" : isPaidActive);
                     const price = period === "YEAR" ? plan.yearPriceKopecks : plan.monthPriceKopecks;
@@ -240,8 +268,8 @@ export default function SubscriptionPage() {
                     При смене тарифа неиспользованные дни пересчитываются в новый тариф. Автопродление можно отключить в любой момент.
                     {data.enabled && (
                         <>
-                            {" "}Переходя к оплате, вы принимаете <Link to="/legal/offer">договор-оферту</Link> и соглашаетесь на
-                            автоматическое продление подписки. <Link to="/legal/refund">Политика возврата</Link>.
+                            {" "}Переходя к оплате, вы принимаете <Link to="/legal/offer">договор-оферту</Link>.
+                            Автопродление — только с согласием выше. <Link to="/legal/refund">Политика возврата</Link>.
                         </>
                     )}
                 </div>
@@ -320,7 +348,8 @@ function StatusCard({
             sub = "До 3 активных клиентов. Перейдите на Pro, чтобы вести больше.";
     }
 
-    const canToggle = (data.status === "ACTIVE" || data.status === "GRACE") && data.paymentMethodTitle != null;
+    // FIT-80: auto-renewal exists only with a card bound under the consent to automatic charges.
+    const canToggle = (data.status === "ACTIVE" || data.status === "GRACE") && data.cardSaved;
 
     return (
         <div className={`fb-sub-status ${warn ? "fb-sub-status--warn" : ""}`}>

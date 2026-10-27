@@ -15,7 +15,8 @@ export type NotificationTypeCode =
     | "CONTRACT_EXPIRING"
     | "TRAINING_REMINDER"
     | "TRAINER_DAY_SUMMARY"
-    | "PERSONAL_RECORD";
+    | "PERSONAL_RECORD"
+    | "SUBSCRIPTION_REMINDER";
 
 export type NotificationResponse = {
     id: number;

@@ -248,6 +248,11 @@ public class NotificationService {
         );
     }
 
+    /** FIT-79: «Скоро спишется оплата за подписку» / «Подписка скоро закончится» — opens «Подписка». */
+    public void notifySubscriptionReminder(AppUser trainer, String title, String body) {
+        create(trainer, null, NotificationType.SUBSCRIPTION_REMINDER, title, body, "SUBSCRIPTION", null);
+    }
+
     // ---------- New client ----------
 
     public void notifyNewClient(AppUser trainer, AppUser client) {

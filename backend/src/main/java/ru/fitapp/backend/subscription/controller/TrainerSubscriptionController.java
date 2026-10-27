@@ -1,5 +1,6 @@
 package ru.fitapp.backend.subscription.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import ru.fitapp.backend.subscription.dto.AutoRenewRequest;
@@ -28,13 +29,21 @@ public class TrainerSubscriptionController {
     }
 
     @PostMapping("/checkout")
-    public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request) {
-        return subscriptionService.checkout(request.plan(), request.billingPeriod());
+    public CheckoutResponse checkout(@Valid @RequestBody CheckoutRequest request, HttpServletRequest http) {
+        return subscriptionService.checkout(request.plan(), request.billingPeriod(),
+                Boolean.TRUE.equals(request.autoRenewConsent()), clientInfo(http));
     }
 
     @PutMapping("/auto-renew")
-    public SubscriptionResponse setAutoRenew(@Valid @RequestBody AutoRenewRequest request) {
-        return subscriptionService.setAutoRenew(request.enabled());
+    public SubscriptionResponse setAutoRenew(@Valid @RequestBody AutoRenewRequest request, HttpServletRequest http) {
+        return subscriptionService.setAutoRenew(request.enabled(), clientInfo(http));
+    }
+
+    /** For the consent history (FIT-80): the site is behind Caddy, so the client address is in X-Forwarded-For. */
+    private static SubscriptionService.ClientInfo clientInfo(HttpServletRequest http) {
+        String forwarded = http.getHeader("X-Forwarded-For");
+        String ip = forwarded != null && !forwarded.isBlank() ? forwarded.split(",")[0].trim() : http.getRemoteAddr();
+        return new SubscriptionService.ClientInfo(ip, http.getHeader("User-Agent"));
     }
 
     @PutMapping("/workable-clients")

@@ -82,6 +82,11 @@ export default function NotificationsPage() {
             navigate(`/trainings/${notification.relatedEntityId}`);
             return;
         }
+        // FIT-79: before the subscription is charged / ends
+        if (notification.type === "SUBSCRIPTION_REMINDER") {
+            navigate("/subscription");
+            return;
+        }
         if (notification.type === "PERSONAL_RECORD") {
             navigate("/client/progress");
             return;
