@@ -121,6 +121,10 @@ https://195-208-61-184.swtest.ru — VPS `fit_app_dev`, вход по SSH-клю
 (см. «Версии и выкладка на бой») — бэкап базы и `.env` в `/root/fitapp-release-<дата>/`, обновление, пересборка,
 проверка старта и миграций; там же описан откат (выложить предыдущий тег + восстановить базу).
 Бэкап базы — `deploy/backup.sh` по cron в 03:20, дампы в `/var/backups/fitapp` (14 дней).
+Ресурсы боя — `deploy/monitor.sh` (копия в `/usr/local/bin/fitapp-monitor.sh`, cron `/etc/cron.d/fitapp-monitor`):
+замер раз в 15 минут в `/var/lib/fitapp-monitor/samples.csv`, письмо-тревога у предела (диск 80%, память <15%,
+нагрузка >1,5 на ядро), сводка по понедельникам в 9:30 на `ANALYTICS_REPORT_EMAIL`. После правки скрипта —
+заново скопировать: `git show origin/main:deploy/monitor.sh > /usr/local/bin/fitapp-monitor.sh`.
 Бой: https://80-93-63-169.swtest.ru (VPS 80.93.63.169, тоже `/opt/fitappMain`). На бой — только по команде пользователя.
 
 Уточнения — в чат задачи (вкладка «Чат»), **всегда с упоминанием @Иван Сысоев**; ответы приходят позже, пока
