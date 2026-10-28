@@ -1828,3 +1828,15 @@
 .fb-consent__check input { flex: none; width: 20px; height: 20px; margin: 1px 0 0; accent-color: var(--fb-green); }
 .fb-consent__check a { color: var(--fb-green); text-decoration: underline; }
 .fb-consent__terms { margin: 8px 0 0 30px; font-size: 13px; line-height: 1.45; color: var(--fb-ink-2); }
+
+/* «Подходы» −/+ and the warning before sets are dropped (FIT-82) */
+.fb-stepper { display: flex; gap: 6px; flex: none; }
+.fb-stepper button {
+    width: 36px; height: 32px; border: 1px solid var(--fb-line); border-radius: 8px;
+    background: var(--fb-surface-2); color: var(--fb-ink); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.fb-stepper button:disabled { opacity: 0.4; cursor: default; }
+.fb-sets__warn {
+    margin: 6px 0 2px; padding: 8px 10px; border-radius: 8px;
+    background: var(--fb-surface-2); color: var(--fb-ink-2); font-size: 13px; line-height: 1.4;
+}

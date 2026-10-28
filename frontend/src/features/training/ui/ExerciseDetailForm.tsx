@@ -28,7 +28,7 @@ const MAX_SETS = 50;
 type SetRow = {
     reps: string;
     weight: string;
-    /** Edited by hand: no longer follows the common reps/weight fields. */
+    /** Edited by hand: no longer follows the common reps field. */
     touched: boolean;
 };
 
@@ -80,11 +80,16 @@ function setsCount(value: string): number {
     return Math.min(Math.max(n, 0), MAX_SETS);
 }
 
-function resizeRows(rows: SetRow[], count: number, reps: string, weight: string): SetRow[] {
-    if (rows.length >= count) return rows.slice(0, count);
-    const extra = Array.from({ length: count - rows.length }, () => ({
+/**
+ * Grows the list to `count` sets; never shrinks it. FIT-82: sets beyond the «Подходы» count are kept (hidden) until
+ * the exercise is saved, so clearing the field to type another number doesn't wipe what was filled in.
+ * FIT-81: only the first set gets the starting weight, the trainer fills in the rest; reps go to every set.
+ */
+function growRows(rows: SetRow[], count: number, reps: string, weight: string): SetRow[] {
+    if (rows.length >= count) return rows;
+    const extra = Array.from({ length: count - rows.length }, (_, i) => ({
         reps: defaultSetReps(reps),
-        weight,
+        weight: rows.length + i === 0 ? weight : "",
         touched: false,
     }));
     return [...rows, ...extra];
@@ -103,7 +108,7 @@ function seed(template?: ExerciseTemplateResponse | null, exercise?: TrainingExe
               weight: s.weight != null ? String(s.weight) : "",
               touched: true,
           }))
-        : resizeRows([], setsCount(sets), reps, weight);
+        : growRows([], setsCount(sets), reps, weight);
 
     return {
         title: exercise?.title ?? template?.name ?? "",
@@ -140,15 +145,23 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
         setRows((prev) => prev.map((r) => (r.touched ? r : { ...r, reps: defaultSetReps(value) })));
     };
 
+    // FIT-81: «Стартовый вес» is the weight of the first set only — also for a saved exercise.
     const changeWeight = (value: string) => {
         setWeight(value);
-        setRows((prev) => prev.map((r) => (r.touched ? r : { ...r, weight: value })));
+        setRows((prev) => prev.map((r, i) => (i === 0 ? { ...r, weight: value } : r)));
     };
 
     const changeSets = (value: string) => {
         setSets(value);
-        setRows((prev) => resizeRows(prev, setsCount(value), reps, weight));
+        setRows((prev) => growRows(prev, setsCount(value), reps, weight));
     };
+
+    const stepSets = (delta: number) => changeSets(String(Math.min(Math.max(setsCount(sets) + delta, 0), MAX_SETS)));
+
+    const count = setsCount(sets);
+    const visibleRows = rows.slice(0, count);
+    // Filled sets that are hidden now and will be lost on save.
+    const droppedFilled = rows.slice(count).filter((r) => r.touched || r.weight.trim() !== "").length;
 
     const changeRow = (index: number, patch: Partial<Pick<SetRow, "reps" | "weight">>) => {
         setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch, touched: true } : r)));
@@ -173,7 +186,7 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
         const restSeconds = toNumber(rest);
 
         const setDetails: TrainingExerciseSetPayload[] = setsValue
-            ? rows.map((r) => ({ reps: toNumber(r.reps), weight: toNumber(r.weight) }))
+            ? visibleRows.map((r) => ({ reps: toNumber(r.reps), weight: toNumber(r.weight) }))
             : [];
 
         if (setDetails.some((s) => s.reps != null && (!Number.isInteger(s.reps) || s.reps < 1))) {
@@ -267,17 +280,44 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
 
             <FbTextField id="ex-reps" label="Повторы" placeholder="10 или 8-12" value={reps} onChange={changeReps} />
             <FbTextField id="ex-time" label="Время, сек" type="number" inputMode="numeric" value={duration} onChange={setDuration} />
-            <FbTextField id="ex-weight" label="Вес, кг" inputMode="decimal" value={weight} onChange={changeWeight} />
-            <FbTextField id="ex-sets" label="Подходы" type="number" inputMode="numeric" min={0} max={MAX_SETS} value={sets} onChange={changeSets} />
+            <FbTextField id="ex-weight" label="Стартовый вес, кг" inputMode="decimal" value={weight} onChange={changeWeight} />
+            <FbTextField
+                id="ex-sets"
+                label="Подходы"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={MAX_SETS}
+                value={sets}
+                onChange={changeSets}
+                trailing={
+                    <span className="fb-stepper">
+                        <button type="button" aria-label="Убрать подход" disabled={count === 0} onClick={() => stepSets(-1)}>
+                            −
+                        </button>
+                        <button type="button" aria-label="Добавить подход" disabled={count >= MAX_SETS} onClick={() => stepSets(1)}>
+                            +
+                        </button>
+                    </span>
+                }
+            />
+            {droppedFilled > 0 ? (
+                <div className="fb-sets__warn">
+                    {count === 0
+                        ? "Если удалить значение, удалятся все подходы и информация будет потеряна."
+                        : `При сохранении удалятся подходы с ${count + 1}-го и их данные.`}{" "}
+                    Чтобы добавить подход, нажмите «+» — заполненные подходы сохранятся.
+                </div>
+            ) : null}
 
-            {rows.length > 0 && (
+            {visibleRows.length > 0 && (
                 <div className="fb-sets">
                     <div className="fb-sets__head">
                         <span>Подход</span>
                         <span>Повторы</span>
                         <span>Вес, кг</span>
                     </div>
-                    {rows.map((row, index) => (
+                    {visibleRows.map((row, index) => (
                         <div key={index} className="fb-sets__row">
                             <span className="fb-sets__num">{index + 1}</span>
                             <input
