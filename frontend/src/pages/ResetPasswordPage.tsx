@@ -4,6 +4,7 @@ import axios from "axios";
 import FbPasswordField from "../shared/ui/FbPasswordField";
 import { authApi } from "../shared/api/authApi";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import { setClientDevice } from "../shared/lib/clientDevice";
 
 function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -21,7 +22,8 @@ export default function ResetPasswordPage() {
     const [confirm, setConfirm] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-    const [done, setDone] = useState(false);
+    // FIT-83: the login whose password was changed — prefilled on the login page.
+    const [doneEmail, setDoneEmail] = useState<string | null>(null);
 
     const handleSubmit = async () => {
         if (!token) {
@@ -39,8 +41,10 @@ export default function ResetPasswordPage() {
         setErrorMessage("");
         setIsSubmitting(true);
         try {
-            await authApi.resetPassword(token, password);
-            setDone(true);
+            const result = await authApi.resetPassword(token, password);
+            // A client by the trainer's link: from now on this device doesn't offer the trainer registration.
+            if (result.role === "CLIENT") setClientDevice(true);
+            setDoneEmail(result.email ?? "");
         } catch (error) {
             setErrorMessage(resolveApiError(error, "Не удалось обновить пароль"));
         } finally {
@@ -48,7 +52,7 @@ export default function ResetPasswordPage() {
         }
     };
 
-    if (done) {
+    if (doneEmail != null) {
         return (
             <div className="fb-screen">
                 <header className="fb-topbar">
@@ -63,7 +67,7 @@ export default function ResetPasswordPage() {
                         <h2 className="fb-confirm__title">Пароль обновлён</h2>
                         <p className="fb-confirm__text">Теперь войдите с новым паролем.</p>
                     </div>
-                    <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={() => navigate("/login", { replace: true })}>
+                    <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={() => navigate("/login", { replace: true, state: { email: doneEmail } })}>
                         Войти
                     </button>
                 </div>

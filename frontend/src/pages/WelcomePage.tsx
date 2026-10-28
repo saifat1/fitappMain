@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import BrandWordmark from "../shared/ui/BrandWordmark";
 import { publicApi } from "../shared/api/publicApi";
 import type { SellerInfo } from "../features/subscription/model/subscription.types";
+import { isClientDevice } from "../shared/lib/clientDevice";
 
 /**
  * Onboarding / splash screen (mockup images 1 & 2, first frame).
@@ -18,6 +19,11 @@ export default function WelcomePage() {
     useEffect(() => {
         publicApi.getPricing().then((data) => setSeller(data.seller)).catch(() => undefined);
     }, []);
+
+    // FIT-83: a client device goes straight to the login — the start screen leads to the trainer registration.
+    if (isClientDevice()) {
+        return <Navigate to="/login" replace />;
+    }
 
     const sellerLine = seller?.name
         ? [seller.name, "самозанятый", seller.inn ? `ИНН ${seller.inn}` : "", seller.city ? `г. ${seller.city}` : ""]

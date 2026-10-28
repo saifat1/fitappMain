@@ -12,9 +12,11 @@ import ru.fitapp.backend.auth.dto.RegisterTrainerRequest;
 import ru.fitapp.backend.auth.passwordreset.dto.ForgotPasswordRequest;
 import ru.fitapp.backend.auth.passwordreset.dto.MessageResponse;
 import ru.fitapp.backend.auth.passwordreset.dto.ResetPasswordRequest;
+import ru.fitapp.backend.auth.passwordreset.dto.ResetPasswordResponse;
 import ru.fitapp.backend.auth.passwordreset.service.PasswordResetService;
 import ru.fitapp.backend.auth.service.AccountDeletionService;
 import ru.fitapp.backend.auth.service.AuthService;
+import ru.fitapp.backend.user.entity.AppUser;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -65,9 +67,9 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
-        return new MessageResponse("Пароль обновлён");
+    public ResetPasswordResponse resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        AppUser user = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        return new ResetPasswordResponse("Пароль обновлён", user.getEmail(), user.getRole());
     }
 
     @GetMapping("/me")

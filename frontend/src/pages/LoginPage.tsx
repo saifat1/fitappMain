@@ -1,6 +1,7 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import LoginForm from "../features/auth/ui/LoginForm";
 import { useAuth } from "../features/auth/model/AuthContext";
+import { isClientDevice } from "../shared/lib/clientDevice";
 
 export default function LoginPage() {
     const { isAuthenticated, isInitializing } = useAuth();
@@ -13,14 +14,17 @@ export default function LoginPage() {
     return (
         <div className="fb-screen">
             <header className="fb-topbar">
-                <button
-                    type="button"
-                    className="fb-topbar__back"
-                    aria-label="Назад"
-                    onClick={() => navigate("/welcome")}
-                >
-                    ‹
-                </button>
+                {/* FIT-83: no way back to the start screen (trainer registration) on a client device */}
+                {!isClientDevice() && (
+                    <button
+                        type="button"
+                        className="fb-topbar__back"
+                        aria-label="Назад"
+                        onClick={() => navigate("/welcome")}
+                    >
+                        ‹
+                    </button>
+                )}
                 <h1 className="fb-topbar__title">Вход</h1>
             </header>
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import FbTextField from "../../../shared/ui/FbTextField";
 import FbPasswordField from "../../../shared/ui/FbPasswordField";
@@ -9,8 +9,10 @@ import type { ApiErrorResponse } from "../model/auth.types";
 export default function LoginForm() {
     const { login } = useAuth();
     const navigate = useNavigate();
+    // FIT-83: after «Новый пароль» the login is the account whose password was changed, not the browser's saved one.
+    const prefilledEmail = (useLocation().state as { email?: string } | null)?.email ?? "";
 
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(prefilledEmail);
     const [password, setPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");

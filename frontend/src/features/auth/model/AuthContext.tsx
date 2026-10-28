@@ -1,3 +1,4 @@
+import { setClientDevice } from "../../../shared/lib/clientDevice";
 import {
     createContext,
     useCallback,
@@ -75,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadMe = useCallback(async () => {
         const me = await authApi.getMe();
         setCurrentUser(me);
+        setClientDevice(me.role === "CLIENT");
     }, []);
 
     const refreshConsentStatus = useCallback(async () => {

@@ -101,7 +101,8 @@ public class PasswordResetService {
         );
     }
 
-    public void resetPassword(String rawToken, String newPassword) {
+    /** Returns the user whose password was changed (FIT-83: the login form is prefilled with their login). */
+    public AppUser resetPassword(String rawToken, String newPassword) {
         PasswordResetToken token = tokenRepository.findByTokenHash(hash(rawToken))
                 .orElseThrow(() -> new ApiException("INVALID_TOKEN", "Ссылка недействительна"));
 
@@ -118,6 +119,7 @@ public class PasswordResetService {
 
         token.setUsedAt(LocalDateTime.now());
         tokenRepository.save(token);
+        return user;
     }
 
     private String generateRawToken() {

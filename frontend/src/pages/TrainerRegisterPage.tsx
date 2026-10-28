@@ -6,6 +6,7 @@ import FbPasswordField from "../shared/ui/FbPasswordField";
 import { useAuth } from "../features/auth/model/AuthContext";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import { signupSource } from "../shared/lib/signupSource";
+import { isClientDevice, setClientDevice } from "../shared/lib/clientDevice";
 
 export default function TrainerRegisterPage() {
     const { registerTrainer, isAuthenticated, isInitializing } = useAuth();
@@ -19,9 +20,43 @@ export default function TrainerRegisterPage() {
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
+    // FIT-83: a client device doesn't get the trainer registration unless the person says they are a trainer.
+    const [clientDevice, setClientDeviceState] = useState(isClientDevice);
 
     if (!isInitializing && isAuthenticated) {
         return <Navigate to="/me" replace />;
+    }
+
+    if (clientDevice) {
+        return (
+            <div className="fb-screen">
+                <header className="fb-topbar">
+                    <h1 className="fb-topbar__title">Регистрация</h1>
+                </header>
+                <div className="fb-body">
+                    <div className="fb-confirm">
+                        <h2 className="fb-confirm__title">Регистрация — только для тренеров</h2>
+                        <p className="fb-confirm__text">
+                            Вы уже входили сюда как клиент. Ваш аккаунт создаёт тренер — войдите с логином и паролем,
+                            которые он вам дал, или попросите у него ссылку для нового пароля.
+                        </p>
+                    </div>
+                    <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={() => navigate("/login", { replace: true })}>
+                        Войти
+                    </button>
+                    <button
+                        type="button"
+                        className="fb-link fb-link--muted"
+                        onClick={() => {
+                            setClientDevice(false);
+                            setClientDeviceState(false);
+                        }}
+                    >
+                        Я тренер — зарегистрироваться
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {

@@ -6,6 +6,7 @@ import type {
     LoginRequest,
     RegisterByInviteRequest,
     RegisterTrainerRequest,
+    UserRole,
 } from "../../features/auth/model/auth.types";
 
 export const authApi = {
@@ -42,8 +43,10 @@ export const authApi = {
         await apiClient.post("/auth/forgot-password", { email });
     },
 
-    resetPassword: async (token: string, newPassword: string): Promise<void> => {
-        await apiClient.post("/auth/reset-password", { token, newPassword });
+    /** FIT-83: returns whose password was changed. */
+    resetPassword: async (token: string, newPassword: string): Promise<{ email: string; role: UserRole }> => {
+        const response = await apiClient.post("/auth/reset-password", { token, newPassword });
+        return response.data;
     },
 
     /** FIT-70: the signed-in user deletes their own account (personal data is wiped, history stays anonymous). */
