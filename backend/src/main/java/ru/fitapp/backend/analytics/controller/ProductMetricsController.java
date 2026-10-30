@@ -14,12 +14,16 @@ import ru.fitapp.backend.common.security.CurrentUserService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
  * FIT-72. /metrics — for the admin «Аналитика» screen (admin JWT).
  * /report/** — for the weekly report: the caller presents ANALYTICS_REPORT_TOKEN (server .env only) in X-Report-Token,
- * reads the metrics and emails the written report to ANALYTICS_REPORT_EMAIL. Empty token = report endpoints off.
+ * reads the metrics and emails the written report to ANALYTICS_REPORT_EMAIL (+ ANALYTICS_REPORT_CC with copyToTeam).
+ * Empty token = report endpoints off.
  */
 @RestController
 @RequestMapping("/api/analytics")
@@ -34,6 +38,9 @@ public class ProductMetricsController {
 
     @Value("${app.analytics.report-email:}")
     private String reportEmail;
+
+    @Value("${app.analytics.report-cc:}")
+    private String reportCc;
 
     public ProductMetricsController(
             ProductMetricsService metricsService,
@@ -73,13 +80,22 @@ public class ProductMetricsController {
         if (reportEmail == null || reportEmail.isBlank()) {
             throw new ApiException("REPORT_EMAIL_NOT_SET", "Не задан адрес для отчёта (ANALYTICS_REPORT_EMAIL)");
         }
-        mailService.sendNotification(reportEmail.trim(), request.subject(), request.text());
-        return Map.of("sentTo", reportEmail.trim());
+        List<String> recipients = new ArrayList<>(List.of(reportEmail.trim()));
+        if (Boolean.TRUE.equals(request.copyToTeam()) && reportCc != null) {
+            Arrays.stream(reportCc.split(","))
+                    .map(String::trim)
+                    .filter(email -> !email.isEmpty() && !recipients.contains(email))
+                    .forEach(recipients::add);
+        }
+        recipients.forEach(email -> mailService.sendNotification(email, request.subject(), request.text()));
+        return Map.of("sentTo", String.join(", ", recipients));
     }
 
+    /** copyToTeam — also send to ANALYTICS_REPORT_CC (the weekly metrics report, not server alerts). */
     public record ReportEmailRequest(
             @NotBlank @Size(max = 200) String subject,
-            @NotBlank @Size(max = 50_000) String text
+            @NotBlank @Size(max = 50_000) String text,
+            Boolean copyToTeam
     ) {
     }
 

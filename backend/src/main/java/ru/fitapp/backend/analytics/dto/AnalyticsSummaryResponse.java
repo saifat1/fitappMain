@@ -24,7 +24,16 @@ public class AnalyticsSummaryResponse {
     private long activeTrainersRange;
 
     private List<EventCountResponse> topEvents;
-    private List<InactiveUserResponse> inactiveUsers;
+
+    // Visits = app opens and logins in the period; unique users are activeTrainersRange / activeClientsRange.
+    private long trainerVisits;
+    private long clientVisits;
+
+    // Who came most often in the period / who hasn't come for the longest time (any period), per role.
+    private List<UserActivityResponse> mostActiveTrainers;
+    private List<UserActivityResponse> mostActiveClients;
+    private List<UserActivityResponse> leastActiveTrainers;
+    private List<UserActivityResponse> leastActiveClients;
 
     public long getTrainerLoginCount() {
         return trainerLoginCount;
@@ -152,12 +161,57 @@ public class AnalyticsSummaryResponse {
         return this;
     }
 
-    public List<InactiveUserResponse> getInactiveUsers() {
-        return inactiveUsers;
+    public long getTrainerVisits() {
+        return trainerVisits;
     }
 
-    public AnalyticsSummaryResponse setInactiveUsers(List<InactiveUserResponse> inactiveUsers) {
-        this.inactiveUsers = inactiveUsers;
+    public AnalyticsSummaryResponse setTrainerVisits(long trainerVisits) {
+        this.trainerVisits = trainerVisits;
+        return this;
+    }
+
+    public long getClientVisits() {
+        return clientVisits;
+    }
+
+    public AnalyticsSummaryResponse setClientVisits(long clientVisits) {
+        this.clientVisits = clientVisits;
+        return this;
+    }
+
+    public List<UserActivityResponse> getMostActiveTrainers() {
+        return mostActiveTrainers;
+    }
+
+    public AnalyticsSummaryResponse setMostActiveTrainers(List<UserActivityResponse> mostActiveTrainers) {
+        this.mostActiveTrainers = mostActiveTrainers;
+        return this;
+    }
+
+    public List<UserActivityResponse> getMostActiveClients() {
+        return mostActiveClients;
+    }
+
+    public AnalyticsSummaryResponse setMostActiveClients(List<UserActivityResponse> mostActiveClients) {
+        this.mostActiveClients = mostActiveClients;
+        return this;
+    }
+
+    public List<UserActivityResponse> getLeastActiveTrainers() {
+        return leastActiveTrainers;
+    }
+
+    public AnalyticsSummaryResponse setLeastActiveTrainers(List<UserActivityResponse> leastActiveTrainers) {
+        this.leastActiveTrainers = leastActiveTrainers;
+        return this;
+    }
+
+    public List<UserActivityResponse> getLeastActiveClients() {
+        return leastActiveClients;
+    }
+
+    public AnalyticsSummaryResponse setLeastActiveClients(List<UserActivityResponse> leastActiveClients) {
+        this.leastActiveClients = leastActiveClients;
         return this;
     }
 
@@ -180,7 +234,7 @@ public class AnalyticsSummaryResponse {
         }
     }
 
-    public static class InactiveUserResponse {
+    public static class UserActivityResponse {
 
         private Long id;
         private String email;
@@ -190,12 +244,15 @@ public class AnalyticsSummaryResponse {
         private LocalDateTime lastLoginAt;
         private LocalDateTime lastSeenAt;
         private Long loginCount;
+        // Only in the «most active» lists: days with visits and visits in the period.
+        private Long periodActiveDays;
+        private Long periodVisits;
 
         public Long getId() {
             return id;
         }
 
-        public InactiveUserResponse setId(Long id) {
+        public UserActivityResponse setId(Long id) {
             this.id = id;
             return this;
         }
@@ -204,7 +261,7 @@ public class AnalyticsSummaryResponse {
             return email;
         }
 
-        public InactiveUserResponse setEmail(String email) {
+        public UserActivityResponse setEmail(String email) {
             this.email = email;
             return this;
         }
@@ -213,7 +270,7 @@ public class AnalyticsSummaryResponse {
             return role;
         }
 
-        public InactiveUserResponse setRole(String role) {
+        public UserActivityResponse setRole(String role) {
             this.role = role;
             return this;
         }
@@ -222,7 +279,7 @@ public class AnalyticsSummaryResponse {
             return firstName;
         }
 
-        public InactiveUserResponse setFirstName(String firstName) {
+        public UserActivityResponse setFirstName(String firstName) {
             this.firstName = firstName;
             return this;
         }
@@ -231,7 +288,7 @@ public class AnalyticsSummaryResponse {
             return lastName;
         }
 
-        public InactiveUserResponse setLastName(String lastName) {
+        public UserActivityResponse setLastName(String lastName) {
             this.lastName = lastName;
             return this;
         }
@@ -240,7 +297,7 @@ public class AnalyticsSummaryResponse {
             return lastLoginAt;
         }
 
-        public InactiveUserResponse setLastLoginAt(LocalDateTime lastLoginAt) {
+        public UserActivityResponse setLastLoginAt(LocalDateTime lastLoginAt) {
             this.lastLoginAt = lastLoginAt;
             return this;
         }
@@ -249,7 +306,7 @@ public class AnalyticsSummaryResponse {
             return lastSeenAt;
         }
 
-        public InactiveUserResponse setLastSeenAt(LocalDateTime lastSeenAt) {
+        public UserActivityResponse setLastSeenAt(LocalDateTime lastSeenAt) {
             this.lastSeenAt = lastSeenAt;
             return this;
         }
@@ -258,8 +315,26 @@ public class AnalyticsSummaryResponse {
             return loginCount;
         }
 
-        public InactiveUserResponse setLoginCount(Long loginCount) {
+        public UserActivityResponse setLoginCount(Long loginCount) {
             this.loginCount = loginCount;
+            return this;
+        }
+
+        public Long getPeriodActiveDays() {
+            return periodActiveDays;
+        }
+
+        public UserActivityResponse setPeriodActiveDays(Long periodActiveDays) {
+            this.periodActiveDays = periodActiveDays;
+            return this;
+        }
+
+        public Long getPeriodVisits() {
+            return periodVisits;
+        }
+
+        public UserActivityResponse setPeriodVisits(Long periodVisits) {
+            this.periodVisits = periodVisits;
             return this;
         }
     }

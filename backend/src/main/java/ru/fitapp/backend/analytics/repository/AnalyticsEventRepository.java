@@ -32,6 +32,52 @@ public interface AnalyticsEventRepository extends JpaRepository<AnalyticsEvent, 
             @Param("to") LocalDateTime to
     );
 
+    /** Visits = app opens and logins of users with the role in the period. */
+    @Query("""
+            select count(e.id)
+            from AnalyticsEvent e
+            where e.userRole = :userRole
+              and e.eventType in :eventTypes
+              and e.occurredAt >= :from
+              and e.occurredAt < :to
+            """)
+    long countVisitsByRoleBetween(
+            @Param("userRole") String userRole,
+            @Param("eventTypes") List<String> eventTypes,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to
+    );
+
+    /** Users of the role who came most often in the period: by days with visits, then by visits. */
+    @Query("""
+            select e.user.id as userId,
+                   count(distinct cast(e.occurredAt as date)) as activeDays,
+                   count(e.id) as visits
+            from AnalyticsEvent e
+            where e.userRole = :userRole
+              and e.user is not null
+              and e.eventType in :eventTypes
+              and e.occurredAt >= :from
+              and e.occurredAt < :to
+            group by e.user.id
+            order by count(distinct cast(e.occurredAt as date)) desc, count(e.id) desc
+            """)
+    List<UserVisitsView> findMostActiveUsersByRoleBetween(
+            @Param("userRole") String userRole,
+            @Param("eventTypes") List<String> eventTypes,
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to,
+            Pageable pageable
+    );
+
+    interface UserVisitsView {
+        Long getUserId();
+
+        long getActiveDays();
+
+        long getVisits();
+    }
+
     @Query("""
             select e.eventType as eventType, count(e.id) as count
             from AnalyticsEvent e

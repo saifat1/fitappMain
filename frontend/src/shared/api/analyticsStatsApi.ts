@@ -5,7 +5,7 @@ export type AnalyticsEventCount = {
     count: number;
 };
 
-export type InactiveUser = {
+export type UserActivity = {
     id: number;
     email: string;
     role: string;
@@ -14,6 +14,9 @@ export type InactiveUser = {
     lastLoginAt?: string | null;
     lastSeenAt?: string | null;
     loginCount?: number | null;
+    /** Only in the «most active» lists: days with visits and visits in the period. */
+    periodActiveDays?: number | null;
+    periodVisits?: number | null;
 };
 
 export type AnalyticsSummary = {
@@ -35,8 +38,15 @@ export type AnalyticsSummary = {
     activeTrainersToday: number;
     activeTrainersWeek: number;
 
+    /** App opens and logins in the period; unique users are activeTrainersRange / activeClientsRange. */
+    trainerVisits: number;
+    clientVisits: number;
+
     topEvents: AnalyticsEventCount[];
-    inactiveUsers: InactiveUser[];
+    mostActiveTrainers: UserActivity[];
+    mostActiveClients: UserActivity[];
+    leastActiveTrainers: UserActivity[];
+    leastActiveClients: UserActivity[];
 };
 
 export type AnalyticsSummaryParams = {

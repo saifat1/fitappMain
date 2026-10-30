@@ -25,10 +25,30 @@ function formatName(firstName?: string | null, lastName?: string | null) {
     return fullName || "—";
 }
 
-function formatRole(role: string) {
-    if (role === "TRAINER") return "Тренер";
-    if (role === "CLIENT") return "Клиент";
-    return role;
+type UsersTab = "most" | "least";
+type UsersRole = "TRAINER" | "CLIENT";
+
+const USERS_TABS: { value: UsersTab; label: string }[] = [
+    { value: "most", label: "Чаще всех" },
+    { value: "least", label: "Реже всех" },
+];
+
+const USERS_ROLES: { value: UsersRole; label: string }[] = [
+    { value: "TRAINER", label: "Тренеры" },
+    { value: "CLIENT", label: "Клиенты" },
+];
+
+function StatTiles({ tiles }: { tiles: { label: string; value: number }[] }) {
+    return (
+        <div className="fb-stat-grid">
+            {tiles.map((tile) => (
+                <div key={tile.label} className="fb-stat-tile">
+                    <div className="fb-stat-tile__label">{tile.label}</div>
+                    <div className="fb-stat-tile__value">{tile.value}</div>
+                </div>
+            ))}
+        </div>
+    );
 }
 
 function toInputDate(date: Date) {
@@ -65,6 +85,8 @@ export default function AnalyticsPage() {
     const [to, setTo] = useState(defaultRange.to);
     const [loading, setLoading] = useState(true);
     const [errorText, setErrorText] = useState<string | null>(null);
+    const [usersTab, setUsersTab] = useState<UsersTab>("most");
+    const [usersRole, setUsersRole] = useState<UsersRole>("TRAINER");
 
     async function loadSummary(nextFrom: string, nextTo: string) {
         try {
@@ -112,20 +134,28 @@ export default function AnalyticsPage() {
         <button type="button" className="fb-topbar__back" aria-label="Назад" onClick={() => navigate(-1)}>‹</button>
     );
 
-    const tiles: { label: string; value: number }[] = summary
+    // Unique people who opened the app in the period, and how many times they opened it.
+    const visitTiles: { label: string; value: number }[] = summary
         ? [
-              { label: "Входы тренеров", value: summary.trainerLoginCount },
-              { label: "Входы клиентов", value: summary.clientLoginCount },
+              { label: "Тренеров заходило", value: summary.activeTrainersRange },
+              { label: "Клиентов заходило", value: summary.activeClientsRange },
+              { label: "Заходов тренеров", value: summary.trainerVisits },
+              { label: "Заходов клиентов", value: summary.clientVisits },
+          ]
+        : [];
+
+    const trainingTiles: { label: string; value: number }[] = summary
+        ? [
               { label: "Тренировок всего", value: summary.totalTrainings },
               { label: "Назначено", value: summary.plannedTrainings },
               { label: "Завершено", value: summary.completedTrainings },
-              { label: "Активных клиентов", value: summary.activeClientsRange },
-              { label: "Активных тренеров", value: summary.activeTrainersRange },
-              { label: "Клиентов сегодня", value: summary.activeClientsToday },
-              { label: "Клиентов за 7 дней", value: summary.activeClientsWeek },
-              { label: "Тренеров сегодня", value: summary.activeTrainersToday },
-              { label: "Тренеров за 7 дней", value: summary.activeTrainersWeek },
           ]
+        : [];
+
+    const users = summary
+        ? usersTab === "most"
+            ? usersRole === "TRAINER" ? summary.mostActiveTrainers : summary.mostActiveClients
+            : usersRole === "TRAINER" ? summary.leastActiveTrainers : summary.leastActiveClients
         : [];
 
     return (
@@ -173,14 +203,12 @@ export default function AnalyticsPage() {
                             Период: {summary.rangeFrom} — {summary.rangeTo}
                         </div>
 
-                        <div className="fb-stat-grid">
-                            {tiles.map((tile) => (
-                                <div key={tile.label} className="fb-stat-tile">
-                                    <div className="fb-stat-tile__label">{tile.label}</div>
-                                    <div className="fb-stat-tile__value">{tile.value}</div>
-                                </div>
-                            ))}
-                        </div>
+                        <div className="fb-section-title fb-section-title--flush">Заходили в приложение</div>
+                        <div className="fb-hint">Уникальные люди за период и сколько раз они открывали приложение.</div>
+                        <StatTiles tiles={visitTiles} />
+
+                        <div className="fb-section-title fb-section-title--flush">Тренировки</div>
+                        <StatTiles tiles={trainingTiles} />
 
                         {metrics && <ProductMetricsBlock metrics={metrics} />}
 
@@ -200,21 +228,54 @@ export default function AnalyticsPage() {
                             </div>
                         )}
 
-                        <div className="fb-section-title fb-section-title--flush">Давно не заходили</div>
-                        <div className="fb-hint">Не зависит от периода: пользователи с самой старой активностью.</div>
-                        {summary.inactiveUsers.length === 0 ? (
-                            <div className="fb-empty">Пользователей нет</div>
+                        <div className="fb-section-title fb-section-title--flush">Пользователи</div>
+                        <div className="fb-segment fb-analytics__segment">
+                            {USERS_TABS.map((item) => (
+                                <button
+                                    key={item.value}
+                                    type="button"
+                                    className={`fb-segment__item ${usersTab === item.value ? "fb-segment__item--active" : ""}`}
+                                    onClick={() => setUsersTab(item.value)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="fb-chips">
+                            {USERS_ROLES.map((item) => (
+                                <button
+                                    key={item.value}
+                                    type="button"
+                                    className={`fb-chip ${usersRole === item.value ? "fb-chip--active" : ""}`}
+                                    onClick={() => setUsersRole(item.value)}
+                                >
+                                    {item.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="fb-hint">
+                            {usersTab === "most"
+                                ? "За выбранный период: по числу дней с заходами, затем по числу заходов."
+                                : "Не зависит от периода: у кого самая давняя активность (сверху — ни разу не заходили)."}
+                        </div>
+                        {users.length === 0 ? (
+                            <div className="fb-empty">
+                                {usersTab === "most" ? "За период никто не заходил" : "Пользователей нет"}
+                            </div>
                         ) : (
                             <div className="fb-list">
-                                {summary.inactiveUsers.map((user) => (
+                                {users.map((user, index) => (
                                     <div key={user.id} className="fb-row">
                                         <span className="fb-row__main">
                                             <span className="fb-row__title">
-                                                {formatName(user.firstName, user.lastName)} · {formatRole(user.role)}
+                                                {usersTab === "most" ? `${index + 1}. ` : ""}
+                                                {formatName(user.firstName, user.lastName)}
                                             </span>
                                             <span className="fb-row__sub">{user.email}</span>
                                             <span className="fb-row__sub">
-                                                Активность: {formatDateTime(user.lastSeenAt)} · входов: {user.loginCount ?? 0}
+                                                {usersTab === "most"
+                                                    ? `Дней с заходами: ${user.periodActiveDays ?? 0} · заходов: ${user.periodVisits ?? 0}`
+                                                    : `Активность: ${formatDateTime(user.lastSeenAt)} · входов: ${user.loginCount ?? 0}`}
                                             </span>
                                         </span>
                                     </div>

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import ru.fitapp.backend.user.entity.AppUser;
+import ru.fitapp.backend.user.model.UserRole;
 import ru.fitapp.backend.user.model.UserStatus;
 
 import java.util.List;
@@ -20,9 +21,10 @@ public interface UserRepository extends JpaRepository<AppUser, Long> {
             select u
             from AppUser u
             where u.status = :status
+              and u.role = :role
             order by
               case when u.lastSeenAt is null then 0 else 1 end,
               u.lastSeenAt asc
             """)
-    List<AppUser> findLeastActiveUsers(UserStatus status, Pageable pageable);
+    List<AppUser> findLeastActiveUsers(UserStatus status, UserRole role, Pageable pageable);
 }

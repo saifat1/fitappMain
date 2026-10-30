@@ -1742,6 +1742,8 @@
 }
 .fb-analytics__apply { width: auto; min-height: 40px; font-size: 14px; flex: none; }
 .fb-analytics__event { word-break: break-all; font-size: 14px; }
+.fb-analytics__segment { margin: 4px 0 0; }
+.fb-analytics .fb-chips:not(.fb-chips--wrap) { padding: 8px 0 0; }
 .fb-clients__invites { margin: 4px 16px 16px; }
 
 /* exercise template: restore from archive (FIT-28) */
