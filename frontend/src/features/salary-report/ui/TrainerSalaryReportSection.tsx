@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import FbTextField from "../../../shared/ui/FbTextField";
 import { salaryReportApi } from "../../../shared/api/salaryReportApi";
+import { saveFile } from "../../../shared/lib/saveFile";
 import type { ApiErrorResponse } from "../../auth/model/auth.types";
 import type { TrainerSalaryReportResponse } from "../model/salaryReport.types";
 
@@ -39,17 +40,6 @@ function formatTime(value: string | null): string {
     }
 
     return value.slice(0, 5);
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-    const url = window.URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    window.URL.revokeObjectURL(url);
 }
 
 export default function TrainerSalaryReportSection() {
@@ -91,7 +81,7 @@ export default function TrainerSalaryReportSection() {
                 selectedPeriod.month
             );
 
-            downloadBlob(
+            await saveFile(
                 blob,
                 `salary-report-print-${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, "0")}.pdf`
             );
