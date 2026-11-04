@@ -83,7 +83,8 @@ export default function TrainerSalaryReportSection() {
 
             await saveFile(
                 blob,
-                `salary-report-print-${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, "0")}.pdf`
+                `salary-report-print-${selectedPeriod.year}-${String(selectedPeriod.month).padStart(2, "0")}.pdf`,
+                "Скачан PDF файл"
             );
         } catch (error) {
             setErrorMessage(

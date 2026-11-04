@@ -1,6 +1,10 @@
-import { Directory, Filesystem } from "@capacitor/filesystem";
-import { Share } from "@capacitor/share";
+import { registerPlugin } from "@capacitor/core";
 import { isNativeApp } from "./platform";
+
+/** Native side: android/app/src/main/java/ru/com/fitapp/DownloadsPlugin.java */
+const Downloads = registerPlugin<{
+    save(options: { filename: string; data: string; mimeType: string; notice: string }): Promise<void>;
+}>("Downloads");
 
 function blobToBase64(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -13,10 +17,10 @@ function blobToBase64(blob: Blob): Promise<string> {
 
 /**
  * Gives a generated file to the user. In the browser — a regular download.
- * FIT-86: the store app's WebView ignores <a download>, so there the file goes to the app cache
- * and the system share sheet opens (save to files, open in a PDF viewer, send to a messenger).
+ * FIT-86: the store app's WebView ignores <a download>, so there the file is saved
+ * to the phone's "Downloads" folder and the system shows `notice`.
  */
-export async function saveFile(blob: Blob, filename: string): Promise<void> {
+export async function saveFile(blob: Blob, filename: string, notice: string): Promise<void> {
     if (!isNativeApp) {
         const url = window.URL.createObjectURL(blob);
         const anchor = document.createElement("a");
@@ -29,18 +33,10 @@ export async function saveFile(blob: Blob, filename: string): Promise<void> {
         return;
     }
 
-    const { uri } = await Filesystem.writeFile({
-        path: filename,
+    await Downloads.save({
+        filename,
         data: await blobToBase64(blob),
-        directory: Directory.Cache,
+        mimeType: blob.type || "application/octet-stream",
+        notice,
     });
-
-    try {
-        await Share.share({ title: filename, url: uri, dialogTitle: "Сохранить или отправить файл" });
-    } catch (error) {
-        // Closing the share sheet without choosing an app is not an error.
-        if (!(error instanceof Error && /cancel/i.test(error.message))) {
-            throw error;
-        }
-    }
 }
