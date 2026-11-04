@@ -1086,6 +1086,8 @@
 
 /* drill-in link row on the profile screen */
 .fb-profile-link {
+    /* FIT-84: .fb-row is 100% wide — without the side margins subtracted the row runs off the screen and cuts the switch */
+    width: calc(100% - 32px);
     margin: 4px 16px 0;
     padding: 14px 4px;
     border-top: 1px solid var(--fb-line);
@@ -1226,6 +1228,9 @@
 /* logout button on profile */
 .fb-logout { margin: 24px 16px calc(16px + env(safe-area-inset-bottom)); width: auto; color: var(--fb-danger); }
 .fb-logout:hover { border-color: var(--fb-danger); }
+/* FIT-84: trainer profile — «Выйти» at the same distance as «Сохранить» / «Отменить» */
+.fb-tab-panel--before-logout { padding-bottom: 0; }
+.fb-logout--tight { margin-top: 10px; }
 
 /* ---------- Client profile: contract summary card ---------- */
 .fb-contract-card {

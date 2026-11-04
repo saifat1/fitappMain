@@ -328,7 +328,7 @@ export default function TrainerProfilePage() {
                 </button>
             </div>
 
-            <div className="fb-tab-panel">
+            <div className="fb-tab-panel fb-tab-panel--before-logout">
                 {activeTab === "info" && (
                     <TrainerProfileInfoCard
                         profile={profile}
@@ -366,7 +366,7 @@ export default function TrainerProfilePage() {
                 {activeTab === "reports" && <TrainerSalaryReportSection />}
             </div>
 
-            <button type="button" className="fb-btn fb-btn--ghost fb-logout" onClick={handleLogout}>
+            <button type="button" className="fb-btn fb-btn--ghost fb-logout fb-logout--tight" onClick={handleLogout}>
                 Выйти
             </button>
 
