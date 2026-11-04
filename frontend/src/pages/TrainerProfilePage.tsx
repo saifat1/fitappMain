@@ -115,6 +115,12 @@ export default function TrainerProfilePage() {
         void loadProfile();
     }, []);
 
+    const isProfileDirty =
+        profile != null &&
+        (firstName.trim() !== (profile.firstName ?? "").trim() ||
+            lastName.trim() !== (profile.lastName ?? "").trim() ||
+            phone.trim() !== (profile.phone ?? "").trim());
+
     const handleResetProfile = () => {
         if (!profile) {
             return;
@@ -330,6 +336,7 @@ export default function TrainerProfilePage() {
                         lastName={lastName}
                         phone={phone}
                         isSaving={isSavingProfile}
+                        isDirty={isProfileDirty}
                         successMessage={profileSuccessMessage}
                         errorMessage={profileErrorMessage}
                         onFirstNameChange={setFirstName}

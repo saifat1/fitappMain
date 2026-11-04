@@ -7,6 +7,8 @@ type Props = {
     lastName: string;
     phone: string;
     isSaving: boolean;
+    /** FIT-85: the form differs from the saved profile; until then «Сохранить» / «Отменить» are off. */
+    isDirty: boolean;
     successMessage: string;
     errorMessage: string;
     onFirstNameChange: (value: string) => void;
@@ -22,6 +24,7 @@ export default function TrainerProfileInfoCard({
     lastName,
     phone,
     isSaving,
+    isDirty,
     successMessage,
     errorMessage,
     onFirstNameChange,
@@ -71,7 +74,7 @@ export default function TrainerProfileInfoCard({
                 type="button"
                 className="fb-btn fb-btn--primary fb-form-submit"
                 onClick={onSave}
-                disabled={isSaving}
+                disabled={isSaving || !isDirty}
             >
                 {isSaving ? "Сохраняем…" : "Сохранить"}
             </button>
@@ -81,7 +84,7 @@ export default function TrainerProfileInfoCard({
                 className="fb-btn fb-btn--ghost"
                 style={{ marginTop: 10 }}
                 onClick={onReset}
-                disabled={isSaving}
+                disabled={isSaving || !isDirty}
             >
                 Отменить
             </button>
