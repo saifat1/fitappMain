@@ -157,7 +157,7 @@ export default function TrainerRegisterPage() {
                 <button
                     type="submit"
                     className="fb-btn fb-btn--primary fb-form-submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !(email.trim() || firstName.trim() || lastName.trim() || password || confirmPassword)}
                 >
                     {isSubmitting ? "Регистрируем…" : "Зарегистрироваться"}
                 </button>

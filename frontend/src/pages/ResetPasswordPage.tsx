@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
                     autoComplete="new-password"
                 />
 
-                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSubmit} disabled={isSubmitting || (!password && !confirm)}>
                     {isSubmitting ? "Сохраняем…" : "Сохранить"}
                 </button>
             </div>

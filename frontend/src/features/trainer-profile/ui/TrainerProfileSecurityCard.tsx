@@ -27,6 +27,8 @@ export default function TrainerProfileSecurityCard({
     onSubmit,
     onReset,
 }: Props) {
+    const isEmpty = !currentPassword && !newPassword && !confirmPassword;
+
     return (
         <>
             <div className="fb-section-title fb-section-title--flush">Безопасность</div>
@@ -63,7 +65,7 @@ export default function TrainerProfileSecurityCard({
                 type="button"
                 className="fb-btn fb-btn--primary fb-form-submit"
                 onClick={onSubmit}
-                disabled={isChanging}
+                disabled={isChanging || isEmpty}
             >
                 {isChanging ? "Меняем…" : "Сменить пароль"}
             </button>
@@ -73,7 +75,7 @@ export default function TrainerProfileSecurityCard({
                 className="fb-btn fb-btn--ghost"
                 style={{ marginTop: 10 }}
                 onClick={onReset}
-                disabled={isChanging}
+                disabled={isChanging || isEmpty}
             >
                 Очистить
             </button>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FbTextField from "../../../shared/ui/FbTextField.tsx";
+import { isFormChanged } from "../../../shared/lib/formChanges.ts";
 import { MUSCLE_GROUPS, muscleGroupLabel } from "../lib/muscleGroup.ts";
 import type {
     CreateExerciseTemplateRequest,
@@ -39,26 +40,34 @@ export default function ExerciseTemplateForm({
     submitLabel,
     onSubmit,
 }: Props) {
-    const [name, setName] = useState(initial?.name ?? "");
-    const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | null>(
-        initial?.muscleGroup ?? null
-    );
-    const [description, setDescription] = useState(initial?.description ?? "");
-    const [reps, setReps] = useState(initialReps(initial));
-    const [duration, setDuration] = useState(
-        initial?.durationSeconds != null ? String(initial.durationSeconds) : ""
-    );
-    const [weight, setWeight] = useState(
-        initial?.weight != null ? String(initial.weight) : ""
-    );
-    const [sets, setSets] = useState(initial?.sets != null ? String(initial.sets) : "");
-    const [rest, setRest] = useState(
-        initial?.restSeconds != null ? String(initial.restSeconds) : ""
-    );
-    const [trainerNote, setTrainerNote] = useState(initial?.trainerNote ?? "");
+    const [initialForm] = useState(() => ({
+        name: initial?.name ?? "",
+        muscleGroup: (initial?.muscleGroup ?? null) as MuscleGroup | null,
+        description: initial?.description ?? "",
+        reps: initialReps(initial),
+        duration: initial?.durationSeconds != null ? String(initial.durationSeconds) : "",
+        weight: initial?.weight != null ? String(initial.weight) : "",
+        sets: initial?.sets != null ? String(initial.sets) : "",
+        rest: initial?.restSeconds != null ? String(initial.restSeconds) : "",
+        trainerNote: initial?.trainerNote ?? "",
+    }));
+    const [name, setName] = useState(initialForm.name);
+    const [muscleGroup, setMuscleGroup] = useState(initialForm.muscleGroup);
+    const [description, setDescription] = useState(initialForm.description);
+    const [reps, setReps] = useState(initialForm.reps);
+    const [duration, setDuration] = useState(initialForm.duration);
+    const [weight, setWeight] = useState(initialForm.weight);
+    const [sets, setSets] = useState(initialForm.sets);
+    const [rest, setRest] = useState(initialForm.rest);
+    const [trainerNote, setTrainerNote] = useState(initialForm.trainerNote);
 
     const [error, setError] = useState("");
     const [pickerOpen, setPickerOpen] = useState(false);
+
+    const isChanged = isFormChanged(
+        { name, muscleGroup, description, reps, duration, weight, sets, rest, trainerNote },
+        initialForm
+    );
 
     const handleSubmit = () => {
         if (!name.trim()) {
@@ -135,7 +144,7 @@ export default function ExerciseTemplateForm({
                 type="button"
                 className="fb-btn fb-btn--primary fb-form-submit"
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isChanged}
             >
                 {isSubmitting ? "Сохраняем…" : submitLabel}
             </button>

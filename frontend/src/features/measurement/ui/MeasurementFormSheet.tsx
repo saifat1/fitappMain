@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { isFormChanged } from "../../../shared/lib/formChanges";
 import { MEASUREMENT_FIELDS } from "../model/measurement.types";
 import type { ClientMeasurementResponse, SaveClientMeasurementRequest } from "../model/measurement.types";
 
@@ -15,16 +16,17 @@ function todayIso(): string {
 }
 
 export default function MeasurementFormSheet({ initial, isSaving, errorMessage, onSubmit, onClose }: Props) {
-    const [measuredAt, setMeasuredAt] = useState(initial?.measuredAt ?? todayIso());
-    const [values, setValues] = useState<Record<string, string>>(() => {
+    const [initialForm] = useState(() => {
         const initialValues: Record<string, string> = {};
         for (const field of MEASUREMENT_FIELDS) {
             const value = initial?.[field.key];
             initialValues[field.key] = value != null ? String(value) : "";
         }
-        return initialValues;
+        return { measuredAt: initial?.measuredAt ?? todayIso(), values: initialValues, notes: initial?.notes ?? "" };
     });
-    const [notes, setNotes] = useState(initial?.notes ?? "");
+    const [measuredAt, setMeasuredAt] = useState(initialForm.measuredAt);
+    const [values, setValues] = useState(initialForm.values);
+    const [notes, setNotes] = useState(initialForm.notes);
 
     const handleSubmit = () => {
         const payload: SaveClientMeasurementRequest = { measuredAt, notes: notes.trim() || undefined };
@@ -96,7 +98,7 @@ export default function MeasurementFormSheet({ initial, isSaving, errorMessage, 
                     <button type="button" className="fb-btn fb-btn--ghost" onClick={onClose} disabled={isSaving}>
                         Отмена
                     </button>
-                    <button type="button" className="fb-btn fb-btn--primary" onClick={handleSubmit} disabled={isSaving}>
+                    <button type="button" className="fb-btn fb-btn--primary" onClick={handleSubmit} disabled={isSaving || !isFormChanged({ measuredAt, values, notes }, initialForm)}>
                         {isSaving ? "Сохраняем…" : "Сохранить"}
                     </button>
                 </div>

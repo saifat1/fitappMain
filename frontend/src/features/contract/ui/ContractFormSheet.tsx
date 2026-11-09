@@ -22,6 +22,8 @@ export default function ContractFormSheet({
     const [endDate, setEndDate] = useState("");
     const [count, setCount] = useState("");
 
+    const hasInput = mode === "create" ? Boolean(contractNumber.trim() || totalTrainings.trim() || endDate) : Boolean(count.trim());
+
     const handleSubmit = () => {
         if (mode === "create") {
             const total = Number(totalTrainings);
@@ -121,7 +123,7 @@ export default function ContractFormSheet({
                         type="button"
                         className="fb-btn fb-btn--primary"
                         onClick={handleSubmit}
-                        disabled={isSaving}
+                        disabled={isSaving || !hasInput}
                     >
                         {isSaving ? "Сохраняем…" : "Сохранить"}
                     </button>

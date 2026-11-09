@@ -195,7 +195,7 @@ export default function InvitesPage() {
                         value={expiresInDays}
                         onChange={setExpiresInDays}
                     />
-                    <button type="submit" className="fb-btn fb-btn--primary fb-form-submit" disabled={isSubmitting}>
+                    <button type="submit" className="fb-btn fb-btn--primary fb-form-submit" disabled={isSubmitting || (!email.trim() && expiresInDays.trim() === "7")}>
                         {isSubmitting ? "Создаём…" : "Создать приглашение"}
                     </button>
                 </form>

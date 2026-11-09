@@ -6,6 +6,7 @@ import FbTextField from "../shared/ui/FbTextField";
 import { trainingApi } from "../shared/api/trainingApi";
 import { bookingRequestApi } from "../shared/api/bookingRequestApi";
 import { formatTrainingDay, shortTime } from "../features/training/lib/trainingDates";
+import { isFormChanged } from "../shared/lib/formChanges";
 
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
 import type { TrainingResponse } from "../features/training/model/training.types";
@@ -139,7 +140,13 @@ export default function CreateRescheduleRequestPage() {
                             type="button"
                             className="fb-btn fb-btn--primary fb-form-submit"
                             onClick={() => void handleSubmit()}
-                            disabled={isSubmitting}
+                            disabled={
+                                isSubmitting ||
+                                !isFormChanged(
+                                    { date, start, end, comment },
+                                    { date: training.trainingDate, start: shortTime(training.startTime), end: shortTime(training.endTime), comment: "" }
+                                )
+                            }
                         >
                             {isSubmitting ? "Отправляем…" : "Отправить запрос"}
                         </button>

@@ -50,10 +50,6 @@ export default function FeedbackPage() {
     }, []);
 
     const handleSend = async () => {
-        if (!text.trim()) {
-            setErrorMessage("Напишите, что хотите предложить или что случилось");
-            return;
-        }
         setIsSending(true);
         setErrorMessage("");
         setSuccessMessage("");
@@ -112,7 +108,7 @@ export default function FeedbackPage() {
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
                 {successMessage ? <div className="fb-success-note">{successMessage}</div> : null}
 
-                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSend} disabled={isSending}>
+                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSend} disabled={isSending || !text.trim()}>
                     {isSending ? "Отправляем…" : "Отправить"}
                 </button>
 

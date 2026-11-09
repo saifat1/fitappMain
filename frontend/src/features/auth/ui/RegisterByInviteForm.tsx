@@ -25,6 +25,9 @@ export default function RegisterByInviteForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
+    // FIT-85: the email from the invite is prefilled, it doesn't count as input.
+    const hasInput = email.trim() !== initialEmail.trim() || Boolean(firstName.trim() || lastName.trim() || password);
+
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         setErrorMessage("");
@@ -94,7 +97,7 @@ export default function RegisterByInviteForm({
             <button
                 type="submit"
                 className="fb-btn fb-btn--primary fb-form-submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !hasInput}
             >
                 {isSubmitting ? "Регистрируем…" : "Зарегистрироваться"}
             </button>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import FbTextField from "../../../shared/ui/FbTextField";
+import { isFormChanged } from "../../../shared/lib/formChanges";
 import PreviousExerciseHint from "../../progress/ui/PreviousExerciseHint";
 import type { PreviousExercise } from "../../../shared/api/progressApi";
 import { summaryFromParts, type DraftExercise } from "../model/trainingDraft";
@@ -123,6 +124,11 @@ function seed(template?: ExerciseTemplateResponse | null, exercise?: TrainingExe
     };
 }
 
+/** What the form shows: sets hidden by the «Подходы» count and the `touched` flag are not input. */
+function visibleForm(form: ReturnType<typeof seed>) {
+    return { ...form, rows: form.rows.slice(0, setsCount(form.sets)).map((r) => ({ reps: r.reps, weight: r.weight })) };
+}
+
 export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, onBack, loadPrevious }: Props) {
     const isTemplate = Boolean(template);
     const isEdit = Boolean(exercise);
@@ -162,6 +168,10 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
     const visibleRows = rows.slice(0, count);
     // Filled sets that are hidden now and will be lost on save.
     const droppedFilled = rows.slice(count).filter((r) => r.touched || r.weight.trim() !== "").length;
+    // FIT-85: an exercise from a template is ready to add as it is.
+    const canSubmit =
+        isTemplate ||
+        isFormChanged(visibleForm({ title, description, reps, duration, weight, sets, rest, trainerNote, rows }), visibleForm(initial));
 
     const changeRow = (index: number, patch: Partial<Pick<SetRow, "reps" | "weight">>) => {
         setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch, touched: true } : r)));
@@ -353,7 +363,7 @@ export default function ExerciseDetailForm({ template, exercise, onAdd, onSave, 
                 type="button"
                 className="fb-btn fb-btn--primary fb-form-submit"
                 onClick={() => void handleSubmit()}
-                disabled={isSaving}
+                disabled={isSaving || !canSubmit}
             >
                 {isEdit ? (isSaving ? "Сохраняем…" : "Сохранить") : "Добавить"}
             </button>

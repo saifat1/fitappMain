@@ -5,6 +5,7 @@ import axios from "axios";
 import FbTextField from "../shared/ui/FbTextField";
 import ChipToggleGroup from "../shared/ui/ChipToggleGroup";
 import { questionnaireApi } from "../shared/api/questionnaireApi";
+import { isFormChanged } from "../shared/lib/formChanges";
 import {
     HEALTH_CONDITIONS,
     TRAINING_EXPERIENCE_OPTIONS,
@@ -56,6 +57,27 @@ export default function ClientQuestionnairePage() {
     const [nutritionRecommendations, setNutritionRecommendations] = useState("");
     const [instructorNotes, setInstructorNotes] = useState("");
 
+    const form = {
+        heightCm,
+        weightKg,
+        clothingSize,
+        bodyFatPercent,
+        healthConditions,
+        therapyType,
+        trainingExperience,
+        trainingsPerWeek,
+        fitnessGoals,
+        fitnessGoalOther,
+        desiredWeightKg,
+        priorityBodyParts,
+        convenientDays,
+        convenientTimeOfDay,
+        convenientTimeNote,
+        nutritionRecommendations,
+        instructorNotes,
+    };
+    const [savedForm, setSavedForm] = useState(form);
+
     useEffect(() => {
         let active = true;
 
@@ -63,23 +85,43 @@ export default function ClientQuestionnairePage() {
             .getForClient(id)
             .then((data) => {
                 if (!active) return;
-                setHeightCm(data.heightCm?.toString() ?? "");
-                setWeightKg(data.weightKg?.toString() ?? "");
-                setClothingSize(data.clothingSize ?? "");
-                setBodyFatPercent(data.bodyFatPercent?.toString() ?? "");
-                setHealthConditions(data.healthConditions ?? []);
-                setTherapyType(data.therapyType ?? "");
-                setTrainingExperience(data.trainingExperience ?? []);
-                setTrainingsPerWeek(data.trainingsPerWeek?.toString() ?? "");
-                setFitnessGoals(data.fitnessGoals ?? []);
-                setFitnessGoalOther(data.fitnessGoalOther ?? "");
-                setDesiredWeightKg(data.desiredWeightKg?.toString() ?? "");
-                setPriorityBodyParts(data.priorityBodyParts ?? []);
-                setConvenientDays(data.convenientDays ?? []);
-                setConvenientTimeOfDay(data.convenientTimeOfDay ?? []);
-                setConvenientTimeNote(data.convenientTimeNote ?? "");
-                setNutritionRecommendations(data.nutritionRecommendations ?? "");
-                setInstructorNotes(data.instructorNotes ?? "");
+                const loaded = {
+                    heightCm: data.heightCm?.toString() ?? "",
+                    weightKg: data.weightKg?.toString() ?? "",
+                    clothingSize: data.clothingSize ?? "",
+                    bodyFatPercent: data.bodyFatPercent?.toString() ?? "",
+                    healthConditions: data.healthConditions ?? [],
+                    therapyType: data.therapyType ?? "",
+                    trainingExperience: data.trainingExperience ?? [],
+                    trainingsPerWeek: data.trainingsPerWeek?.toString() ?? "",
+                    fitnessGoals: data.fitnessGoals ?? [],
+                    fitnessGoalOther: data.fitnessGoalOther ?? "",
+                    desiredWeightKg: data.desiredWeightKg?.toString() ?? "",
+                    priorityBodyParts: data.priorityBodyParts ?? [],
+                    convenientDays: data.convenientDays ?? [],
+                    convenientTimeOfDay: data.convenientTimeOfDay ?? [],
+                    convenientTimeNote: data.convenientTimeNote ?? "",
+                    nutritionRecommendations: data.nutritionRecommendations ?? "",
+                    instructorNotes: data.instructorNotes ?? "",
+                };
+                setHeightCm(loaded.heightCm);
+                setWeightKg(loaded.weightKg);
+                setClothingSize(loaded.clothingSize);
+                setBodyFatPercent(loaded.bodyFatPercent);
+                setHealthConditions(loaded.healthConditions);
+                setTherapyType(loaded.therapyType);
+                setTrainingExperience(loaded.trainingExperience);
+                setTrainingsPerWeek(loaded.trainingsPerWeek);
+                setFitnessGoals(loaded.fitnessGoals);
+                setFitnessGoalOther(loaded.fitnessGoalOther);
+                setDesiredWeightKg(loaded.desiredWeightKg);
+                setPriorityBodyParts(loaded.priorityBodyParts);
+                setConvenientDays(loaded.convenientDays);
+                setConvenientTimeOfDay(loaded.convenientTimeOfDay);
+                setConvenientTimeNote(loaded.convenientTimeNote);
+                setNutritionRecommendations(loaded.nutritionRecommendations);
+                setInstructorNotes(loaded.instructorNotes);
+                setSavedForm(loaded);
             })
             .catch((error) => setErrorMessage(resolveApiError(error, "Не удалось загрузить анкету")))
             .finally(() => {
@@ -116,6 +158,7 @@ export default function ClientQuestionnairePage() {
                 nutritionRecommendations: nutritionRecommendations.trim() || null,
                 instructorNotes: instructorNotes.trim() || null,
             });
+            setSavedForm(form);
             setSavedMessage("Сохранено");
             window.setTimeout(() => setSavedMessage(""), 2000);
         } catch (error) {
@@ -258,7 +301,7 @@ export default function ClientQuestionnairePage() {
                             type="button"
                             className="fb-btn fb-btn--primary fb-form-submit"
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={isSaving || !isFormChanged(form, savedForm)}
                         >
                             {isSaving ? "Сохраняем…" : "Сохранить"}
                         </button>

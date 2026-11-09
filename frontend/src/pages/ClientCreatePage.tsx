@@ -29,6 +29,9 @@ export default function ClientCreatePage() {
     const [invite, setInvite] = useState<InviteResponse | null>(null);
     const [copied, setCopied] = useState(false);
 
+    // FIT-85: every field is optional, but a completely empty form is not a client.
+    const hasInput = [email, firstName, lastName, phone, contractNumber, contractTotalTrainings].some((value) => value.trim());
+
     const handleCreate = async () => {
         setErrorMessage("");
         setIsSubmitting(true);
@@ -153,7 +156,7 @@ export default function ClientCreatePage() {
                     type="button"
                     className="fb-btn fb-btn--primary fb-form-submit"
                     onClick={handleCreate}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasInput}
                 >
                     {isSubmitting ? "Создаём…" : "Создать клиента"}
                 </button>

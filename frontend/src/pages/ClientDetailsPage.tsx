@@ -9,6 +9,7 @@ import TicketIcon from "../features/training/ui/TicketIcon";
 import UpcomingTrainingRow from "../features/training/ui/UpcomingTrainingRow";
 import { trainerApi } from "../shared/api/trainerApi";
 import { trainingApi } from "../shared/api/trainingApi";
+import { isFormChanged } from "../shared/lib/formChanges";
 import {
     clientName,
     clientInitials,
@@ -210,6 +211,10 @@ export default function ClientDetailsPage() {
     }
 
     const isActive = client.claimedByClient;
+    const isChanged = isFormChanged(
+        { firstName, lastName, phone },
+        { firstName: client.firstName ?? "", lastName: client.lastName ?? "", phone: client.phone ?? "" }
+    );
 
     return (
         <div className="fb-screen">
@@ -277,7 +282,7 @@ export default function ClientDetailsPage() {
 
                         {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
-                        <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSave} disabled={isSaving}>
+                        <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSave} disabled={isSaving || !isChanged}>
                             {isSaving ? "Сохраняем…" : "Сохранить"}
                         </button>
                     </>

@@ -20,10 +20,6 @@ export default function ForgotPasswordPage() {
     const [sent, setSent] = useState(false);
 
     const handleSubmit = async () => {
-        if (!email.trim()) {
-            setErrorMessage("Укажите электронную почту");
-            return;
-        }
         setErrorMessage("");
         setIsSubmitting(true);
         try {
@@ -83,7 +79,7 @@ export default function ForgotPasswordPage() {
                     Введите почту, которую использовали при регистрации. Мы отправим ссылку для создания нового пароля.
                 </div>
 
-                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSubmit} disabled={isSubmitting}>
+                <button type="button" className="fb-btn fb-btn--primary fb-form-submit" onClick={handleSubmit} disabled={isSubmitting || !email.trim()}>
                     {isSubmitting ? "Отправляем…" : "Отправить ссылку"}
                 </button>
             </div>
