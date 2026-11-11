@@ -99,7 +99,7 @@ public class SecurityConfig {
         ).map(origin -> origin.trim().replaceAll("/+$", "")).filter(origin -> !origin.isEmpty()).distinct().toList());
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-App-Store"));
         configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

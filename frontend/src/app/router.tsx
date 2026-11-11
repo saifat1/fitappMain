@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { canBuyInApp } from "../shared/lib/platform";
 import LoginPage from "../pages/LoginPage";
 import ForgotPasswordPage from "../pages/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
@@ -85,7 +86,8 @@ export const router = createBrowserRouter([
     },
     {
         path: "/pricing",
-        element: <PricingPage />,
+        // Google Play build: no prices or ways to pay in the app (see canBuyInApp).
+        element: canBuyInApp ? <PricingPage /> : <Navigate to="/" replace />,
     },
     {
         // Public on purpose: the app stores link here (FIT-70); the page asks to sign in first.

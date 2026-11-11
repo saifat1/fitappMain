@@ -73,6 +73,10 @@ $env:JAVA_HOME = (Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Directory |
 - Ключ подписи релиза — только на машине: `%USERPROFILE%\.fitapp\fitapp-release.jks` + `keystore.properties`.
   Потеря ключа = нельзя обновить приложение в RuStore. Готовые файлы складываются в `builds/` (не в git).
 - Версия приложения — `version` в `frontend/package.json` (см. «Версии и выкладка на бой»).
+- Сборка для Google Play — с `$env:VITE_APP_STORE="google"` перед sync (по умолчанию — RuStore). В ней подписку видно,
+  но купить нельзя: правила Google запрещают оплату мимо их биллинга и даже отсылку к ней (`canBuyInApp` в `platform.ts`,
+  заголовок `X-App-Store` → тексты лимитов на сервере). Оплата — на сайте, ссылка — только в письмах. Пуши о подписке
+  нейтральные для обеих сборок: сервер не знает, из какого магазина приложение.
 
 ## Процесс работы с задачами (YouGile)
 

@@ -12,6 +12,7 @@ import {
     type SubscriptionResponse,
 } from "../features/subscription/model/subscription.types";
 import type { ApiErrorResponse } from "../features/auth/model/auth.types";
+import { canBuyInApp } from "../shared/lib/platform";
 
 function resolveApiError(error: unknown, fallback: string): string {
     if (axios.isAxiosError<ApiErrorResponse>(error)) {
@@ -147,7 +148,7 @@ export default function SubscriptionPage() {
                         <div className="fb-sub-limit__title">Клиентов больше, чем позволяет тариф</div>
                         <div className="fb-sub-limit__sub">
                             Выберите до {data.clientLimit} рабочих клиентов. С остальными можно смотреть историю и договоры, но не создавать
-                            тренировки и записи. Ничего не удаляется — после оплаты всё вернётся.
+                            тренировки и записи. Ничего не удаляется{canBuyInApp ? " — после оплаты всё вернётся" : ""}.
                         </div>
                         {data.clients.map((c) => {
                             const checked = selected.includes(c.clientId);
@@ -188,6 +189,8 @@ export default function SubscriptionPage() {
 
                 {errorMessage ? <div className="fb-cal-error">{errorMessage}</div> : null}
 
+                {canBuyInApp && (
+                <>
                 <div className="fb-section-title fb-section-title--flush">Тарифы</div>
 
                 <div className="fb-segment fb-sub__period">
@@ -273,6 +276,8 @@ export default function SubscriptionPage() {
                         </>
                     )}
                 </div>
+                </>
+                )}
 
                 {data.enabled && data.payments.length > 0 && (
                     <>
@@ -332,7 +337,9 @@ function StatusCard({
     switch (data.status) {
         case "TRIAL":
             title = `${data.planTitle} · пробный период`;
-            sub = `Бесплатно до ${date(data.trialEndsAt)}. Потом — тариф «Старт» (до 3 клиентов), если не оплатить.`;
+            sub = canBuyInApp
+                ? `Бесплатно до ${date(data.trialEndsAt)}. Потом — тариф «Старт» (до 3 клиентов), если не оплатить.`
+                : `Бесплатно до ${date(data.trialEndsAt)}. Потом — тариф «Старт» (до 3 клиентов).`;
             break;
         case "ACTIVE":
             sub = data.autoRenew
@@ -341,11 +348,11 @@ function StatusCard({
             break;
         case "GRACE":
             warn = true;
-            sub = `Не удалось списать оплату. Всё работает до ${date(data.graceUntil)} — мы попробуем ещё раз. Можно оплатить вручную ниже.`;
+            sub = `Не удалось списать оплату. Всё работает до ${date(data.graceUntil)} — мы попробуем ещё раз.${canBuyInApp ? " Можно оплатить вручную ниже." : ""}`;
             break;
         default:
             title = "Старт · бесплатно";
-            sub = "До 3 активных клиентов. Перейдите на Pro, чтобы вести больше.";
+            sub = canBuyInApp ? "До 3 активных клиентов. Перейдите на Pro, чтобы вести больше." : "До 3 активных клиентов.";
     }
 
     // FIT-80: auto-renewal exists only with a card bound under the consent to automatic charges.

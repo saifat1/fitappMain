@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getAccessToken, removeAccessToken } from "../lib/tokenStorage";
-import { API_BASE_URL } from "../lib/platform";
+import { API_BASE_URL, APP_STORE } from "../lib/platform";
 
 export const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -14,6 +14,11 @@ apiClient.interceptors.request.use((config) => {
 
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // The server words subscription messages without «оплатите» for the Google Play build.
+    if (APP_STORE) {
+        config.headers["X-App-Store"] = APP_STORE;
     }
 
     return config;

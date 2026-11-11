@@ -2,6 +2,8 @@ package ru.fitapp.backend.subscription.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.transaction.annotation.Transactional;
 import ru.fitapp.backend.common.exception.ApiException;
 import ru.fitapp.backend.subscription.entity.TrainerSubscription;
@@ -93,6 +95,17 @@ public class SubscriptionAccessService {
         return Optional.ofNullable(resolve(getOrCreate(trainer), LocalDateTime.now()).plan().getClientLimit());
     }
 
+    /**
+     * The Google Play build of the app (header X-App-Store: google) may not point to paying outside Google's billing,
+     * so its messages don't say «оплатите / перейдите на тариф». The site and the RuStore build keep them.
+     */
+    private static boolean canBuyInApp() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
+            return !"google".equalsIgnoreCase(attrs.getRequest().getHeader("X-App-Store"));
+        }
+        return true;
+    }
+
     /** Before adding a new active client (manual creation, invite, restore from archive). */
     public void assertCanAddClient(AppUser trainer) {
         Optional<Integer> limit = clientLimit(trainer);
@@ -103,7 +116,9 @@ public class SubscriptionAccessService {
             throw new ApiException(
                     "SUBSCRIPTION_LIMIT",
                     "Достигнут лимит тарифа (активных клиентов: " + limit.get() + "). "
-                            + "Перейдите на тариф побольше в разделе «Подписка» или перенесите клиента в архив"
+                            + (canBuyInApp()
+                                    ? "Перейдите на тариф побольше в разделе «Подписка» или перенесите клиента в архив"
+                                    : "Чтобы добавить клиента, перенесите кого-нибудь в архив")
             );
         }
     }
@@ -122,7 +137,9 @@ public class SubscriptionAccessService {
             throw new ApiException(
                     "SUBSCRIPTION_LIMIT",
                     "Клиент вне лимита тарифа (рабочих клиентов на текущем тарифе: " + limit.get()
-                            + "). Продлите подписку или выберите рабочих клиентов в разделе «Подписка»"
+                            + (canBuyInApp()
+                                    ? "). Продлите подписку или выберите рабочих клиентов в разделе «Подписка»"
+                                    : "). Выберите рабочих клиентов в разделе «Подписка»")
             );
         }
     }

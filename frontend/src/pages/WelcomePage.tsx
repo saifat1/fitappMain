@@ -4,6 +4,7 @@ import BrandWordmark from "../shared/ui/BrandWordmark";
 import { publicApi } from "../shared/api/publicApi";
 import type { SellerInfo } from "../features/subscription/model/subscription.types";
 import { isClientDevice } from "../shared/lib/clientDevice";
+import { canBuyInApp } from "../shared/lib/platform";
 
 /**
  * Onboarding / splash screen (mockup images 1 & 2, first frame).
@@ -73,11 +74,11 @@ export default function WelcomePage() {
             </div>
 
             <nav className="fb-welcome__legal" aria-label="Информация">
-                <Link to="/pricing">Тарифы и оплата</Link>
+                {canBuyInApp && <Link to="/pricing">Тарифы и оплата</Link>}
                 <Link to="/legal/offer">Оферта</Link>
                 <Link to="/legal/refund">Возврат</Link>
                 <Link to="/legal/privacy">Персональные данные</Link>
-                <Link to="/pricing">Контакты</Link>
+                {canBuyInApp && <Link to="/pricing">Контакты</Link>}
             </nav>
 
             {sellerLine ? (
